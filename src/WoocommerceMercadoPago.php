@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use MercadoPago\Woocommerce\Admin\Settings;
+use MercadoPago\Woocommerce\Admin\OnboardingNoticeMetrics;
 use MercadoPago\Woocommerce\Api\Core\CoreApi;
 use MercadoPago\Woocommerce\Blocks\BasicBlock;
 use MercadoPago\Woocommerce\Blocks\CustomBlock;
@@ -24,6 +25,7 @@ use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
+use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 use MercadoPago\Woocommerce\Order\OrderShipping;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
@@ -31,6 +33,8 @@ use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\HealthMonitor\FileIntegrityChecker;
+use MercadoPago\Woocommerce\SmartPix\Composition\SmartPixCoreNotificationHandlerFactory;
+use MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixReconciliation;
 use MercadoPago\Woocommerce\SuperToken\SuperTokenPaymentProcessor;
 use WooCommerce;
 
@@ -40,7 +44,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '8.10.0';
+    private const PLUGIN_VERSION = '8.10.1';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
@@ -79,6 +83,10 @@ class WoocommerceMercadoPago
 
     public OrderMetadata $orderMetadata;
 
+    public \MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderOperations $smartPixOperations;
+
+    public \MercadoPago\Woocommerce\SmartPix\Adapters\WooCommerce\SmartPixNativeEffects $smartPixNativeEffects;
+
     public OrderShipping $orderShipping;
 
     public OrderStatus $orderStatus;
@@ -104,6 +112,10 @@ class WoocommerceMercadoPago
     public CoreApi $coreApi;
 
     private static bool $booted = false;
+
+    private bool $onboardingMetricsRegistered = false;
+
+    private bool $onboardingNoticeRegistered = false;
 
     /**
      * WoocommerceMercadoPago constructor
@@ -255,7 +267,11 @@ class WoocommerceMercadoPago
         }
 
         $this->setProperties();
+        $this->registerOnboardingNoticeMetrics();
         add_action('mp_reconcile_payment_refund', [$this->orderStatus, 'retryPaymentRefundReconciliation'], 10, 4);
+        add_action(SmartPixReconciliation::HOOK, static function ($orderId, $attempt): void {
+            SmartPixCoreNotificationHandlerFactory::reconciliationFromPlugin()->run((int) $orderId, (int) $attempt);
+        }, 10, 2);
         $this->setPluginSettingsLink();
 
         if (version_compare(PHP_VERSION, self::PLUGIN_MIN_PHP, '<')) {
@@ -274,6 +290,12 @@ class WoocommerceMercadoPago
         $this->registerBlocks();
         $this->registerGateways();
         $this->registerHealthMonitor();
+        \MercadoPago\Woocommerce\SmartPix\Adapters\WooCommerce\SmartPixRepaymentGuard::register($this->orderMetadata);
+        add_action('template_redirect', function (): void {
+            (new \MercadoPago\Woocommerce\SmartPix\Adapters\WooCommerce\SmartPixCheckoutRecovery(
+                $this->orderMetadata
+            ))->redirectCheckout();
+        }, 1);
         $this->registerActionsWhenGatewayIsNotCalled();
         $this->registerMyAccountOrderActionsFilter();
 
@@ -295,6 +317,21 @@ class WoocommerceMercadoPago
     public function booted(): bool
     {
         return static::$booted;
+    }
+
+    public function registerOnboardingNoticeMetrics(): void
+    {
+        if (!is_admin() || $this->onboardingMetricsRegistered) {
+            return;
+        }
+
+        new OnboardingNoticeMetrics(
+            $this->helpers->nonce,
+            $this->helpers->currentUser,
+            $this->hooks->endpoints,
+            Datadog::getInstance()
+        );
+        $this->onboardingMetricsRegistered = true;
     }
 
     /**
@@ -378,6 +415,8 @@ class WoocommerceMercadoPago
         $this->orderBilling  = $dependencies->orderBilling;
         $this->orderShipping = $dependencies->orderShipping;
         $this->orderMetadata = $dependencies->orderMetadata;
+        $this->smartPixOperations = $dependencies->smartPixOperations;
+        $this->smartPixNativeEffects = $dependencies->smartPixNativeEffects;
         $this->orderStatus   = $dependencies->orderStatus;
 
         // Helpers
@@ -473,18 +512,17 @@ class WoocommerceMercadoPago
     }
 
     /**
-     * Show notice when credentials are null
+     * Register the persistent onboarding notice and the shared campaign region
      *
      * @return void
      */
     public function verifyCredentialsForInstructionNotice(): void
     {
-        if (isset($this->sellerConfig)) {
-            $publicKeyProd = $this->sellerConfig->getCredentialsPublicKeyProd();
-            if (empty($publicKeyProd) && $this->helpers->notices->shouldShowNoticesForSettingsSection()) {
-                $this->helpers->notices->instructionalNotice();
-            }
+        if ($this->onboardingNoticeRegistered || !isset($this->sellerConfig)) {
+            return;
         }
+
+        $this->onboardingNoticeRegistered = $this->helpers->notices->registerOnboardingNotice();
     }
 
     /**

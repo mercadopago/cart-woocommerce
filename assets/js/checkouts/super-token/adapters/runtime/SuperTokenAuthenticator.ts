@@ -21,6 +21,7 @@
  */
 import { GetAccountPaymentMethods } from '@super-token/useCases/GetAccountPaymentMethods';
 import type { AuthenticatorMetrics } from '@super-token/useCases/GetAccountPaymentMethods';
+import { CoordinateAccountPaymentMethods } from '@super-token/useCases/CoordinateAccountPaymentMethods';
 import { AuthorizePayment } from '@super-token/useCases/AuthorizePayment';
 import type { AuthorizePaymentMetrics } from '@super-token/useCases/AuthorizePayment';
 import {
@@ -28,10 +29,17 @@ import {
   type LegacyAccountPaymentMethodsSource,
 } from '@super-token/adapters/session/LegacyAuthenticatorSession';
 import type {
+  AccountPaymentMethod,
   PaymentMethod,
+  SmartTransferPaymentMethod,
   RawSdkAuthenticator,
   RawMpSdkInstance,
 } from '@super-token/types/external-globals';
+import { partitionAccountPaymentMethods } from '@super-token/core/checkoutSession/AccountPaymentMethodsPartition';
+import {
+  isValidBuyerEmail,
+  normalizeBuyerEmail,
+} from '@super-token/core/checkoutSession/BuyerEmail';
 import { SITES_WITHOUT_DECIMAL_AMOUNTS } from '@super-token/core/constants';
 
 /** Superset of the metrics the load use case, the submit use case and the primitives emit. */
@@ -56,6 +64,7 @@ export class SuperTokenAuthenticator {
   private loadGeneration = 0;
 
   private readonly getAccountPaymentMethodsUseCase = new GetAccountPaymentMethods();
+  private readonly coordinateAccountPaymentMethodsUseCase = new CoordinateAccountPaymentMethods();
   private readonly authorizePaymentUseCase = new AuthorizePayment();
 
   constructor(
@@ -70,6 +79,15 @@ export class SuperTokenAuthenticator {
     this.loadGeneration++;
     this.authenticator = null;
     this.fastPaymentToken = null;
+    this.coordinateAccountPaymentMethodsUseCase.invalidate();
+    this.setSuperTokenValidation(false);
+
+    const authorizedPseudotoken = document.getElementById(
+      this.AUTHORIZED_PSEUDOTOKEN_ELEMENT_ID,
+    ) as HTMLInputElement | null;
+    if (authorizedPseudotoken) {
+      authorizedPseudotoken.value = '';
+    }
   }
 
   setSuperTokenValidation(value: boolean): void {
@@ -210,14 +228,47 @@ export class SuperTokenAuthenticator {
     }
   }
 
-  getAccountPaymentMethods(amount: string | null, buyerEmail: string): Promise<PaymentMethod[] | null> {
-    const generation = ++this.loadGeneration;
-    return this.getAccountPaymentMethodsUseCase.execute({
-      session: new LegacyAuthenticatorSession(this, this.paymentMethods, () => generation === this.loadGeneration),
-      metrics: this.metrics,
+  getCoordinatedAccountPaymentMethods(
+    amount: string | null,
+    buyerEmail: string,
+  ): Promise<AccountPaymentMethod[] | null> {
+    const normalizedEmail = normalizeBuyerEmail(buyerEmail);
+    if (!isValidBuyerEmail(normalizedEmail)) {
+      return Promise.resolve(null);
+    }
+
+    return this.coordinateAccountPaymentMethodsUseCase.execute({
       amount,
-      buyerEmail,
+      buyerEmail: normalizedEmail,
+      fetch: (signal) => {
+        // A reset or a newer fetch supersedes this one even if its SDK call is still pending.
+        const generation = ++this.loadGeneration;
+        return this.getAccountPaymentMethodsUseCase.execute({
+          session: new LegacyAuthenticatorSession(
+            this,
+            this.paymentMethods,
+            () => generation === this.loadGeneration,
+          ),
+          metrics: this.metrics,
+          amount,
+          buyerEmail: normalizedEmail,
+          signal,
+        });
+      },
     });
+  }
+
+  getAccountPaymentMethods(amount: string | null, buyerEmail: string): Promise<PaymentMethod[] | null> {
+    return this.getCoordinatedAccountPaymentMethods(amount, buyerEmail)
+      .then((methods) => methods ? partitionAccountPaymentMethods(methods).superToken : null);
+  }
+
+  getSmartTransferPaymentMethods(
+    amount: string | null,
+    buyerEmail: string,
+  ): Promise<SmartTransferPaymentMethod[] | null> {
+    return this.getCoordinatedAccountPaymentMethods(amount, buyerEmail)
+      .then((methods) => methods ? partitionAccountPaymentMethods(methods).smartTransfer : null);
   }
 
   authorizePayment(pseudotoken: string): Promise<void> {

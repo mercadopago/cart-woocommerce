@@ -12,6 +12,7 @@ import type { SelectionMetrics } from '@super-token/useCases/SelectSavedPaymentM
 import { ResetFlow } from '@super-token/useCases/ResetFlow';
 import { GetAccountPaymentMethods } from '@super-token/useCases/GetAccountPaymentMethods';
 import type { AuthenticatorMetrics } from '@super-token/useCases/GetAccountPaymentMethods';
+import { CoordinateAccountPaymentMethods } from '@super-token/useCases/CoordinateAccountPaymentMethods';
 import { AuthorizePayment } from '@super-token/useCases/AuthorizePayment';
 import type { AuthorizePaymentMetrics } from '@super-token/useCases/AuthorizePayment';
 import { FetchAndRenderPaymentMethods } from '@super-token/useCases/FetchAndRenderPaymentMethods';
@@ -64,7 +65,18 @@ import type {
   LegacyAuthenticator,
   LegacyAccountPaymentMethodsSource,
 } from '@super-token/adapters/session/LegacyAuthenticatorSession';
-import type { PaymentMethod } from '@super-token/types/external-globals';
+import type {
+  AccountPaymentMethod,
+  PaymentMethod,
+  SmartTransferPaymentMethod,
+} from '@super-token/types/external-globals';
+import {
+  partitionAccountPaymentMethods,
+} from '@super-token/core/checkoutSession/AccountPaymentMethodsPartition';
+import {
+  isValidBuyerEmail,
+  normalizeBuyerEmail,
+} from '@super-token/core/checkoutSession/BuyerEmail';
 import { MPSuperTokenErrorCodes } from '@super-token/core/checkoutSession/ErrorClassification';
 import { resolveCheckoutValidation } from '@super-token/adapters/validation/checkoutValidationResolver';
 import type {
@@ -145,24 +157,60 @@ function resetOnError(preserveSelection: boolean): void {
 
 // One shared instance: the use case is stateless orchestration over the injected session.
 const getAccountPaymentMethodsUseCase = new GetAccountPaymentMethods();
+const coordinateAccountPaymentMethodsUseCase = new CoordinateAccountPaymentMethods();
 
 // Hybrid: the legacy authenticator still owns the handle/token state and the SDK primitives,
 // and the legacy controller still owns the account fetch. This wraps both as the load session
 // so the use case drives the *order* and the fail-safe gates while the state stays legacy —
 // the scaffold that shrinks as the primitives are ported into the tree.
+function getCoordinatedAccountPaymentMethods(
+  amount: string | null,
+  buyerEmail: string,
+): Promise<AccountPaymentMethod[] | null> {
+  const normalizedEmail = normalizeBuyerEmail(buyerEmail);
+  if (!isValidBuyerEmail(normalizedEmail)) {
+    return Promise.resolve(null);
+  }
+
+  const authenticator = window.mpSuperTokenAuthenticator as unknown as LegacyAuthenticator;
+
+  if (typeof authenticator?.getCoordinatedAccountPaymentMethods === 'function') {
+    return authenticator.getCoordinatedAccountPaymentMethods(amount, normalizedEmail);
+  }
+
+  const paymentMethods = window.mpSuperTokenPaymentMethods as unknown as LegacyAccountPaymentMethodsSource;
+  const metrics = window.mpSuperTokenMetrics as unknown as AuthenticatorMetrics;
+  if (!authenticator || !paymentMethods || !metrics) {
+    return Promise.resolve(null);
+  }
+
+  return coordinateAccountPaymentMethodsUseCase.execute({
+    amount,
+    buyerEmail: normalizedEmail,
+    fetch: (signal) => getAccountPaymentMethodsUseCase.execute({
+      session: new LegacyAuthenticatorSession(authenticator, paymentMethods),
+      metrics,
+      amount,
+      buyerEmail: normalizedEmail,
+      signal,
+    }),
+  });
+}
+
 function getAccountPaymentMethods(
   amount: string | null,
   buyerEmail: string,
 ): Promise<PaymentMethod[] | null> {
-  const authenticator = window.mpSuperTokenAuthenticator as unknown as LegacyAuthenticator;
-  const paymentMethods = window.mpSuperTokenPaymentMethods as unknown as LegacyAccountPaymentMethodsSource;
-  const metrics = window.mpSuperTokenMetrics as unknown as AuthenticatorMetrics;
-  return getAccountPaymentMethodsUseCase.execute({
-    session: new LegacyAuthenticatorSession(authenticator, paymentMethods),
-    metrics,
-    amount,
-    buyerEmail,
-  });
+  return getCoordinatedAccountPaymentMethods(amount, buyerEmail)
+    .then((methods) => methods ? partitionAccountPaymentMethods(methods).superToken : null);
+}
+
+function getSmartTransferPaymentMethods(
+  amount: string | null,
+  buyerEmail: string,
+): Promise<SmartTransferPaymentMethod[] | null> {
+  return getCoordinatedAccountPaymentMethods(amount, buyerEmail)
+    .then((methods) => methods ? partitionAccountPaymentMethods(methods).smartTransfer : null);
 }
 
 // ─── Authorize at submit (Phase 8) ───────────────────────────────────────────
@@ -247,6 +295,15 @@ const resetCustomCheckoutUseCase = new ResetCustomCheckout();
 // while the state stays legacy — the scaffold that shrinks as the primitives are ported.
 function resetCustomCheckout(shouldClearCache: boolean): void {
   const triggerHandler = window.mpSuperTokenTriggerHandler as unknown as LegacyResetCustomCheckoutTriggerHandler;
+
+  // In the hybrid runtime an older authenticator does not own the shared coordinator.
+  // Clear this composition-level cache with the same reset that invalidates the
+  // legacy authenticator/token state, otherwise an equal amount/e-mail can reuse
+  // methods without rebuilding the handle required at authorization time.
+  if (shouldClearCache) {
+    coordinateAccountPaymentMethodsUseCase.invalidate();
+  }
+
   resetCustomCheckoutUseCase.execute({
     session: new LegacyResetCustomCheckoutSession(triggerHandler),
     shouldClearCache,
@@ -316,6 +373,10 @@ export function publishLegacyDelegationSeams(): void {
   globalBridge.publishSelectors({ selectSavedPaymentMethod });
   globalBridge.publishReset({ resetOnError });
   globalBridge.publishAccountPaymentMethods({ getAccountPaymentMethods });
+  globalBridge.publishFastPaymentsEligibility({
+    isValidBuyerEmail,
+    getSmartTransferPaymentMethods,
+  });
   globalBridge.publishAuthorizePayment({ authorizePayment });
   globalBridge.publishFetchAndRender({ fetchAndRenderPaymentMethods });
   globalBridge.publishLoad({ loadSuperToken });

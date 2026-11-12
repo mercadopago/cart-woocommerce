@@ -1,0 +1,287 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "scenario_id",
+    "port",
+    "operation",
+    "request",
+    "response",
+    "expected_effects"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "smart-pix-mutations/v1"
+    },
+    "scenario_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{2,79}$"
+    },
+    "port": {
+      "enum": [
+        "sdk",
+        "orders"
+      ]
+    },
+    "operation": {
+      "enum": [
+        "query",
+        "cancel",
+        "refund"
+      ]
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "surface",
+        "country",
+        "payment_contract",
+        "attempt_reference",
+        "order_reference",
+        "amount",
+        "refund_amount"
+      ],
+      "properties": {
+        "surface": {
+          "enum": [
+            "classic",
+            "blocks",
+            "order_pay",
+            "server"
+          ]
+        },
+        "country": {
+          "const": "MLB"
+        },
+        "payment_contract": {
+          "const": "orders_smart_pix_v1"
+        },
+        "attempt_reference": {
+          "oneOf": [
+            {
+              "$ref": "urn:mercadopago:woocommerce:smart-pix:internal-contract:v1#/definitions/opaqueReference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "order_reference": {
+          "oneOf": [
+            {
+              "$ref": "urn:mercadopago:woocommerce:smart-pix:internal-contract:v1#/definitions/opaqueReference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "amount": {
+          "oneOf": [
+            {
+              "$ref": "urn:mercadopago:woocommerce:smart-pix:internal-contract:v1#/definitions/amount"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "refund_amount": {
+          "oneOf": [
+            {
+              "$ref": "urn:mercadopago:woocommerce:smart-pix:internal-contract:v1#/definitions/amount"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "operation_context": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "contract_version",
+            "idempotency_key",
+            "seller_reference"
+          ],
+          "properties": {
+            "contract_version": {
+              "const": "smart-pix-mutations/v1"
+            },
+            "idempotency_key": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "seller_reference": {
+              "type": "string",
+              "pattern": "^[0-9]{1,32}$"
+            }
+          }
+        }
+      }
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outcome",
+        "state",
+        "order_reference",
+        "eligibility",
+        "authorization",
+        "payments",
+        "error",
+        "order_context"
+      ],
+      "properties": {
+        "outcome": {
+          "enum": [
+            "success",
+            "failure"
+          ]
+        },
+        "state": {
+          "enum": [
+            "empty",
+            "unavailable",
+            "eligible",
+            "authorizing",
+            "authorized",
+            "processing",
+            "terminal_success",
+            "error",
+            "terminal_failure"
+          ]
+        },
+        "order_reference": {
+          "oneOf": [
+            {
+              "$ref": "urn:mercadopago:woocommerce:smart-pix:internal-contract:v1#/definitions/opaqueReference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eligibility": {
+          "oneOf": [
+            {
+              "$ref": "urn:mercadopago:woocommerce:smart-pix:internal-contract:v1#/definitions/eligibility"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "authorization": {
+          "oneOf": [
+            {
+              "$ref": "urn:mercadopago:woocommerce:smart-pix:internal-contract:v1#/definitions/authorization"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "payments": {
+          "type": "array",
+          "items": {
+            "$ref": "urn:mercadopago:woocommerce:smart-pix:internal-contract:v1#/definitions/payment"
+          }
+        },
+        "error": {
+          "oneOf": [
+            {
+              "$ref": "urn:mercadopago:woocommerce:smart-pix:internal-contract:v1#/definitions/error"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "order_context": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "contract_version",
+            "seller_reference",
+            "attempt_reference",
+            "amount",
+            "refunded_amount"
+          ],
+          "properties": {
+            "contract_version": {
+              "const": "smart-pix-mutations/v1"
+            },
+            "seller_reference": {
+              "type": "string",
+              "pattern": "^[0-9]{1,32}$"
+            },
+            "attempt_reference": {
+              "type": "string",
+              "pattern": "^WC-[1-9][0-9]*$"
+            },
+            "amount": {
+              "$ref": "urn:mercadopago:woocommerce:smart-pix:internal-contract:v1#/definitions/amount"
+            },
+            "refunded_amount": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)\\.[0-9]{2}$",
+              "maxLength": 64
+            }
+          }
+        }
+      }
+    },
+    "expected_effects": {
+      "$ref": "urn:mercadopago:woocommerce:smart-pix:internal-contract:v1#/definitions/expectedEffects"
+    }
+  },
+  "$id": "https://woocommerce.mercadopago.test/smart-pix-mutations-v1",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "operation": {
+            "enum": [
+              "cancel",
+              "refund"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "request": {
+            "type": "object",
+            "required": [
+              "operation_context"
+            ],
+            "properties": {
+              "operation_context": {}
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "request": {
+            "type": "object",
+            "not": {
+              "type": "object",
+              "required": [
+                "operation_context"
+              ],
+              "properties": {
+                "operation_context": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

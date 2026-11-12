@@ -1,8 +1,20 @@
 import type { SuperTokenInstances } from '@super-token/types/instances';
 import type { ClassicCheckoutDeps } from '@super-token/adapters/checkout/ClassicCheckout';
 import type { BlocksCheckoutDeps, BlocksResponse } from '@super-token/adapters/checkout/BlocksCheckout';
-import type { PaymentMethod } from '@super-token/types/external-globals';
+import type {
+  PaymentMethod,
+  SmartTransferPaymentMethod,
+} from '@super-token/types/external-globals';
 import type { CheckoutValidationVerdict } from '@super-token/adapters/validation/checkoutValidationResolver';
+
+export const FAST_PAYMENTS_BRIDGE_READY_EVENT = 'mp_fast_payments_bridge_ready';
+
+function notifyFastPaymentsReady(): void {
+  const EventConstructor = window.CustomEvent;
+  if (typeof EventConstructor === 'function') {
+    window.document.dispatchEvent(new EventConstructor(FAST_PAYMENTS_BRIDGE_READY_EVENT));
+  }
+}
 
 /**
  * Transitional compatibility bridge (TECH-4).
@@ -21,6 +33,10 @@ export function publish(instances: SuperTokenInstances): void {
   window.mpSuperTokenPaymentMethods = instances.paymentMethods;
   window.mpSuperTokenMetrics = instances.metrics;
   window.mpSuperTokenErrorHandler = instances.errorHandler;
+  // The seams are published before async composition. Notify again once their session exists.
+  if (typeof window.mpFastPaymentsGetSmartTransferPaymentMethods === 'function') {
+    notifyFastPaymentsReady();
+  }
 }
 
 /**
@@ -149,6 +165,26 @@ export interface SuperTokenAccountPaymentMethods {
  */
 export function publishAccountPaymentMethods(seam: SuperTokenAccountPaymentMethods): void {
   window.mpSuperTokenGetAccountPaymentMethods = seam.getAccountPaymentMethods;
+}
+
+/**
+ * Shared eligibility boundary consumed by Smart Pix. Both functions are backed by
+ * the same coordinated SDK request used by Super Token; the Smart Pix consumer
+ * receives only `smart_transfer` entries, never saved-card methods.
+ */
+export interface FastPaymentsEligibility {
+  isValidBuyerEmail(email: unknown): boolean;
+  getSmartTransferPaymentMethods(
+    amount: string | null,
+    buyerEmail: string,
+  ): Promise<SmartTransferPaymentMethod[] | null>;
+}
+
+export function publishFastPaymentsEligibility(seam: FastPaymentsEligibility): void {
+  window.mpFastPaymentsIsValidBuyerEmail = seam.isValidBuyerEmail;
+  window.mpFastPaymentsGetSmartTransferPaymentMethods = seam.getSmartTransferPaymentMethods;
+
+  notifyFastPaymentsReady();
 }
 
 /**

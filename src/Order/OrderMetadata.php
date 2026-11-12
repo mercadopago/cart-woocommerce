@@ -2,10 +2,12 @@
 
 namespace MercadoPago\Woocommerce\Order;
 
+use MercadoPago\Woocommerce\Gateways\PixGateway;
 use MercadoPago\Woocommerce\Helpers\Date;
 use MercadoPago\Woocommerce\Hooks\OrderMeta;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Helpers\PaymentMetadata;
+use MercadoPago\Woocommerce\SmartPix\Adapters\Persistence\SmartPixCreationStore;
 use WC_Order;
 
 if (!defined('ABSPATH')) {
@@ -55,6 +57,79 @@ class OrderMetadata
     private const CHECKOUT_TYPE = 'checkout_type';
 
     private const CHECKOUT = 'checkout';
+
+    private const PAYMENT_CONTRACT = '_mp_payment_contract';
+
+    private const PP_ORDER_ID = '_mp_pp_order_id';
+
+    private const PP_PAYMENT_ID = '_mp_pp_payment_id';
+
+    private const MP_ORDER_ID = '_mp_order_id';
+
+    public const SMART_PIX_ORDER_ID_CUSTOM_FIELD = 'Mercado Pago - Order ID';
+
+    private const TRANSACTION_INTENT_ID = '_mp_transaction_intent_id';
+
+    private const SMART_PIX_ATTEMPT_REFERENCE = '_mp_smart_pix_attempt_reference';
+
+    private const SMART_PIX_SUPERSEDED_KEY = '_mp_smart_pix_superseded_key';
+
+    private const SMART_PIX_SUPERSEDED_REFERENCE = '_mp_smart_pix_superseded_reference';
+
+    private const SMART_PIX_SUPERSEDED_SETTLED = '_mp_smart_pix_superseded_settled';
+
+    private const IDEMPOTENCY_KEY = '_mp_idempotency_key';
+
+    private const PP_ORDER_STATUS = '_mp_pp_order_status';
+
+    private const PP_ORDER_STATUS_DETAIL = '_mp_pp_order_status_detail';
+
+    private const PP_PAYMENT_STATUS = '_mp_pp_payment_status';
+
+    private const PP_PAYMENT_STATUS_DETAIL = '_mp_pp_payment_status_detail';
+
+    private const PP_ORDER_TOTAL_FAILED = '_mp_pp_order_total_failed';
+
+    private const PP_ORDER_EVENT_FINGERPRINT = '_mp_pp_order_event_fingerprint';
+
+    private const PP_ORDER_RECONCILE_STATE = '_mp_pp_order_reconcile_state';
+
+    private const PP_ORDER_PENDING_SINCE = '_mp_pp_order_pending_since';
+
+    private const PP_ORDER_TERMINAL_REPORTED = '_mp_pp_order_terminal_reported';
+
+    private const PP_ORDER_THANKYOU_RESULT_REPORTED = '_mp_pp_order_thankyou_result_reported';
+
+    public const PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1 = 'orders_smart_pix_v1';
+
+    private const SMART_PIX_ATTEMPT_KEYS = [
+        self::PAYMENT_CONTRACT,
+        self::IDEMPOTENCY_KEY,
+        self::SMART_PIX_ATTEMPT_REFERENCE,
+        self::PP_ORDER_ID,
+        self::PP_PAYMENT_ID,
+        self::MP_ORDER_ID,
+        self::SMART_PIX_ORDER_ID_CUSTOM_FIELD,
+        self::TRANSACTION_INTENT_ID,
+        self::PP_ORDER_STATUS,
+        self::PP_ORDER_STATUS_DETAIL,
+        self::PP_PAYMENT_STATUS,
+        self::PP_PAYMENT_STATUS_DETAIL,
+        self::PP_ORDER_TOTAL_FAILED,
+        self::PP_ORDER_EVENT_FINGERPRINT,
+        self::PP_ORDER_RECONCILE_STATE,
+        self::PP_ORDER_PENDING_SINCE,
+        self::PP_ORDER_TERMINAL_REPORTED,
+        self::PP_ORDER_THANKYOU_RESULT_REPORTED,
+    ];
+
+    public const PP_ORDER_RECONCILE_STATE_SCHEDULED = 'scheduled';
+
+    public const PP_ORDER_RECONCILE_STATE_WAITING = 'waiting';
+
+    public const PP_ORDER_RECONCILE_STATE_TERMINAL = 'terminal';
+
+    public const PP_ORDER_RECONCILE_STATE_MANUAL_REVIEW = 'manual_review';
 
     public const CURRENCY_RATIO = '_currency_ratio';
 
@@ -107,6 +182,472 @@ class OrderMetadata
         $checkoutType = $this->orderMeta->get($order, self::CHECKOUT_TYPE);
 
         return !empty($checkoutType) ? (string) $checkoutType : null;
+    }
+
+    /**
+     * Concurrent Smart Pix attempts can leave more than one row behind for
+     * this key (see {@see \MercadoPago\Woocommerce\SmartPix\Adapters\Persistence\SmartPixAttemptRepository}),
+     * so this must resolve to the earliest-persisted row rather than
+     * whichever one the data store's read query happens to return first.
+     *
+     * @param WC_Order $order
+     *
+     * @return mixed
+     */
+    public function getPaymentContract(WC_Order $order)
+    {
+        return $this->orderMeta->getEarliest($order, self::PAYMENT_CONTRACT);
+    }
+
+    /**
+     * @param WC_Order $order
+     * @param string $paymentContract
+     *
+     * @return void
+     */
+    public function setPaymentContract(WC_Order $order, string $paymentContract): void
+    {
+        $this->orderMeta->update($order, self::PAYMENT_CONTRACT, $paymentContract);
+    }
+
+    /**
+     * @param WC_Order $order
+     *
+     * @return mixed
+     */
+    public function getPpOrderId(WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::PP_ORDER_ID);
+    }
+
+    /**
+     * @param WC_Order $order
+     * @param string $ppOrderId
+     *
+     * @return void
+     */
+    public function setPpOrderId(WC_Order $order, string $ppOrderId): void
+    {
+        $this->orderMeta->update($order, self::PP_ORDER_ID, $ppOrderId);
+    }
+
+    /** @return mixed */
+    public function getPpPaymentId(WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::PP_PAYMENT_ID);
+    }
+
+    /** @return mixed The provider Order id from payments[0].references.order_id. */
+    public function getMpOrderId(WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::MP_ORDER_ID);
+    }
+
+    /** Stages a display-only copy for the current WooCommerce save, without starting another save. */
+    public function prepareSmartPixOrderIdCustomField(WC_Order $order): void
+    {
+        if (
+            $order->get_payment_method('edit') !== PixGateway::ID
+            || $this->getPaymentContract($order) !== self::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1
+        ) {
+            return;
+        }
+
+        $reference = $this->getMpOrderId($order);
+        if (!is_string($reference) || trim($reference) === '') {
+            return;
+        }
+
+        if ($order->get_meta(self::SMART_PIX_ORDER_ID_CUSTOM_FIELD, true, 'edit') !== $reference) {
+            $order->update_meta_data(self::SMART_PIX_ORDER_ID_CUSTOM_FIELD, $reference);
+        }
+    }
+
+    /** @return mixed */
+    public function getTransactionIntentId(WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::TRANSACTION_INTENT_ID);
+    }
+
+    /**
+     * Links the pending Orders creation and records when this attempt started waiting, so the
+     * pending-status duration never counts an older order's life (Order Pay) as payment time.
+     * @param array<string, mixed> $references
+     */
+    public function linkSmartPixOrder(WC_Order $order, string $ppOrderId, int $pendingSince, array $references = []): void
+    {
+        $this->orderMeta->updateMany(
+            $order,
+            [
+                self::PP_ORDER_ID            => $ppOrderId,
+                self::PP_ORDER_PENDING_SINCE => (string) $pendingSince,
+            ] + ($references === [] ? [] : $this->smartPixReferenceFields($ppOrderId, $references))
+        );
+    }
+
+    /**
+     * Records references from an authenticated, correlated provider read for an already-linked
+     * attempt. Does not change payment state, reset the waiting clock or overwrite another id.
+     * @param array<string, mixed> $references
+     */
+    public function persistSmartPixReferences(WC_Order $order, array $references): void
+    {
+        $linked = $this->getPpOrderId($order);
+        if ($this->getPaymentContract($order) !== self::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1 || !is_string($linked) || $linked === '') {
+            throw new \InvalidArgumentException('Invalid Smart Pix reference context.');
+        }
+        $fields = $this->smartPixReferenceFields($linked, $references);
+        foreach ($fields as $key => $value) {
+            $stored = $this->orderMeta->get($order, $key);
+            if ($stored !== '' && $stored !== null && $stored !== $value) {
+                throw new \InvalidArgumentException('Conflicting Smart Pix reference.');
+            }
+        }
+        $this->orderMeta->updateMany($order, $fields);
+    }
+
+    /**
+     * @param array<string, mixed> $references
+     * @return array<string, string>
+     */
+    private function smartPixReferenceFields(string $ppOrderId, array $references): array
+    {
+        $keys = [
+            'order_reference' => self::PP_ORDER_ID,
+            'payment_reference' => self::PP_PAYMENT_ID,
+            'provider_order_reference' => self::MP_ORDER_ID,
+            'transaction_intent_reference' => self::TRANSACTION_INTENT_ID,
+        ];
+        if (($references['order_reference'] ?? null) !== $ppOrderId || !isset($references['payment_reference'])) {
+            throw new \InvalidArgumentException('Invalid Smart Pix references.');
+        }
+        $fields = [];
+        foreach ($references as $key => $value) {
+            if (!isset($keys[$key]) || !is_string($value) || preg_match('/^[A-Za-z0-9][A-Za-z0-9_-]{2,127}$/D', $value) !== 1) {
+                throw new \InvalidArgumentException('Invalid Smart Pix references.');
+            }
+            $fields[$keys[$key]] = $value;
+        }
+        return $fields;
+    }
+
+    /**
+     * @param WC_Order $order
+     *
+     * @return mixed Unix timestamp string written by {@see linkSmartPixOrder()}, or '' when absent.
+     */
+    public function getPpOrderPendingSince(WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::PP_ORDER_PENDING_SINCE);
+    }
+
+    /**
+     * @param WC_Order $order
+     *
+     * @return mixed The public terminal state already reported for this attempt, or '' when none was.
+     */
+    public function getPpOrderTerminalReported(WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::PP_ORDER_TERMINAL_REPORTED);
+    }
+
+    public function setPpOrderTerminalReported(WC_Order $order, string $publicState): void
+    {
+        $this->orderMeta->update($order, self::PP_ORDER_TERMINAL_REPORTED, $publicState);
+    }
+
+    /**
+     * @param WC_Order $order
+     *
+     * @return mixed The public result whose thank-you duration was already reported for this attempt, or '' when none was.
+     */
+    public function getPpOrderThankyouResultReported(WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::PP_ORDER_THANKYOU_RESULT_REPORTED);
+    }
+
+    public function setPpOrderThankyouResultReported(WC_Order $order, string $publicState): void
+    {
+        $this->orderMeta->update($order, self::PP_ORDER_THANKYOU_RESULT_REPORTED, $publicState);
+    }
+
+    /**
+     * Concurrent Smart Pix attempts can leave more than one row behind for
+     * this key (see {@see \MercadoPago\Woocommerce\SmartPix\Adapters\Persistence\SmartPixAttemptRepository}),
+     * so this must resolve to the earliest-persisted row rather than
+     * whichever one the data store's read query happens to return first.
+     *
+     * @param WC_Order $order
+     *
+     * @return mixed
+     */
+    public function getIdempotencyKey(WC_Order $order)
+    {
+        return $this->orderMeta->getEarliest($order, self::IDEMPOTENCY_KEY);
+    }
+
+    /**
+     * @param WC_Order $order
+     * @param string $idempotencyKey
+     *
+     * @return void
+     */
+    public function setIdempotencyKey(WC_Order $order, string $idempotencyKey): void
+    {
+        $this->orderMeta->update($order, self::IDEMPOTENCY_KEY, $idempotencyKey);
+    }
+
+    /** Trusted persisted creation correlation, with compatibility for earlier native attempts. */
+    public function getSmartPixAttemptReference(WC_Order $order): string
+    {
+        $reference = $this->orderMeta->get($order, self::SMART_PIX_ATTEMPT_REFERENCE);
+        return $reference === '' ? $this->smartPixExternalReference($order) : (is_string($reference) ? $reference : '');
+    }
+
+    public function persistSmartPixAttempt(WC_Order $order, string $idempotencyKey): void
+    {
+        $this->orderMeta->updateMany(
+            $order,
+            [
+                self::PAYMENT_CONTRACT => self::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1,
+                self::IDEMPOTENCY_KEY   => $idempotencyKey,
+                self::SMART_PIX_ATTEMPT_REFERENCE => $this->smartPixExternalReference($order),
+            ]
+        );
+    }
+
+    /**
+     * The Orders external_reference sent on creation: the store identificator prefix plus the
+     * native order ID, so refunds and cancellations correlate with the created Order.
+     */
+    private function smartPixExternalReference(WC_Order $order): string
+    {
+        return get_option('_mp_store_identificator', 'WC-') . $order->get_id();
+    }
+
+    /**
+     * A conventional Pix payment on the same order supersedes any earlier Smart Pix attempt, so its
+     * contract and Orders linkage must no longer decide the thank-you page or the status endpoint.
+     */
+    public function endSmartPixAttempt(WC_Order $order): void
+    {
+        $unresolved = $this->unresolvedSmartPixAttempt($order);
+        if ($unresolved !== null) {
+            // The admitted create got no answer: its Order may still settle and must stay traceable.
+            $this->orderMeta->updateMany($order, [
+                self::SMART_PIX_SUPERSEDED_KEY => $unresolved['attempt_key'],
+                self::SMART_PIX_SUPERSEDED_REFERENCE => $unresolved['attempt_reference'],
+            ]);
+        }
+
+        $storedKeys = array_values(array_filter(
+            self::SMART_PIX_ATTEMPT_KEYS,
+            static fn(string $metaKey): bool => $order->meta_exists($metaKey)
+        ));
+
+        if ($storedKeys !== []) {
+            $this->orderMeta->deleteMany($order, $storedKeys);
+        }
+    }
+
+    /**
+     * A Smart Pix create that was admitted but never linked nor answered with a known failure, on
+     * an order now paid by another method: preserved by endSmartPixAttempt(), or still the active
+     * attempt when the buyer switched to another gateway. A late Order for it is reviewed, never
+     * applied.
+     *
+     * @return array{attempt_key: string, attempt_reference: string}|null
+     */
+    public function getSupersededSmartPixAttempt(WC_Order $order): ?array
+    {
+        $key = $this->orderMeta->get($order, self::SMART_PIX_SUPERSEDED_KEY);
+        $reference = $this->orderMeta->get($order, self::SMART_PIX_SUPERSEDED_REFERENCE);
+        if (is_string($key) && $key !== '' && is_string($reference) && $reference !== '') {
+            return ['attempt_key' => $key, 'attempt_reference' => $reference];
+        }
+
+        return $order->get_payment_method('edit') !== PixGateway::ID
+            ? $this->unresolvedSmartPixAttempt($order)
+            : null;
+    }
+
+    /** True when the late Order of a superseded attempt was already recorded for the merchant. */
+    public function isSupersededSmartPixSettled(WC_Order $order, string $orderReference): bool
+    {
+        return $this->orderMeta->get($order, self::SMART_PIX_SUPERSEDED_SETTLED) === $orderReference;
+    }
+
+    /**
+     * Records the reviewed late Order and its manual review in one save. The caller adds the
+     * merchant note first, so an interruption before this save replays the note instead of losing it.
+     */
+    public function settleSupersededSmartPixReview(WC_Order $order, string $orderReference): void
+    {
+        $this->orderMeta->updateMany($order, [
+            self::SMART_PIX_SUPERSEDED_SETTLED => $orderReference,
+            self::PP_ORDER_RECONCILE_STATE => self::PP_ORDER_RECONCILE_STATE_MANUAL_REVIEW,
+        ]);
+    }
+
+    /** @return array{attempt_key: string, attempt_reference: string}|null */
+    private function unresolvedSmartPixAttempt(WC_Order $order): ?array
+    {
+        $key = $this->getIdempotencyKey($order);
+        $linked = $this->getPpOrderId($order);
+        if (
+            $this->getPaymentContract($order) !== self::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1
+            || !is_string($key) || $key === ''
+            || (is_string($linked) && $linked !== '')
+            || !SmartPixCreationStore::hasStarted($order)
+            || SmartPixCreationStore::failureCategory($order) !== null
+        ) {
+            return null;
+        }
+        $reference = $this->getSmartPixAttemptReference($order);
+
+        return $reference === '' ? null : ['attempt_key' => $key, 'attempt_reference' => $reference];
+    }
+
+    /**
+     * @param WC_Order $order
+     *
+     * @return mixed
+     */
+    public function getPpOrderStatus(WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::PP_ORDER_STATUS);
+    }
+
+    /**
+     * @param WC_Order $order
+     * @param string $ppOrderStatus
+     *
+     * @return void
+     */
+    public function setPpOrderStatus(WC_Order $order, string $ppOrderStatus): void
+    {
+        $this->orderMeta->update($order, self::PP_ORDER_STATUS, $ppOrderStatus);
+    }
+
+    /**
+     * @param WC_Order $order
+     *
+     * @return mixed
+     */
+    public function getPpOrderStatusDetail(WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::PP_ORDER_STATUS_DETAIL);
+    }
+
+    /**
+     * @param WC_Order $order
+     * @param string $ppOrderStatusDetail
+     *
+     * @return void
+     */
+    public function setPpOrderStatusDetail(WC_Order $order, string $ppOrderStatusDetail): void
+    {
+        $this->orderMeta->update($order, self::PP_ORDER_STATUS_DETAIL, $ppOrderStatusDetail);
+    }
+
+    /**
+     * @param WC_Order $order
+     *
+     * @return mixed
+     */
+    public function getPpPaymentStatus(WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::PP_PAYMENT_STATUS);
+    }
+
+    /**
+     * @param WC_Order $order
+     *
+     * @return mixed
+     */
+    public function getPpPaymentStatusDetail(WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::PP_PAYMENT_STATUS_DETAIL);
+    }
+
+    /**
+     * An empty value means the provider did not report a failed total.
+     *
+     * @param WC_Order $order
+     *
+     * @return mixed
+     */
+    public function getPpOrderTotalFailed(WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::PP_ORDER_TOTAL_FAILED);
+    }
+
+    /**
+     * Records one authoritative Orders observation in hidden meta with a single CRUD save.
+     * These values never drive native payment effects.
+     *
+     * @param WC_Order $order
+     * @param array{order_status: string, order_status_detail: string, payment_status: string,
+     *     payment_status_detail: string, total_failed: string|null, payment_id?: string,
+     *     payment_reference?: string|null} $observed
+     *
+     * @return void
+     */
+    public function persistSmartPixObservation(WC_Order $order, array $observed): void
+    {
+        $this->orderMeta->updateMany(
+            $order,
+            [
+                self::PP_ORDER_STATUS          => $observed['order_status'],
+                self::PP_ORDER_STATUS_DETAIL   => $observed['order_status_detail'],
+                self::PP_PAYMENT_STATUS        => $observed['payment_status'],
+                self::PP_PAYMENT_STATUS_DETAIL => $observed['payment_status_detail'],
+                // Clear a stale failed total when the latest observation omits it.
+                self::PP_ORDER_TOTAL_FAILED    => $observed['total_failed'] ?? '',
+            ]
+        );
+    }
+
+    /**
+     * @param WC_Order $order
+     *
+     * @return mixed
+     */
+    public function getPpOrderEventFingerprint(WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::PP_ORDER_EVENT_FINGERPRINT);
+    }
+
+    /**
+     * @param WC_Order $order
+     * @param string $ppOrderEventFingerprint
+     *
+     * @return void
+     */
+    public function setPpOrderEventFingerprint(WC_Order $order, string $ppOrderEventFingerprint): void
+    {
+        $this->orderMeta->update($order, self::PP_ORDER_EVENT_FINGERPRINT, $ppOrderEventFingerprint);
+    }
+
+    /**
+     * @param WC_Order $order
+     *
+     * @return mixed
+     */
+    public function getPpOrderReconcileState(WC_Order $order)
+    {
+        return $this->orderMeta->get($order, self::PP_ORDER_RECONCILE_STATE);
+    }
+
+    /**
+     * @param WC_Order $order
+     * @param string $ppOrderReconcileState
+     *
+     * @return void
+     */
+    public function setPpOrderReconcileState(WC_Order $order, string $ppOrderReconcileState): void
+    {
+        $this->orderMeta->update($order, self::PP_ORDER_RECONCILE_STATE, $ppOrderReconcileState);
     }
 
     /**
@@ -506,6 +1047,15 @@ class OrderMetadata
     public function getPixOnMeta(WC_Order $order)
     {
         return $this->orderMeta->get($order, self::PIX_ON);
+    }
+
+    /**
+     * A conventional Pix QR was issued for this order through Payments. Its expiration is stored
+     * only as the relative gateway setting, so this conservatively stays true after the QR expires.
+     */
+    public function hasConventionalPixPayment(WC_Order $order): bool
+    {
+        return (string) $this->getPixOnMeta($order) === '1' && $this->getPaymentIds($order) !== [];
     }
 
     /**

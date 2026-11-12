@@ -1,0 +1,36 @@
+{
+  "contract_version": "smart-pix-internal/v1",
+  "scenario_id": "orders-query-invalid-response",
+  "port": "orders",
+  "operation": "query",
+  "request": {
+    "surface": "server",
+    "country": "MLB",
+    "payment_contract": "orders_smart_pix_v1",
+    "attempt_reference": "attempt_fixture_query_invalid_001",
+    "order_reference": "order_fixture_query_invalid_001",
+    "amount": null,
+    "refund_amount": null
+  },
+  "response": {
+    "outcome": "failure",
+    "state": "error",
+    "order_reference": "order_fixture_query_invalid_001",
+    "eligibility": null,
+    "authorization": null,
+    "payments": [],
+    "error": {
+      "category": "invalid_response",
+      "code": "SMART_PIX_ORDERS_INVALID_RESPONSE",
+      "retryable": false
+    }
+  },
+  "expected_effects": {
+    "persist_attempt": false,
+    "link_order_reference": false,
+    "orders_create_calls": 0,
+    "payments_create_calls": 0,
+    "state_transition": "apply_once",
+    "reconciliation": "scheduled"
+  }
+}

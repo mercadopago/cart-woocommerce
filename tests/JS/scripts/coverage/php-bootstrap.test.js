@@ -5,7 +5,6 @@ const { spawnSync } = require('child_process');
 const { phpProfile } = require('../../../../scripts/coverage/php-profile');
 const recipe = require('../../../../scripts/coverage/php-bootstrap.json');
 const ROOT = path.resolve(__dirname, '../../../..');
-beforeAll(() => fs.mkdirSync(path.join(ROOT, 'coverage'), { recursive: true }));
 
 async function nativeCompilationProof(root, output, runtime) {
   const bootstrapHelper = path.join(ROOT, 'scripts/coverage/php-bootstrap.php');
@@ -362,7 +361,7 @@ echo json_encode(['php' => PHP_VERSION, 'xdebug' => phpversion('xdebug'), 'resul
 }, 120000);
 
 phpTest('native Woo declarations preserve guards and subprocess coverage, tolerate header comments, and reject a real functional mutation', async () => {
-  const root = fs.mkdtempSync(path.join(ROOT, 'coverage/php-bootstrap-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'php-bootstrap-'));
   const output = fs.mkdtempSync(path.join(os.tmpdir(), 'php-bootstrap-output-'));
   const policy = require('../../../../coverage-policy.json');
   try {

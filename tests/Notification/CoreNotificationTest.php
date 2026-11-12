@@ -13,8 +13,22 @@ use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
+use MercadoPago\Woocommerce\Notification\AbstractNotification;
 use MercadoPago\Woocommerce\Notification\CoreNotification;
 use MercadoPago\Woocommerce\Order\OrderStatus;
+use MercadoPago\Woocommerce\Order\OrderMetadata;
+use MercadoPago\Woocommerce\SmartPix\Adapters\Notification\DenyAllSmartPixNotificationAuthenticator;
+use MercadoPago\Woocommerce\SmartPix\Adapters\Notification\SmartPixCoreNotificationHandler;
+use MercadoPago\Woocommerce\SmartPix\Adapters\Notification\SmartPixCoreNotificationIdentifiers;
+use MercadoPago\Woocommerce\SmartPix\Contracts\SmartPixEffectOwnershipStore;
+use MercadoPago\Woocommerce\SmartPix\Adapters\Notification\SmartPixNotificationBody;
+use MercadoPago\Woocommerce\SmartPix\Adapters\Notification\SmartPixNotificationLinkage;
+use MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixNotificationReceiver;
+use MercadoPago\Woocommerce\SmartPix\Contracts\SmartPixOrderClient;
+use MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderQuery;
+use MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixStateApplicator;
+use MercadoPago\Woocommerce\SmartPix\Core\SmartPixStateReducer;
+use MercadoPago\Woocommerce\SmartPix\Adapters\Telemetry\SmartPixTelemetry;
 use MercadoPago\Woocommerce\Tests\Traits\WoocommerceMock;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
@@ -153,6 +167,160 @@ class CoreNotificationTest extends TestCase
      * also recorded the per-payment refunded amount), the notification skips the WooCommerce
      * refund while scheduling a repair for a possible failed amount write.
      */
+    public function testHandleSuccessfulRequestIgnoresOrdersOwnedBySmartPixOrders(): void
+    {
+        \WP_Mock::setUp();
+        \WP_Mock::userFunction('get_option', ['args' => ['_mp_store_identificator', 'WC-'], 'return' => 'WC-']);
+
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('get_id')->andReturn(321);
+        $order->shouldNotReceive('save');
+        $order->shouldNotReceive('update_meta_data');
+        \WP_Mock::userFunction('wc_get_order', ['args' => [321], 'times' => 1, 'return' => $order]);
+        \WP_Mock::userFunction('wp_send_json', [
+            'args' => [['status' => 200, 'message' => 'Notification ignored'], 200],
+            'times' => 1,
+        ]);
+
+        $orderStatusMock = Mockery::mock(OrderStatus::class);
+        $orderStatusMock->shouldReceive('isOwnedBySmartPixOrders')->once()->with($order)->andReturn(true);
+        $orderStatusMock->shouldNotReceive('processStatus');
+
+        $fileMock = Mockery::mock(File::class);
+        $fileMock->shouldIgnoreMissing();
+        $logsMock = Mockery::mock(Logs::class);
+        $logsMock->file = $fileMock;
+
+        $notification = Mockery::mock(CoreNotification::class, [
+            Mockery::mock(MercadoPagoGatewayInterface::class),
+            $logsMock,
+            $orderStatusMock,
+            Mockery::mock(Seller::class),
+            Mockery::mock(Store::class),
+            Mockery::mock(NotificationsClient::class),
+        ])->makePartial();
+        $notification->shouldNotReceive('handleSuccessfulRequestInternal');
+
+        $notification->handleSuccessfulRequest(['external_reference' => 'WC-321', 'status' => 'approved']);
+
+        $this->assertTrue(true);
+    }
+
+    public function testHandleSuccessfulRequestKeepsLegacyProcessingForOrdersNotOwnedBySmartPix(): void
+    {
+        \WP_Mock::setUp();
+        \WP_Mock::userFunction('get_option', ['args' => ['_mp_store_identificator', 'WC-'], 'return' => 'WC-']);
+        \WP_Mock::userFunction('wp_send_json', ['times' => 0]);
+
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('get_id')->andReturn(321);
+        \WP_Mock::userFunction('wc_get_order', ['args' => [321], 'times' => 1, 'return' => $order]);
+
+        $orderStatusMock = Mockery::mock(OrderStatus::class);
+        $orderStatusMock->shouldReceive('isOwnedBySmartPixOrders')->once()->with($order)->andReturn(false);
+
+        $data = ['external_reference' => 'WC-321', 'status' => 'approved'];
+        $notification = $this->guardedNotification($orderStatusMock, $this->ignoringFileLog());
+        $notification->shouldReceive('handleSuccessfulRequestInternal')->once()->with($data, $order);
+
+        $notification->handleSuccessfulRequest($data);
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * @dataProvider unresolvedOrderProvider
+     */
+    public function testHandleSuccessfulRequestRejectsUnresolvedOrdersBeforeTheSmartPixGuard(bool $orderExists): void
+    {
+        \WP_Mock::setUp();
+        \WP_Mock::userFunction('get_option', ['args' => ['_mp_store_identificator', 'WC-'], 'return' => 'WC-']);
+
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('get_id')->andReturn(999);
+        \WP_Mock::userFunction('wc_get_order', ['args' => [321], 'times' => 1, 'return' => $orderExists ? $order : false]);
+        $expectedMessage = $orderExists ? 'Order error' : 'Order is invalid';
+        \WP_Mock::userFunction('wp_send_json', [
+            'args' => [['status' => 422, 'message' => $expectedMessage], 422],
+            'times' => 1,
+            'return' => function () {
+                // Mirrors wp_send_json() terminating the request.
+                throw new \Error('wp_send_json terminated the request');
+            },
+        ]);
+
+        $orderStatusMock = Mockery::mock(OrderStatus::class);
+        $orderStatusMock->shouldNotReceive('isOwnedBySmartPixOrders');
+        $orderStatusMock->shouldNotReceive('processStatus');
+
+        $notification = $this->guardedNotification($orderStatusMock, $this->ignoringFileLog());
+        $notification->shouldNotReceive('handleSuccessfulRequestInternal');
+
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('wp_send_json terminated the request');
+        $notification->handleSuccessfulRequest(['external_reference' => 'WC-321']);
+    }
+
+    public static function unresolvedOrderProvider(): array
+    {
+        return [
+            'missing order' => [false],
+            'order id mismatch' => [true],
+        ];
+    }
+
+    public function testSmartPixIgnoredNotificationLogsOnlyAFixedReason(): void
+    {
+        \WP_Mock::setUp();
+        \WP_Mock::userFunction('get_option', ['args' => ['_mp_store_identificator', 'WC-'], 'return' => 'WC-']);
+        \WP_Mock::userFunction('wp_send_json', ['times' => 1]);
+
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('get_id')->andReturn(321);
+        \WP_Mock::userFunction('wc_get_order', ['args' => [321], 'return' => $order]);
+
+        $orderStatusMock = Mockery::mock(OrderStatus::class);
+        $orderStatusMock->shouldReceive('isOwnedBySmartPixOrders')->andReturn(true);
+
+        $fileMock = Mockery::mock(File::class);
+        $fileMock->shouldReceive('info')->once()->with('Starting to process update...', AbstractNotification::class);
+        $fileMock->shouldReceive('info')->once()
+            ->with('Legacy notification ignored for a Smart Pix Orders contract', AbstractNotification::class);
+        $fileMock->shouldNotReceive('error');
+        $logsMock = Mockery::mock(Logs::class);
+        $logsMock->file = $fileMock;
+
+        $notification = $this->guardedNotification($orderStatusMock, $logsMock);
+        $notification->handleSuccessfulRequest([
+            'external_reference' => 'WC-321',
+            'payer' => ['email' => 'buyer@example.test'],
+        ]);
+
+        $this->assertTrue(true);
+    }
+
+    private function ignoringFileLog(): Logs
+    {
+        $fileMock = Mockery::mock(File::class);
+        $fileMock->shouldIgnoreMissing();
+        $logsMock = Mockery::mock(Logs::class);
+        $logsMock->file = $fileMock;
+
+        return $logsMock;
+    }
+
+    private function guardedNotification(OrderStatus $orderStatus, Logs $logs)
+    {
+        return Mockery::mock(CoreNotification::class, [
+            Mockery::mock(MercadoPagoGatewayInterface::class),
+            $logs,
+            $orderStatus,
+            Mockery::mock(Seller::class),
+            Mockery::mock(Store::class),
+            Mockery::mock(NotificationsClient::class),
+        ])->makePartial();
+    }
+
     public function testHandleRefundNotificationSkipsWhenRefundAlreadyApplied(): void
     {
         // The shared setup initializes WP_Mock before these expectations are created.
@@ -352,6 +520,423 @@ class CoreNotificationTest extends TestCase
     public function testValidateNotificationId(string $id, bool $expected)
     {
         $this->assertEquals($expected, $this->notification->validateNotificationId($id));
+    }
+
+    public function testLegacyNotificationIdKeepsTheCoreFetchAndProcessingPath(): void
+    {
+        \WP_Mock::userFunction('wp_is_mobile', ['return' => false]);
+        // A Smart Pix branch would answer through wp_send_json; the legacy success path never does.
+        \WP_Mock::userFunction('wp_send_json', ['times' => 0]);
+
+        $data = ['external_reference' => 'WC-321', 'status' => 'approved'];
+        $fetched = Mockery::mock(\MercadoPago\Woocommerce\Api\Core\Models\Notification::class);
+        $fetched->shouldReceive('toArray')->once()->andReturn($data);
+        $client = Mockery::mock(NotificationsClient::class);
+        $client->shouldReceive('find')->once()->with('P-123', Mockery::type(CoreRequestContext::class))->andReturn($fetched);
+        $seller = Mockery::mock(Seller::class);
+        $seller->shouldReceive('getCredentialsAccessToken')->andReturn('SYNTHETIC_ACCESS_TOKEN');
+        $store = Mockery::mock(Store::class);
+        $store->shouldReceive('getIntegratorId')->andReturn('');
+
+        $notification = Mockery::mock(CoreNotification::class, [
+            Mockery::mock(MercadoPagoGatewayInterface::class),
+            $this->ignoringFileLog(),
+            Mockery::mock(OrderStatus::class),
+            $seller,
+            $store,
+            $client,
+        ])->makePartial()->shouldAllowMockingProtectedMethods();
+        $notification->shouldReceive('getInput')->andReturn('{"notification_id":"P-123"}');
+        $notification->shouldReceive('handleSuccessfulRequest')->once()->with($data);
+
+        $notification->handleReceivedNotification(['source_news' => 'webhooks']);
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * @testWith ["{\"notification_id\":\"PPORDSYNTHETIC001\"}"]
+     *           ["\"PPORDSYNTHETIC001\""]
+     */
+    public function testSmartPixIdsAreRoutedToTheSmartPixHandlerBeforeTheLegacyValidation(string $posted): void
+    {
+        \WP_Mock::userFunction('wp_is_mobile', ['return' => false]);
+        \WP_Mock::userFunction('wp_send_json', [
+            'args' => [['status' => 500, 'message' => SmartPixNotificationReceiver::MESSAGE_FAILED], 500],
+            'times' => 1,
+        ]);
+        $smartPixClient = Mockery::mock(NotificationsClient::class);
+        $smartPixClient->shouldReceive('find')->once()
+            ->with('PPORDSYNTHETIC001', Mockery::type(CoreRequestContext::class))
+            ->andThrow(new \RuntimeException('SYNTHETIC_SECRET_VALUE'));
+        $legacyClient = Mockery::mock(NotificationsClient::class);
+        $legacyClient->shouldNotReceive('find');
+        $file = Mockery::mock(File::class);
+        $file->shouldReceive('info')->once()->with('Received data content', AbstractNotification::class, ['source_news' => 'webhooks']);
+        $file->shouldNotReceive('error');
+
+        $notification = $this->routedNotification($posted, $legacyClient, $file, $this->smartPixHandler($smartPixClient));
+        $notification->shouldNotReceive('handleSuccessfulRequest');
+
+        $notification->handleReceivedNotification(['source_news' => 'webhooks']);
+
+        $this->assertTrue(true);
+    }
+
+    public function testOversizedSmartPixBodyIsRejectedBeforeFetchingOrDecoding(): void
+    {
+        $posted = '{"notification_id":"PPORDSYNTHETIC001","padding":"'
+            . str_repeat('x', SmartPixNotificationBody::DEFAULT_MAX_BYTES) . '"}';
+        \WP_Mock::userFunction('wp_send_json', [
+            'args' => [['status' => 413, 'message' => SmartPixNotificationReceiver::MESSAGE_TOO_LARGE], 413],
+            'times' => 1,
+        ]);
+        $smartPixClient = Mockery::mock(NotificationsClient::class);
+        $smartPixClient->shouldNotReceive('find');
+        $legacyClient = Mockery::mock(NotificationsClient::class);
+        $legacyClient->shouldNotReceive('find');
+        $file = Mockery::mock(File::class);
+        $file->shouldReceive('info')->once()->with('Received data content', AbstractNotification::class, ['source_news' => 'webhooks']);
+        $file->shouldNotReceive('error');
+
+        $notification = $this->routedNotification($posted, $legacyClient, $file, $this->smartPixHandler($smartPixClient));
+        $notification->shouldNotReceive('handleSuccessfulRequest');
+
+        $notification->handleReceivedNotification(['source_news' => 'webhooks']);
+
+        $this->assertTrue(true);
+    }
+
+    public function testOversizedSmartPixBodyIsRejectedAfterABoundedReadWithoutLoadingTheWholeBody(): void
+    {
+        $limit = SmartPixNotificationBody::DEFAULT_MAX_BYTES;
+        $posted = '{"notification_id":"PPORDSYNTHETIC001","padding":"' . str_repeat('x', 4 * $limit) . '"}';
+        \WP_Mock::userFunction('wp_send_json', [
+            'args' => [['status' => 413, 'message' => SmartPixNotificationReceiver::MESSAGE_TOO_LARGE], 413],
+            'times' => 1,
+        ]);
+        $smartPixClient = Mockery::mock(NotificationsClient::class);
+        $smartPixClient->shouldNotReceive('find');
+        $legacyClient = Mockery::mock(NotificationsClient::class);
+        $legacyClient->shouldNotReceive('find');
+
+        $notification = $this->routedNotification(
+            $posted,
+            $legacyClient,
+            $this->ignoringFileLog()->file,
+            $this->smartPixHandler($smartPixClient),
+            false
+        );
+        $notification->shouldReceive('getInput')->once()->with($limit + 1)->andReturn(substr($posted, 0, $limit + 1));
+        $notification->shouldNotReceive('handleSuccessfulRequest');
+
+        $notification->handleReceivedNotification(['source_news' => 'webhooks']);
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * Only Smart Pix bodies are bounded: a large legacy body keeps the legacy fetch.
+     *
+     * @testWith ["P-123"]
+     *           ["M-456"]
+     */
+    public function testOversizedLegacyBodyKeepsTheLegacyFetch(string $id): void
+    {
+        \WP_Mock::userFunction('wp_is_mobile', ['return' => false]);
+        \WP_Mock::userFunction('wp_send_json', ['times' => 0]);
+        $data = ['external_reference' => 'WC-321', 'status' => 'approved'];
+        $fetched = Mockery::mock(\MercadoPago\Woocommerce\Api\Core\Models\Notification::class);
+        $fetched->shouldReceive('toArray')->once()->andReturn($data);
+        $smartPixClient = Mockery::mock(NotificationsClient::class);
+        $smartPixClient->shouldNotReceive('find');
+        $legacyClient = Mockery::mock(NotificationsClient::class);
+        $legacyClient->shouldReceive('find')->once()->with($id, Mockery::type(CoreRequestContext::class))->andReturn($fetched);
+        $posted = (string) json_encode([
+            'notification_id' => $id,
+            'padding' => str_repeat('x', SmartPixNotificationBody::DEFAULT_MAX_BYTES),
+        ]);
+
+        $notification = $this->routedNotification(
+            $posted,
+            $legacyClient,
+            $this->ignoringFileLog()->file,
+            $this->smartPixHandler($smartPixClient)
+        );
+        $notification->shouldReceive('handleSuccessfulRequest')->once()->with($data);
+
+        $notification->handleReceivedNotification(['source_news' => 'webhooks']);
+
+        $this->assertTrue(true);
+    }
+
+    public function testOversizedLegacyBodyIsReadWholeOnceAfterTheBoundedRead(): void
+    {
+        $limit = SmartPixNotificationBody::DEFAULT_MAX_BYTES;
+        \WP_Mock::userFunction('wp_is_mobile', ['return' => false]);
+        \WP_Mock::userFunction('wp_send_json', ['times' => 0]);
+        $data = ['external_reference' => 'WC-321', 'status' => 'approved'];
+        $fetched = Mockery::mock(\MercadoPago\Woocommerce\Api\Core\Models\Notification::class);
+        $fetched->shouldReceive('toArray')->once()->andReturn($data);
+        $smartPixClient = Mockery::mock(NotificationsClient::class);
+        $smartPixClient->shouldNotReceive('find');
+        $legacyClient = Mockery::mock(NotificationsClient::class);
+        $legacyClient->shouldReceive('find')->once()->with('P-123', Mockery::type(CoreRequestContext::class))->andReturn($fetched);
+        $posted = (string) json_encode(['notification_id' => 'P-123', 'padding' => str_repeat('x', 2 * $limit)]);
+
+        $notification = $this->routedNotification(
+            $posted,
+            $legacyClient,
+            $this->ignoringFileLog()->file,
+            $this->smartPixHandler($smartPixClient),
+            false
+        );
+        $notification->shouldReceive('getInput')->once()->with($limit + 1)->andReturn(substr($posted, 0, $limit + 1));
+        $notification->shouldReceive('getInput')->once()->withNoArgs()->andReturn($posted);
+        $notification->shouldReceive('handleSuccessfulRequest')->once()->with($data);
+
+        $notification->handleReceivedNotification(['source_news' => 'webhooks']);
+
+        $this->assertTrue(true);
+    }
+
+    public function testSmallBodyIsReadOnceWithinTheLimit(): void
+    {
+        \WP_Mock::userFunction('wp_is_mobile', ['return' => false]);
+        \WP_Mock::userFunction('wp_send_json', ['times' => 0]);
+        $data = ['external_reference' => 'WC-321', 'status' => 'approved'];
+        $fetched = Mockery::mock(\MercadoPago\Woocommerce\Api\Core\Models\Notification::class);
+        $fetched->shouldReceive('toArray')->once()->andReturn($data);
+        $legacyClient = Mockery::mock(NotificationsClient::class);
+        $legacyClient->shouldReceive('find')->once()->with('P-123', Mockery::type(CoreRequestContext::class))->andReturn($fetched);
+
+        $notification = $this->routedNotification(
+            '{"notification_id":"P-123"}',
+            $legacyClient,
+            $this->ignoringFileLog()->file,
+            null,
+            false
+        );
+        $notification->shouldReceive('getInput')->once()->with(SmartPixNotificationBody::DEFAULT_MAX_BYTES + 1)
+            ->andReturn('{"notification_id":"P-123"}');
+        $notification->shouldReceive('handleSuccessfulRequest')->once()->with($data);
+
+        $notification->handleReceivedNotification(['source_news' => 'webhooks']);
+
+        $this->assertTrue(true);
+    }
+
+    /** A Smart Pix id placed after the inspected prefix is still caught once the body is decoded. */
+    public function testOversizedBodyNamingASmartPixIdBeyondThePrefixIsRejectedWithoutFetching(): void
+    {
+        $posted = '{"padding":"' . str_repeat('x', SmartPixNotificationBody::DEFAULT_MAX_BYTES)
+            . '","notification_id":"PPORDSYNTHETIC001"}';
+        \WP_Mock::userFunction('wp_send_json', [
+            'args' => [['status' => 413, 'message' => SmartPixNotificationReceiver::MESSAGE_TOO_LARGE], 413],
+            'times' => 1,
+        ]);
+        $smartPixClient = Mockery::mock(NotificationsClient::class);
+        $smartPixClient->shouldNotReceive('find');
+        $legacyClient = Mockery::mock(NotificationsClient::class);
+        $legacyClient->shouldNotReceive('find');
+        $file = Mockery::mock(File::class);
+        $file->shouldReceive('info')->once()->with('Received data content', AbstractNotification::class, ['source_news' => 'webhooks']);
+        $file->shouldNotReceive('error');
+
+        $notification = $this->routedNotification($posted, $legacyClient, $file, $this->smartPixHandler($smartPixClient));
+        $notification->shouldNotReceive('handleSuccessfulRequest');
+
+        $notification->handleReceivedNotification(['source_news' => 'webhooks']);
+
+        $this->assertTrue(true);
+    }
+
+    /** The size is known without the handler, so a composition failure still answers 413. */
+    public function testOversizedSmartPixBodyAnswersTooLargeWhenTheHandlerCannotBeComposed(): void
+    {
+        // The plugin container is not loaded, so the default factory cannot compose the handler.
+        $GLOBALS['mercadopago'] = null;
+        $posted = '"PPORDSYNTHETIC001' . str_repeat(' ', SmartPixNotificationBody::DEFAULT_MAX_BYTES) . '"';
+        \WP_Mock::userFunction('wp_send_json', [
+            'args' => [['status' => 413, 'message' => SmartPixNotificationReceiver::MESSAGE_TOO_LARGE], 413],
+            'times' => 1,
+        ]);
+        $legacyClient = Mockery::mock(NotificationsClient::class);
+        $legacyClient->shouldNotReceive('find');
+        $file = Mockery::mock(File::class);
+        $file->shouldReceive('info')->once();
+        $file->shouldReceive('error')->once()->with('Smart Pix notification could not be handled', CoreNotification::class);
+
+        $notification = $this->routedNotification($posted, $legacyClient, $file);
+        $notification->shouldNotReceive('handleSuccessfulRequest');
+
+        $notification->handleReceivedNotification(['source_news' => 'webhooks']);
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * @testWith ["{\"notification_id\":\"PPORD-SYNTHETIC001\"}"]
+     *           ["\"PPORD-SYNTHETIC001\""]
+     *           ["{\"notification_id\":\"ppordsynthetic001\"}"]
+     *           ["{\"notification_id\":\"PPORDSYNTHETIC001\\n\"}"]
+     *           ["{\"notification_id\":\"PPORD\"}"]
+     *           ["{\"notification_id\":123}"]
+     *           ["{\"notification_id\":\"X-123\"}"]
+     *           ["\"P-123-456\""]
+     */
+    public function testIdsOutsideBothFormatsKeepTheLegacyInvalidIdAnswer(string $posted): void
+    {
+        $data = ['source_news' => 'webhooks'];
+        \WP_Mock::userFunction('wp_send_json', [
+            'args' => [['status' => 400, 'message' => 'Invalid notification id'], 400],
+            'times' => 1,
+        ]);
+        $smartPixClient = Mockery::mock(NotificationsClient::class);
+        $smartPixClient->shouldNotReceive('find');
+        $legacyClient = Mockery::mock(NotificationsClient::class);
+        $legacyClient->shouldNotReceive('find');
+        $file = Mockery::mock(File::class);
+        $file->shouldReceive('info')->once();
+        $file->shouldReceive('error')->once()->with('Invalid notification id', CoreNotification::class, $data);
+
+        $notification = $this->routedNotification($posted, $legacyClient, $file, $this->smartPixHandler($smartPixClient));
+        $notification->shouldNotReceive('handleSuccessfulRequest');
+
+        $notification->handleReceivedNotification($data);
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * @testWith ["P-123"]
+     *           ["M-456"]
+     */
+    public function testLegacyIdsKeepTheLegacyFetchWhenASmartPixHandlerIsAvailable(string $id): void
+    {
+        \WP_Mock::userFunction('wp_is_mobile', ['return' => false]);
+        \WP_Mock::userFunction('wp_send_json', ['times' => 0]);
+        $data = ['external_reference' => 'WC-321', 'status' => 'approved'];
+        $fetched = Mockery::mock(\MercadoPago\Woocommerce\Api\Core\Models\Notification::class);
+        $fetched->shouldReceive('toArray')->once()->andReturn($data);
+        $smartPixClient = Mockery::mock(NotificationsClient::class);
+        $smartPixClient->shouldNotReceive('find');
+        $legacyClient = Mockery::mock(NotificationsClient::class);
+        $legacyClient->shouldReceive('find')->once()->with($id, Mockery::type(CoreRequestContext::class))->andReturn($fetched);
+
+        $notification = $this->routedNotification(
+            (string) json_encode(['notification_id' => $id]),
+            $legacyClient,
+            $this->ignoringFileLog()->file,
+            $this->smartPixHandler($smartPixClient)
+        );
+        $notification->shouldReceive('handleSuccessfulRequest')->once()->with($data);
+
+        $notification->handleReceivedNotification(['source_news' => 'webhooks']);
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * @testWith ["P-123"]
+     *           ["M-456"]
+     */
+    public function testLegacyFetchFailureKeepsTheLegacyLogAndExceptionMessage(string $id): void
+    {
+        \WP_Mock::userFunction('wp_is_mobile', ['return' => false]);
+        \WP_Mock::userFunction('wp_send_json', [
+            'args' => [['status' => 500, 'message' => 'Synthetic legacy failure'], 500],
+            'times' => 1,
+        ]);
+        $data = ['source_news' => 'webhooks'];
+        $legacyClient = Mockery::mock(NotificationsClient::class);
+        $legacyClient->shouldReceive('find')->once()->andThrow(new \Exception('Synthetic legacy failure'));
+        $file = Mockery::mock(File::class);
+        $file->shouldReceive('info')->once();
+        $file->shouldReceive('error')->once()->with('Synthetic legacy failure', CoreNotification::class, $data);
+
+        $notification = $this->routedNotification((string) json_encode(['notification_id' => $id]), $legacyClient, $file);
+        $notification->shouldNotReceive('handleSuccessfulRequest');
+
+        $notification->handleReceivedNotification($data);
+
+        $this->assertTrue(true);
+    }
+
+    public function testSmartPixHandlerCompositionFailureAnswersTheFixedServerErrorWithAFixedLog(): void
+    {
+        // The plugin container is not loaded, so the default factory cannot compose the handler.
+        $GLOBALS['mercadopago'] = null;
+        \WP_Mock::userFunction('wp_is_mobile', ['return' => false]);
+        \WP_Mock::userFunction('wp_send_json', [
+            'args' => [['status' => 500, 'message' => SmartPixNotificationReceiver::MESSAGE_FAILED], 500],
+            'times' => 1,
+        ]);
+        $legacyClient = Mockery::mock(NotificationsClient::class);
+        $legacyClient->shouldNotReceive('find');
+        $file = Mockery::mock(File::class);
+        $file->shouldReceive('info')->once();
+        $file->shouldReceive('error')->once()->with('Smart Pix notification could not be handled', CoreNotification::class);
+
+        $notification = $this->routedNotification('{"notification_id":"PPORDSYNTHETIC001"}', $legacyClient, $file);
+        $notification->shouldNotReceive('handleSuccessfulRequest');
+
+        $notification->handleReceivedNotification(['source_news' => 'webhooks']);
+
+        $this->assertTrue(true);
+    }
+
+    private function routedNotification(
+        string $posted,
+        NotificationsClient $legacyClient,
+        File $file,
+        ?SmartPixCoreNotificationHandler $handler = null,
+        bool $stubInput = true
+    ) {
+        $logs = Mockery::mock(Logs::class);
+        $logs->file = $file;
+        $seller = Mockery::mock(Seller::class);
+        $seller->shouldReceive('getCredentialsAccessToken')->andReturn('SYNTHETIC_ACCESS_TOKEN');
+        $store = Mockery::mock(Store::class);
+        $store->shouldReceive('getIntegratorId')->andReturn('');
+
+        $notification = Mockery::mock(CoreNotification::class, [
+            Mockery::mock(MercadoPagoGatewayInterface::class),
+            $logs,
+            Mockery::mock(OrderStatus::class),
+            $seller,
+            $store,
+            $legacyClient,
+            $handler,
+        ])->makePartial()->shouldAllowMockingProtectedMethods();
+        if ($stubInput) {
+            $notification->shouldReceive('getInput')->andReturn($posted);
+        }
+
+        return $notification;
+    }
+
+    /** A real handler whose only reachable collaborator is the given notifications client. */
+    private function smartPixHandler(NotificationsClient $client): SmartPixCoreNotificationHandler
+    {
+        $metadata = Mockery::mock(OrderMetadata::class);
+        $seller = Mockery::mock(Seller::class);
+        $orderClient = Mockery::mock(SmartPixOrderClient::class);
+        $orderClient->shouldNotReceive('create', 'query', 'cancel', 'refund');
+        $ownership = Mockery::mock(SmartPixEffectOwnershipStore::class);
+        $ownership->shouldNotReceive('acquire');
+        $telemetry = new SmartPixTelemetry();
+        $receiver = new SmartPixNotificationReceiver(
+            new SmartPixNotificationBody(),
+            new DenyAllSmartPixNotificationAuthenticator(),
+            new SmartPixCoreNotificationIdentifiers(),
+            new SmartPixNotificationLinkage($metadata, $seller),
+            new SmartPixOrderQuery($orderClient, $metadata, $seller, $telemetry, 'notification'),
+            new SmartPixStateApplicator($metadata, new SmartPixStateReducer(), $seller, $ownership, $telemetry),
+            $telemetry
+        );
+
+        return new SmartPixCoreNotificationHandler($client, $receiver);
     }
 
     public function testGetRequestContext()

@@ -7,7 +7,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Last-Translator: Mercado Pago Developers <woocommerce.dev@mercadopago.com>\n"
-"POT-Creation-Date: 2026-10-30 20:38+0000\n"
+"POT-Creation-Date: 2026-11-05 21:17+0000\n"
 "Project-Id-Version: undefined\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-KeywordsList: __;_e;_ex:1,2c;_n:1,2;_n_noop:1,2;_nx:1,2,4c;_nx_noop:1,2,3c;_x:1,2c;esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c\n"
@@ -16,146 +16,146 @@ msgstr ""
 "X-Poedit-SourceCharset: UTF-8\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../src/WoocommerceMercadoPago.php:552, ../../src/Translations/AdminTranslations.php:219
+#: ../../src/WoocommerceMercadoPago.php:588, ../../src/Translations/AdminTranslations.php:219
 msgid "Activate WooCommerce"
 msgstr ""
 
-#: ../../src/WoocommerceMercadoPago.php:553, ../../src/Translations/AdminTranslations.php:220
+#: ../../src/WoocommerceMercadoPago.php:589, ../../src/Translations/AdminTranslations.php:220
 msgid "Install WooCommerce"
 msgstr ""
 
-#: ../../src/WoocommerceMercadoPago.php:554, ../../src/Translations/AdminTranslations.php:221
+#: ../../src/WoocommerceMercadoPago.php:590, ../../src/Translations/AdminTranslations.php:221
 msgid "See WooCommerce"
 msgstr ""
 
-#: ../../src/WoocommerceMercadoPago.php:556, ../../src/Translations/AdminTranslations.php:211
+#: ../../src/WoocommerceMercadoPago.php:592, ../../src/Translations/AdminTranslations.php:211
 msgid "The Mercado Pago module needs an active version of %s in order to work!"
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:450
+#: ../../src/Gateways/CustomGateway.php:451
 msgid "Could not load the subscription to change the payment method."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:465
+#: ../../src/Gateways/CustomGateway.php:466
 msgid "Subscription is not linked to Mercado Pago yet."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:473
+#: ../../src/Gateways/CustomGateway.php:474
 msgid "Please enter the new card data to continue."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:484
+#: ../../src/Gateways/CustomGateway.php:485
 msgid "Recurring Payments credential is missing. Contact the store administrator."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:510
+#: ../../src/Gateways/CustomGateway.php:511
 msgid "We could not process the card change. Please try again in a few minutes."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:523
+#: ../../src/Gateways/CustomGateway.php:524
 msgid "We could not add the new card. Please try a different card."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:533, ../../src/Gateways/CustomGateway.php:586
+#: ../../src/Gateways/CustomGateway.php:534, ../../src/Gateways/CustomGateway.php:587
 msgid "Payment method updated successfully."
 msgstr ""
 
 #. translators: %s = subscription id
-#: ../../src/Gateways/CustomGateway.php:666
+#: ../../src/Gateways/CustomGateway.php:667
 msgid "Mercado Pago: critical inconsistency removing the old card on subscription %s. Please check WC > Status > Logs (channel: mercadopago-subscriptions)."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1224
+#: ../../src/Gateways/CustomGateway.php:1225
 msgid "Subscription"
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1358
+#: ../../src/Gateways/CustomGateway.php:1359
 msgid "Please fill in at least one Pre-approval Access Token to activate Recurring Payments."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1376
+#: ../../src/Gateways/CustomGateway.php:1377
 msgid "Sandbox"
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1377
+#: ../../src/Gateways/CustomGateway.php:1378
 msgid "Production"
 msgstr ""
 
 #. translators: %s: environment name (Production or Sandbox)
-#: ../../src/Gateways/CustomGateway.php:1383
+#: ../../src/Gateways/CustomGateway.php:1384
 msgid "Please fill in the %s Pre-approval Access Token to activate Recurring Payments in this environment."
 msgstr ""
 
 #. translators: %s: environment name (Production or Sandbox)
-#: ../../src/Gateways/CustomGateway.php:1391
+#: ../../src/Gateways/CustomGateway.php:1392
 msgid "Please fill in the %s Pre-approval Public Key to activate Recurring Payments in this environment."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1412
+#: ../../src/Gateways/CustomGateway.php:1413
 msgid "Recurring credential"
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1419
+#: ../../src/Gateways/CustomGateway.php:1420
 msgid "Test credential"
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1480
+#: ../../src/Gateways/CustomGateway.php:1481
 msgid "Error validating recurring payments credential."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1475
+#: ../../src/Gateways/CustomGateway.php:1476
 msgid "Pre-approval credentials validated successfully"
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1476
+#: ../../src/Gateways/CustomGateway.php:1477
 msgid "Application"
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1496
+#: ../../src/Gateways/CustomGateway.php:1497
 msgid "Invalid Token format."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1497
+#: ../../src/Gateways/CustomGateway.php:1498
 msgid "Invalid or expired Token."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1498
+#: ../../src/Gateways/CustomGateway.php:1499
 msgid "This Access Token does not belong to the expected application. Contact your Mercado Pago commercial consultant."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1499
+#: ../../src/Gateways/CustomGateway.php:1500
 msgid "Credential application not found. Please check if the token is valid."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1500
+#: ../../src/Gateways/CustomGateway.php:1501
 msgid "Could not validate the credential at this time. Please try again."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1501
+#: ../../src/Gateways/CustomGateway.php:1502
 msgid "Could not verify application scopes. Please contact your Mercado Pago commercial consultant."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1502
+#: ../../src/Gateways/CustomGateway.php:1503
 msgid "This credential does not have the required Pre-approval scope. Please request activation from your Mercado Pago commercial consultant."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1503
+#: ../../src/Gateways/CustomGateway.php:1504
 msgid "This application is inactive in Mercado Pago. Contact your Mercado Pago commercial consultant."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1504
+#: ../../src/Gateways/CustomGateway.php:1505
 msgid "This application is blocked in Mercado Pago. Contact your Mercado Pago commercial consultant."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1505
+#: ../../src/Gateways/CustomGateway.php:1506
 msgid "This application is disabled in Mercado Pago. Contact your Mercado Pago commercial consultant."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1506
+#: ../../src/Gateways/CustomGateway.php:1507
 msgid "Unexpected response when validating the credential."
 msgstr ""
 
-#: ../../src/Gateways/CustomGateway.php:1509
+#: ../../src/Gateways/CustomGateway.php:1510
 msgid "An error occurred while validating the credential."
 msgstr ""
 
@@ -199,6 +199,10 @@ msgstr ""
 
 #: ../../src/Hooks/Subscriptions.php:470
 msgid "Subscription renewal"
+msgstr ""
+
+#: ../../src/Order/OrderStatus.php:176
+msgid "Pix via Open Finance: awaiting payment confirmation. Follow the payment status on the order page."
 msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:217
@@ -246,2037 +250,2041 @@ msgid "Our plugin does not support the language you've chosen, so we've switched
 msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:231
-msgid "You activated Mercado Pago’s plug-in"
+msgid "Complete your Mercado Pago setup"
 msgstr ""
 
 #: ../../src/Translations/AdminTranslations.php:232
-msgid "Follow the instructions below to integrate your store with Mercado Pago and start to sell."
+msgid "Link your account to start receiving payments in your store."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:244
+#: ../../src/Translations/AdminTranslations.php:233
+msgid "Link my account"
+msgstr ""
+
+#: ../../src/Translations/AdminTranslations.php:245
 msgid "Set plugin"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:245, ../../src/Translations/AdminTranslations.php:878, ../../src/Translations/AdminTranslations.php:938
+#: ../../src/Translations/AdminTranslations.php:246, ../../src/Translations/AdminTranslations.php:879, ../../src/Translations/AdminTranslations.php:939
 msgid "Payment methods"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:246
+#: ../../src/Translations/AdminTranslations.php:247
 msgid "Plugin manual"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:258, ../../src/Translations/StoreTranslations.php:203, ../../src/Translations/StoreTranslations.php:364
+#: ../../src/Translations/AdminTranslations.php:259, ../../src/Translations/StoreTranslations.php:203, ../../src/Translations/StoreTranslations.php:364
 msgid "Cancel order"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:259
+#: ../../src/Translations/AdminTranslations.php:260
 msgid "Mercado Pago commission:"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:260
+#: ../../src/Translations/AdminTranslations.php:261
 msgid "Represents the commission configured on plugin settings."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:261
+#: ../../src/Translations/AdminTranslations.php:262
 msgid "Mercado Pago discount:"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:262
+#: ../../src/Translations/AdminTranslations.php:263
 msgid "Represents the discount configured on plugin settings."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:263
+#: ../../src/Translations/AdminTranslations.php:264
 msgid "Represents the installment fee charged by Mercado Pago."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:264
+#: ../../src/Translations/AdminTranslations.php:265
 msgid "Mercado Pago Installment Fee:"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:265
+#: ../../src/Translations/AdminTranslations.php:266
 msgid "Represents the total purchase plus the installment fee charged by Mercado Pago."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:266
+#: ../../src/Translations/AdminTranslations.php:267
 msgid "Mercado Pago Total:"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:279
+#: ../../src/Translations/AdminTranslations.php:280
 msgid "Accept"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:280
+#: ../../src/Translations/AdminTranslations.php:281
 msgid "payments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:281
+#: ../../src/Translations/AdminTranslations.php:282
 msgid "safely"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:282
+#: ../../src/Translations/AdminTranslations.php:283
 msgid "with"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:283, ../../src/Translations/AdminTranslations.php:488, ../../src/Translations/AdminTranslations.php:503
+#: ../../src/Translations/AdminTranslations.php:284, ../../src/Translations/AdminTranslations.php:489, ../../src/Translations/AdminTranslations.php:504
 msgid "Mercado Pago"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:288
+#: ../../src/Translations/AdminTranslations.php:289
 msgid "Choose"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:289
+#: ../../src/Translations/AdminTranslations.php:290
 msgid "when you want to receive the money"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:290
+#: ../../src/Translations/AdminTranslations.php:291
 msgid "from your sales and if you want to offer"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:291
+#: ../../src/Translations/AdminTranslations.php:292
 msgctxt "admin settings description"
 msgid "interest-free installments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:292
+#: ../../src/Translations/AdminTranslations.php:293
 msgid "to your clients."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:298
+#: ../../src/Translations/AdminTranslations.php:299
 msgid "SSL"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:299
+#: ../../src/Translations/AdminTranslations.php:300
 msgid "GD Extensions"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:301
+#: ../../src/Translations/AdminTranslations.php:302
 msgid "Technical requirements"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:302
+#: ../../src/Translations/AdminTranslations.php:303
 msgid "Collections and installments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:303
+#: ../../src/Translations/AdminTranslations.php:304
 msgid "More information"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:304
+#: ../../src/Translations/AdminTranslations.php:305
 msgid "Implementation responsible for transmitting data to Mercado Pago in a secure and encrypted way."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:305
+#: ../../src/Translations/AdminTranslations.php:306
 msgid "These extensions are responsible for the implementation and operation of Pix in your store."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:307
+#: ../../src/Translations/AdminTranslations.php:308
 msgid "Check our documentation to learn more about integrating our plug-in."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:308
+#: ../../src/Translations/AdminTranslations.php:309
 msgid "Set deadlines and fees"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:309
+#: ../../src/Translations/AdminTranslations.php:310
 msgid "Go to documentation"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:322
+#: ../../src/Translations/AdminTranslations.php:323
 msgid "Public Key"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:323
+#: ../../src/Translations/AdminTranslations.php:324
 msgid "Access Token"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:324
+#: ../../src/Translations/AdminTranslations.php:325, ../../templates/admin/notices/onboarding-notice.php:28
 msgid "Close"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:325
+#: ../../src/Translations/AdminTranslations.php:326
 msgid "1. Link your store to a Mercado Pago account"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:326, ../../src/Translations/AdminTranslations.php:1208
+#: ../../src/Translations/AdminTranslations.php:327, ../../src/Translations/AdminTranslations.php:1209
 msgid "Linked account"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:327, ../../src/Translations/AdminTranslations.php:1210
+#: ../../src/Translations/AdminTranslations.php:328, ../../src/Translations/AdminTranslations.php:1211
 msgid "For more information, check the"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:328, ../../src/Translations/AdminTranslations.php:1229
+#: ../../src/Translations/AdminTranslations.php:329, ../../src/Translations/AdminTranslations.php:1230
 msgid "Production credentials"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:329
+#: ../../src/Translations/AdminTranslations.php:330
 msgid "Test credentials"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:330
+#: ../../src/Translations/AdminTranslations.php:331
 msgid "To start selling, "
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:331
+#: ../../src/Translations/AdminTranslations.php:332
 msgid "in the fields below. If you don’t have credentials yet, you’ll have to create them from this link."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:332
+#: ../../src/Translations/AdminTranslations.php:333
 msgid "Enable Mercado Pago checkouts for test purchases in the store."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:333
+#: ../../src/Translations/AdminTranslations.php:334
 msgid "Enable Mercado Pago checkouts to receive real payments in the store."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:334
+#: ../../src/Translations/AdminTranslations.php:335
 msgid "Paste the key here"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:335
+#: ../../src/Translations/AdminTranslations.php:336
 msgid "Show Access Token"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:336
+#: ../../src/Translations/AdminTranslations.php:337
 msgid "Hide Access Token"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:337, ../../src/Translations/AdminTranslations.php:424, ../../src/Translations/AdminTranslations.php:1244
+#: ../../src/Translations/AdminTranslations.php:338, ../../src/Translations/AdminTranslations.php:425, ../../src/Translations/AdminTranslations.php:1245
 msgid "Continue"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:338
+#: ../../src/Translations/AdminTranslations.php:339
 msgid "You have to enter your production credentials to start selling with Mercado Pago."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:339
+#: ../../src/Translations/AdminTranslations.php:340
 msgid "Enter credentials"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:340
+#: ../../src/Translations/AdminTranslations.php:341
 msgid "Activate your credentials to be able to sell"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:341
+#: ../../src/Translations/AdminTranslations.php:342
 msgid "Credentials are codes that you must enter to enable sales. Go below on Activate Credentials. On the next screen, use again the Activate Credentials button and fill in the fields with the requested information."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:342
+#: ../../src/Translations/AdminTranslations.php:343
 msgid "Activate credentials"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:343
+#: ../../src/Translations/AdminTranslations.php:344
 msgid "copy and paste your production credentials "
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:344
+#: ../../src/Translations/AdminTranslations.php:345
 msgid "Your WooCommerce store can’t receive payments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:345
+#: ../../src/Translations/AdminTranslations.php:346
 msgid "To start selling again, update your store’s link to Mercado Pago."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:346, ../../src/Translations/AdminTranslations.php:1217
+#: ../../src/Translations/AdminTranslations.php:347, ../../src/Translations/AdminTranslations.php:1218
 msgid "Update link"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:359
+#: ../../src/Translations/AdminTranslations.php:360
 msgid "Add the URL to receive payments notifications."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:360
+#: ../../src/Translations/AdminTranslations.php:361
 msgid "Find out more information in the"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:362
+#: ../../src/Translations/AdminTranslations.php:363
 msgid "guides"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:367
+#: ../../src/Translations/AdminTranslations.php:368
 msgid "If you are a Mercado Pago Certified Partner, make sure to add your integrator_id."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:368
+#: ../../src/Translations/AdminTranslations.php:369
 msgid "If you do not have the code, please"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:370
+#: ../../src/Translations/AdminTranslations.php:371
 msgid "request it now"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:374
+#: ../../src/Translations/AdminTranslations.php:375
 msgid "2. Customize your business’ information"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:375
+#: ../../src/Translations/AdminTranslations.php:376
 msgid "Your store information"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:376
+#: ../../src/Translations/AdminTranslations.php:377
 msgid "Advanced integration options (optional)"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:377
+#: ../../src/Translations/AdminTranslations.php:378
 msgid "Debug and Log Mode"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:378
+#: ../../src/Translations/AdminTranslations.php:379
 msgid "Fill out the following details to have a better experience and offer your customers more information."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:379
+#: ../../src/Translations/AdminTranslations.php:380
 msgid "Name of your store in your client's invoice"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:380
+#: ../../src/Translations/AdminTranslations.php:381
 msgid "Identification in Activities of Mercado Pago"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:381
+#: ../../src/Translations/AdminTranslations.php:382
 msgid "For further integration of your store with Mercado Pago (IPN, Certified Partners, Debug Mode)"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:382
+#: ../../src/Translations/AdminTranslations.php:383
 msgid "Store category"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:383
+#: ../../src/Translations/AdminTranslations.php:384
 msgid "URL for IPN"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:384
+#: ../../src/Translations/AdminTranslations.php:385
 msgid "Integrator ID"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:385
+#: ../../src/Translations/AdminTranslations.php:386
 msgid "We record your store's actions in order to provide a better assistance."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:386
+#: ../../src/Translations/AdminTranslations.php:387
 msgid "Ex: Mary's Store"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:387
+#: ../../src/Translations/AdminTranslations.php:388
 msgid "Ex: Mary Store"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:388, ../../src/Translations/AdminTranslations.php:409, ../../src/Translations/AdminTranslations.php:1517
+#: ../../src/Translations/AdminTranslations.php:389, ../../src/Translations/AdminTranslations.php:410, ../../src/Translations/AdminTranslations.php:1518
 msgid "Select"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:389
+#: ../../src/Translations/AdminTranslations.php:390
 msgid "Ex: https://examples.com/my-custom-ipn-url"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:390
+#: ../../src/Translations/AdminTranslations.php:391
 msgid "Add plugin default params"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:391
+#: ../../src/Translations/AdminTranslations.php:392
 msgid "Ex: 14987126498"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:392
+#: ../../src/Translations/AdminTranslations.php:393
 msgid "Show advanced options"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:393
+#: ../../src/Translations/AdminTranslations.php:394
 msgid "Hide advanced options"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:394
+#: ../../src/Translations/AdminTranslations.php:395
 msgid "Save and continue"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:395
+#: ../../src/Translations/AdminTranslations.php:396
 msgid "If this field is empty, the purchase will be identified as Mercado Pago."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:396
+#: ../../src/Translations/AdminTranslations.php:397
 msgid "In Activities, you will view this term before the order number"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:397
+#: ../../src/Translations/AdminTranslations.php:398
 msgid "Select \"Other categories\" if you do not find the appropriate category."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:398
+#: ../../src/Translations/AdminTranslations.php:399
 msgid "request it now."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:401
+#: ../../src/Translations/AdminTranslations.php:402
 msgid "Order tracking"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:402
+#: ../../src/Translations/AdminTranslations.php:403
 msgid "Keep your Mercado Pago orders updated by selecting the desired frequency. We recommend enabling this option only in the event of automatic order update failures."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:403
+#: ../../src/Translations/AdminTranslations.php:404
 msgid "Disable"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:404
+#: ../../src/Translations/AdminTranslations.php:405
 msgid "Every 5 minutes"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:405
+#: ../../src/Translations/AdminTranslations.php:406
 msgid "Every 10 minutes"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:406
+#: ../../src/Translations/AdminTranslations.php:407
 msgid "Every 15 minutes"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:407
+#: ../../src/Translations/AdminTranslations.php:408
 msgid "Every 30 minutes"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:408
+#: ../../src/Translations/AdminTranslations.php:409
 msgid "Every 1 hour"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:421
+#: ../../src/Translations/AdminTranslations.php:422
 msgid "3. Activate and set up payment methods"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:422
+#: ../../src/Translations/AdminTranslations.php:423
 msgid "Select the payment method you want to appear in your store to activate and set it up."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:423
+#: ../../src/Translations/AdminTranslations.php:424
 msgid "Settings"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:425
+#: ../../src/Translations/AdminTranslations.php:426
 msgid "Enabled"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:426
+#: ../../src/Translations/AdminTranslations.php:427
 msgid "Disabled"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:427
+#: ../../src/Translations/AdminTranslations.php:428
 msgid "Configure your credentials to enable Mercado Pago payment methods."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:440, ../../src/Translations/AdminTranslations.php:446
+#: ../../src/Translations/AdminTranslations.php:441, ../../src/Translations/AdminTranslations.php:447
 msgid "The checkout is"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:441, ../../src/Translations/AdminTranslations.php:569, ../../src/Translations/AdminTranslations.php:581, ../../src/Translations/AdminTranslations.php:706, ../../src/Translations/AdminTranslations.php:718, ../../src/Translations/AdminTranslations.php:962
+#: ../../src/Translations/AdminTranslations.php:442, ../../src/Translations/AdminTranslations.php:570, ../../src/Translations/AdminTranslations.php:582, ../../src/Translations/AdminTranslations.php:707, ../../src/Translations/AdminTranslations.php:719, ../../src/Translations/AdminTranslations.php:963
 msgid "enabled"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:447, ../../src/Translations/AdminTranslations.php:575, ../../src/Translations/AdminTranslations.php:587, ../../src/Translations/AdminTranslations.php:712, ../../src/Translations/AdminTranslations.php:724, ../../src/Translations/AdminTranslations.php:968, ../../src/Translations/AdminTranslations.php:1067
+#: ../../src/Translations/AdminTranslations.php:448, ../../src/Translations/AdminTranslations.php:576, ../../src/Translations/AdminTranslations.php:588, ../../src/Translations/AdminTranslations.php:713, ../../src/Translations/AdminTranslations.php:725, ../../src/Translations/AdminTranslations.php:969, ../../src/Translations/AdminTranslations.php:1068
 msgid "disabled"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:452, ../../src/Translations/AdminTranslations.php:458, ../../src/Translations/AdminTranslations.php:592, ../../src/Translations/AdminTranslations.php:598, ../../src/Translations/AdminTranslations.php:729, ../../src/Translations/AdminTranslations.php:735, ../../src/Translations/AdminTranslations.php:839, ../../src/Translations/AdminTranslations.php:845, ../../src/Translations/AdminTranslations.php:901, ../../src/Translations/AdminTranslations.php:907, ../../src/Translations/AdminTranslations.php:973, ../../src/Translations/AdminTranslations.php:979, ../../src/Translations/AdminTranslations.php:1073, ../../src/Translations/AdminTranslations.php:1079
+#: ../../src/Translations/AdminTranslations.php:453, ../../src/Translations/AdminTranslations.php:459, ../../src/Translations/AdminTranslations.php:593, ../../src/Translations/AdminTranslations.php:599, ../../src/Translations/AdminTranslations.php:730, ../../src/Translations/AdminTranslations.php:736, ../../src/Translations/AdminTranslations.php:840, ../../src/Translations/AdminTranslations.php:846, ../../src/Translations/AdminTranslations.php:902, ../../src/Translations/AdminTranslations.php:908, ../../src/Translations/AdminTranslations.php:974, ../../src/Translations/AdminTranslations.php:980, ../../src/Translations/AdminTranslations.php:1074, ../../src/Translations/AdminTranslations.php:1080
 msgid "Currency conversion is"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:453, ../../src/Translations/AdminTranslations.php:593, ../../src/Translations/AdminTranslations.php:730, ../../src/Translations/AdminTranslations.php:840, ../../src/Translations/AdminTranslations.php:902, ../../src/Translations/AdminTranslations.php:974, ../../src/Translations/AdminTranslations.php:1074
+#: ../../src/Translations/AdminTranslations.php:454, ../../src/Translations/AdminTranslations.php:594, ../../src/Translations/AdminTranslations.php:731, ../../src/Translations/AdminTranslations.php:841, ../../src/Translations/AdminTranslations.php:903, ../../src/Translations/AdminTranslations.php:975, ../../src/Translations/AdminTranslations.php:1075
 msgctxt "currency conversion (feminine)"
 msgid "enabled"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:459, ../../src/Translations/AdminTranslations.php:599, ../../src/Translations/AdminTranslations.php:736, ../../src/Translations/AdminTranslations.php:846, ../../src/Translations/AdminTranslations.php:908, ../../src/Translations/AdminTranslations.php:980, ../../src/Translations/AdminTranslations.php:1080
+#: ../../src/Translations/AdminTranslations.php:460, ../../src/Translations/AdminTranslations.php:600, ../../src/Translations/AdminTranslations.php:737, ../../src/Translations/AdminTranslations.php:847, ../../src/Translations/AdminTranslations.php:909, ../../src/Translations/AdminTranslations.php:981, ../../src/Translations/AdminTranslations.php:1081
 msgctxt "currency conversion (feminine)"
 msgid "disabled"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:464, ../../src/Translations/AdminTranslations.php:470
+#: ../../src/Translations/AdminTranslations.php:465, ../../src/Translations/AdminTranslations.php:471
 msgid "The buyer"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:465
+#: ../../src/Translations/AdminTranslations.php:466
 msgid "will be automatically redirected to the store"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:471
+#: ../../src/Translations/AdminTranslations.php:472
 msgid "will not be automatically redirected to the store"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:477, ../../src/Translations/AdminTranslations.php:483, ../../src/Translations/AdminTranslations.php:753, ../../src/Translations/AdminTranslations.php:759
+#: ../../src/Translations/AdminTranslations.php:478, ../../src/Translations/AdminTranslations.php:484, ../../src/Translations/AdminTranslations.php:754, ../../src/Translations/AdminTranslations.php:760
 msgid "Pending payments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:478, ../../src/Translations/AdminTranslations.php:754
+#: ../../src/Translations/AdminTranslations.php:479, ../../src/Translations/AdminTranslations.php:755
 msgid "will be automatically declined"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:484, ../../src/Translations/AdminTranslations.php:760
+#: ../../src/Translations/AdminTranslations.php:485, ../../src/Translations/AdminTranslations.php:761
 msgid "will not be automatically declined"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:489, ../../src/Translations/AdminTranslations.php:491
+#: ../../src/Translations/AdminTranslations.php:490, ../../src/Translations/AdminTranslations.php:492
 msgid "Your clients finalize their payments in Mercado Pago."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:490
+#: ../../src/Translations/AdminTranslations.php:491
 msgid "Mercado Pago - Checkout Pro"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:492
+#: ../../src/Translations/AdminTranslations.php:493
 msgid "Checkout Pro"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:493
+#: ../../src/Translations/AdminTranslations.php:494
 msgid "With Checkout Pro you sell with all the safety inside Mercado Pago environment."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:494, ../../src/Translations/AdminTranslations.php:609, ../../src/Translations/AdminTranslations.php:855, ../../src/Translations/AdminTranslations.php:917, ../../src/Translations/AdminTranslations.php:998, ../../src/Translations/AdminTranslations.php:1091
+#: ../../src/Translations/AdminTranslations.php:495, ../../src/Translations/AdminTranslations.php:610, ../../src/Translations/AdminTranslations.php:856, ../../src/Translations/AdminTranslations.php:918, ../../src/Translations/AdminTranslations.php:999, ../../src/Translations/AdminTranslations.php:1092
 msgid "Mercado Pago plugin general settings"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:495, ../../src/Translations/AdminTranslations.php:610, ../../src/Translations/AdminTranslations.php:773, ../../src/Translations/AdminTranslations.php:856, ../../src/Translations/AdminTranslations.php:918, ../../src/Translations/AdminTranslations.php:999, ../../src/Translations/AdminTranslations.php:1092
+#: ../../src/Translations/AdminTranslations.php:496, ../../src/Translations/AdminTranslations.php:611, ../../src/Translations/AdminTranslations.php:774, ../../src/Translations/AdminTranslations.php:857, ../../src/Translations/AdminTranslations.php:919, ../../src/Translations/AdminTranslations.php:1000, ../../src/Translations/AdminTranslations.php:1093
 msgid "Set the deadlines and fees, test your store or access the Plugin manual."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:496, ../../src/Translations/AdminTranslations.php:611, ../../src/Translations/AdminTranslations.php:774, ../../src/Translations/AdminTranslations.php:857, ../../src/Translations/AdminTranslations.php:919, ../../src/Translations/AdminTranslations.php:1000, ../../src/Translations/AdminTranslations.php:1093
+#: ../../src/Translations/AdminTranslations.php:497, ../../src/Translations/AdminTranslations.php:612, ../../src/Translations/AdminTranslations.php:775, ../../src/Translations/AdminTranslations.php:858, ../../src/Translations/AdminTranslations.php:920, ../../src/Translations/AdminTranslations.php:1001, ../../src/Translations/AdminTranslations.php:1094
 msgid "Go to Settings"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:497, ../../src/Translations/AdminTranslations.php:775, ../../src/Translations/AdminTranslations.php:1001, ../../src/Translations/AdminTranslations.php:1094
+#: ../../src/Translations/AdminTranslations.php:498, ../../src/Translations/AdminTranslations.php:776, ../../src/Translations/AdminTranslations.php:1002, ../../src/Translations/AdminTranslations.php:1095
 msgid "Enable the checkout"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:498
+#: ../../src/Translations/AdminTranslations.php:499
 msgid "By disabling it, you will disable all payments from Mercado Pago Checkout at Mercado Pago website by redirect."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:501, ../../src/Translations/AdminTranslations.php:781, ../../src/Translations/AdminTranslations.php:862, ../../src/Translations/AdminTranslations.php:924, ../../src/Translations/AdminTranslations.php:1005
+#: ../../src/Translations/AdminTranslations.php:502, ../../src/Translations/AdminTranslations.php:782, ../../src/Translations/AdminTranslations.php:863, ../../src/Translations/AdminTranslations.php:925, ../../src/Translations/AdminTranslations.php:1006
 msgid "Title in the store Checkout"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:502, ../../src/Translations/AdminTranslations.php:782, ../../src/Translations/AdminTranslations.php:863, ../../src/Translations/AdminTranslations.php:925, ../../src/Translations/AdminTranslations.php:1006
+#: ../../src/Translations/AdminTranslations.php:503, ../../src/Translations/AdminTranslations.php:783, ../../src/Translations/AdminTranslations.php:864, ../../src/Translations/AdminTranslations.php:926, ../../src/Translations/AdminTranslations.php:1007
 msgid "Change the display text in Checkout, maximum characters: 85"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:504, ../../src/Translations/AdminTranslations.php:623, ../../src/Translations/AdminTranslations.php:783, ../../src/Translations/AdminTranslations.php:865, ../../src/Translations/AdminTranslations.php:927, ../../src/Translations/AdminTranslations.php:1008, ../../src/Translations/AdminTranslations.php:1101
+#: ../../src/Translations/AdminTranslations.php:505, ../../src/Translations/AdminTranslations.php:624, ../../src/Translations/AdminTranslations.php:784, ../../src/Translations/AdminTranslations.php:866, ../../src/Translations/AdminTranslations.php:928, ../../src/Translations/AdminTranslations.php:1009, ../../src/Translations/AdminTranslations.php:1102
 msgid "The text inserted here will not be translated to other languages"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:505, ../../src/Translations/AdminTranslations.php:624, ../../src/Translations/AdminTranslations.php:787, ../../src/Translations/AdminTranslations.php:866, ../../src/Translations/AdminTranslations.php:928, ../../src/Translations/AdminTranslations.php:1022, ../../src/Translations/AdminTranslations.php:1102
+#: ../../src/Translations/AdminTranslations.php:506, ../../src/Translations/AdminTranslations.php:625, ../../src/Translations/AdminTranslations.php:788, ../../src/Translations/AdminTranslations.php:867, ../../src/Translations/AdminTranslations.php:929, ../../src/Translations/AdminTranslations.php:1023, ../../src/Translations/AdminTranslations.php:1103
 msgid "Convert Currency"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:506, ../../src/Translations/AdminTranslations.php:625, ../../src/Translations/AdminTranslations.php:788, ../../src/Translations/AdminTranslations.php:867, ../../src/Translations/AdminTranslations.php:929, ../../src/Translations/AdminTranslations.php:1023, ../../src/Translations/AdminTranslations.php:1103
+#: ../../src/Translations/AdminTranslations.php:507, ../../src/Translations/AdminTranslations.php:626, ../../src/Translations/AdminTranslations.php:789, ../../src/Translations/AdminTranslations.php:868, ../../src/Translations/AdminTranslations.php:930, ../../src/Translations/AdminTranslations.php:1024, ../../src/Translations/AdminTranslations.php:1104
 msgid "Activate this option so that the value of the currency set in WooCommerce is compatible with the value of the currency you use in Mercado Pago."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:509
+#: ../../src/Translations/AdminTranslations.php:510
 msgid "Choose the payment methods you accept in your store"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:510
+#: ../../src/Translations/AdminTranslations.php:511
 msgid "Enable the payment methods available to your clients."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:511
+#: ../../src/Translations/AdminTranslations.php:512
 msgid "Credit Cards"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:512
+#: ../../src/Translations/AdminTranslations.php:513
 msgid "Debit Cards"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:513
+#: ../../src/Translations/AdminTranslations.php:514
 msgid "Other Payment Methods"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:514
+#: ../../src/Translations/AdminTranslations.php:515
 msgid "Maximum number of installments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:515
+#: ../../src/Translations/AdminTranslations.php:516
 msgid "What is the maximum quota with which a customer can buy?"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:516
+#: ../../src/Translations/AdminTranslations.php:517
 msgid "1 installment"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:517
+#: ../../src/Translations/AdminTranslations.php:518
 msgid "2 installments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:518
+#: ../../src/Translations/AdminTranslations.php:519
 msgid "3 installments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:519
+#: ../../src/Translations/AdminTranslations.php:520
 msgid "4 installments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:520
+#: ../../src/Translations/AdminTranslations.php:521
 msgid "5 installments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:521
+#: ../../src/Translations/AdminTranslations.php:522
 msgid "6 installments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:522
+#: ../../src/Translations/AdminTranslations.php:523
 msgid "10 installments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:523
+#: ../../src/Translations/AdminTranslations.php:524
 msgid "12 installments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:524
+#: ../../src/Translations/AdminTranslations.php:525
 msgid "15 installments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:525
+#: ../../src/Translations/AdminTranslations.php:526
 msgid "18 installments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:526
+#: ../../src/Translations/AdminTranslations.php:527
 msgid "24 installments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:527, ../../src/Translations/AdminTranslations.php:638, ../../src/Translations/AdminTranslations.php:1106
+#: ../../src/Translations/AdminTranslations.php:528, ../../src/Translations/AdminTranslations.php:639, ../../src/Translations/AdminTranslations.php:1107
 msgid "Advanced settings"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:528, ../../src/Translations/AdminTranslations.php:639, ../../src/Translations/AdminTranslations.php:797, ../../src/Translations/AdminTranslations.php:873, ../../src/Translations/AdminTranslations.php:933, ../../src/Translations/AdminTranslations.php:1030, ../../src/Translations/AdminTranslations.php:1107
+#: ../../src/Translations/AdminTranslations.php:529, ../../src/Translations/AdminTranslations.php:640, ../../src/Translations/AdminTranslations.php:798, ../../src/Translations/AdminTranslations.php:874, ../../src/Translations/AdminTranslations.php:934, ../../src/Translations/AdminTranslations.php:1031, ../../src/Translations/AdminTranslations.php:1108
 msgid "Edit these advanced fields only when you want to modify the preset values."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:529
+#: ../../src/Translations/AdminTranslations.php:530
 msgid "Payment experience"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:530
+#: ../../src/Translations/AdminTranslations.php:531
 msgid "Define what payment experience your customers will have, whether inside or outside your store."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:531
+#: ../../src/Translations/AdminTranslations.php:532
 msgid "Redirect"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:532
+#: ../../src/Translations/AdminTranslations.php:533
 msgid "Modal"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:533
+#: ../../src/Translations/AdminTranslations.php:534
 msgid "Return to the store"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:534
+#: ../../src/Translations/AdminTranslations.php:535
 msgid "Do you want your customer to automatically return to the store after payment?"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:537
+#: ../../src/Translations/AdminTranslations.php:538
 msgid "Success URL"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:538
+#: ../../src/Translations/AdminTranslations.php:539
 msgid "Choose the URL that we will show your customers when they finish their purchase."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:539
+#: ../../src/Translations/AdminTranslations.php:540
 msgid "Payment URL rejected"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:540
+#: ../../src/Translations/AdminTranslations.php:541
 msgid "Choose the URL that we will show to your customers when we refuse their purchase. Make sure it includes a message appropriate to the situation and give them useful information so they can solve it."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:541
+#: ../../src/Translations/AdminTranslations.php:542
 msgid "Payment URL pending"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:542
+#: ../../src/Translations/AdminTranslations.php:543
 msgid "Choose the URL that we will show to your customers when they have a payment pending approval."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:543, ../../src/Translations/AdminTranslations.php:798
+#: ../../src/Translations/AdminTranslations.php:544, ../../src/Translations/AdminTranslations.php:799
 msgid "Automatic decline of payments without instant approval"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:544, ../../src/Translations/AdminTranslations.php:799
+#: ../../src/Translations/AdminTranslations.php:545, ../../src/Translations/AdminTranslations.php:800
 msgid "Enable it if you want to automatically decline payments that are not instantly approved by banks or other institutions."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:545
+#: ../../src/Translations/AdminTranslations.php:546
 msgid "Debit, Credit and Invoice in Mercado Pago environment."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:548, ../../src/Translations/AdminTranslations.php:640, ../../src/Translations/AdminTranslations.php:802, ../../src/Translations/AdminTranslations.php:882, ../../src/Translations/AdminTranslations.php:942, ../../src/Translations/AdminTranslations.php:1031, ../../src/Translations/AdminTranslations.php:1108
+#: ../../src/Translations/AdminTranslations.php:549, ../../src/Translations/AdminTranslations.php:641, ../../src/Translations/AdminTranslations.php:803, ../../src/Translations/AdminTranslations.php:883, ../../src/Translations/AdminTranslations.php:943, ../../src/Translations/AdminTranslations.php:1032, ../../src/Translations/AdminTranslations.php:1109
 msgid "Discount in Mercado Pago Checkouts"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:549, ../../src/Translations/AdminTranslations.php:641, ../../src/Translations/AdminTranslations.php:803, ../../src/Translations/AdminTranslations.php:883, ../../src/Translations/AdminTranslations.php:943, ../../src/Translations/AdminTranslations.php:1032, ../../src/Translations/AdminTranslations.php:1109
+#: ../../src/Translations/AdminTranslations.php:550, ../../src/Translations/AdminTranslations.php:642, ../../src/Translations/AdminTranslations.php:804, ../../src/Translations/AdminTranslations.php:884, ../../src/Translations/AdminTranslations.php:944, ../../src/Translations/AdminTranslations.php:1033, ../../src/Translations/AdminTranslations.php:1110
 msgid "Choose a percentage value that you want to discount your customers for paying with Mercado Pago."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:550, ../../src/Translations/AdminTranslations.php:553, ../../src/Translations/AdminTranslations.php:642, ../../src/Translations/AdminTranslations.php:645, ../../src/Translations/AdminTranslations.php:804, ../../src/Translations/AdminTranslations.php:807, ../../src/Translations/AdminTranslations.php:884, ../../src/Translations/AdminTranslations.php:887, ../../src/Translations/AdminTranslations.php:944, ../../src/Translations/AdminTranslations.php:947, ../../src/Translations/AdminTranslations.php:1033, ../../src/Translations/AdminTranslations.php:1036, ../../src/Translations/AdminTranslations.php:1110, ../../src/Translations/AdminTranslations.php:1113
+#: ../../src/Translations/AdminTranslations.php:551, ../../src/Translations/AdminTranslations.php:554, ../../src/Translations/AdminTranslations.php:643, ../../src/Translations/AdminTranslations.php:646, ../../src/Translations/AdminTranslations.php:805, ../../src/Translations/AdminTranslations.php:808, ../../src/Translations/AdminTranslations.php:885, ../../src/Translations/AdminTranslations.php:888, ../../src/Translations/AdminTranslations.php:945, ../../src/Translations/AdminTranslations.php:948, ../../src/Translations/AdminTranslations.php:1034, ../../src/Translations/AdminTranslations.php:1037, ../../src/Translations/AdminTranslations.php:1111, ../../src/Translations/AdminTranslations.php:1114
 msgid "Activate and show this information on Mercado Pago Checkout"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:551, ../../src/Translations/AdminTranslations.php:643, ../../src/Translations/AdminTranslations.php:805, ../../src/Translations/AdminTranslations.php:885, ../../src/Translations/AdminTranslations.php:945, ../../src/Translations/AdminTranslations.php:1034, ../../src/Translations/AdminTranslations.php:1111
+#: ../../src/Translations/AdminTranslations.php:552, ../../src/Translations/AdminTranslations.php:644, ../../src/Translations/AdminTranslations.php:806, ../../src/Translations/AdminTranslations.php:886, ../../src/Translations/AdminTranslations.php:946, ../../src/Translations/AdminTranslations.php:1035, ../../src/Translations/AdminTranslations.php:1112
 msgid "Commission in Mercado Pago Checkouts"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:552, ../../src/Translations/AdminTranslations.php:644, ../../src/Translations/AdminTranslations.php:806, ../../src/Translations/AdminTranslations.php:886, ../../src/Translations/AdminTranslations.php:946, ../../src/Translations/AdminTranslations.php:1035, ../../src/Translations/AdminTranslations.php:1112
+#: ../../src/Translations/AdminTranslations.php:553, ../../src/Translations/AdminTranslations.php:645, ../../src/Translations/AdminTranslations.php:807, ../../src/Translations/AdminTranslations.php:887, ../../src/Translations/AdminTranslations.php:947, ../../src/Translations/AdminTranslations.php:1036, ../../src/Translations/AdminTranslations.php:1113
 msgid "Choose an additional percentage value that you want to charge as commission to your customers for paying with Mercado Pago."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:554
+#: ../../src/Translations/AdminTranslations.php:555
 msgid "This seems to be an invalid URL"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:568, ../../src/Translations/AdminTranslations.php:574, ../../src/Translations/AdminTranslations.php:580, ../../src/Translations/AdminTranslations.php:586
+#: ../../src/Translations/AdminTranslations.php:569, ../../src/Translations/AdminTranslations.php:575, ../../src/Translations/AdminTranslations.php:581, ../../src/Translations/AdminTranslations.php:587
 msgid "“Up to 12 installments with {credits_name}” is"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:604, ../../src/Translations/AdminTranslations.php:606
+#: ../../src/Translations/AdminTranslations.php:605, ../../src/Translations/AdminTranslations.php:607
 msgid "Your customers finish their payments on Mercado Pago with a credit line."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:607
+#: ../../src/Translations/AdminTranslations.php:608
 msgid "Up to 12 installments with {credits_name}"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:608
+#: ../../src/Translations/AdminTranslations.php:609
 msgid "With this alternative, you’ll be able to sell in installments without cards and receive the money immediately with the same fees as with credit cards. Your sales are protected and guaranteed by Mercado Pago."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:612
+#: ../../src/Translations/AdminTranslations.php:613
 msgid "Activate the installments without cards in the checkout"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:613
+#: ../../src/Translations/AdminTranslations.php:614
 msgid "Activate this feature to reach more buyers. It will be available in your store's checkout."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:616
+#: ../../src/Translations/AdminTranslations.php:617
 msgid "Checkout visualization"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:617
+#: ../../src/Translations/AdminTranslations.php:618
 msgid "Check below how this feature will be displayed to your customers:"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:618
+#: ../../src/Translations/AdminTranslations.php:619
 msgid "Checkout Preview"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:619
+#: ../../src/Translations/AdminTranslations.php:620
 msgid "PREVIEW"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:620
+#: ../../src/Translations/AdminTranslations.php:621
 msgid "Title in the checkout"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:621
+#: ../../src/Translations/AdminTranslations.php:622
 msgid "We recommend using the default title. Maximum characters: 85."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:628
+#: ../../src/Translations/AdminTranslations.php:629
 msgid "Promote the payment of your products with Mercado Pago"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:629
+#: ../../src/Translations/AdminTranslations.php:630
 msgid "Activate this promotional banner to offer “{credits_name}” within product pages."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:632
+#: ../../src/Translations/AdminTranslations.php:633
 msgid "Banner on the product page | Computer version"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:633
+#: ../../src/Translations/AdminTranslations.php:634
 msgid "Banner on the product page | Cellphone version"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:634
+#: ../../src/Translations/AdminTranslations.php:635
 msgid "Computer"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:635
+#: ../../src/Translations/AdminTranslations.php:636
 msgid "Mobile"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:636
+#: ../../src/Translations/AdminTranslations.php:637
 msgid "Display in your product pages"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:637
+#: ../../src/Translations/AdminTranslations.php:638
 msgid "Below you can preview how the banner will be displayed to your customers:"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:646
+#: ../../src/Translations/AdminTranslations.php:647
 msgid "Choose how to promote “{credits_name}” on your store"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:647
+#: ../../src/Translations/AdminTranslations.php:648
 msgid "You can only select one alternative and you may edit it whenever you want."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:648
+#: ../../src/Translations/AdminTranslations.php:649
 msgid "Example:"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:649
+#: ../../src/Translations/AdminTranslations.php:650
 msgctxt "credits seller promotion name"
 msgid "Buy now, pay later"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:650
+#: ../../src/Translations/AdminTranslations.php:651
 msgctxt "credits seller alternative name"
 msgid "Buy now, pay later"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:665, ../../src/Translations/StoreTranslations.php:287
+#: ../../src/Translations/AdminTranslations.php:666, ../../src/Translations/StoreTranslations.php:287
 msgctxt "credits banner"
 msgid "Up to 12 installments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:666
+#: ../../src/Translations/AdminTranslations.php:667
 msgctxt "credits seller banner"
 msgid "through {credits_promotion_name}. Learn more"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:671
+#: ../../src/Translations/AdminTranslations.php:672
 msgctxt "credits seller banner"
 msgid "Buy now, pay later"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:672
+#: ../../src/Translations/AdminTranslations.php:673
 msgctxt "credits seller banner"
 msgid "with Mercado Pago. Learn more"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:677
+#: ../../src/Translations/AdminTranslations.php:678
 msgctxt "credits seller banner"
 msgid "With {credits_alternative_name},"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:678, ../../src/Translations/StoreTranslations.php:300
+#: ../../src/Translations/AdminTranslations.php:679, ../../src/Translations/StoreTranslations.php:300
 msgctxt "credits banner"
 msgid "get it now and pay month by month"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:679
+#: ../../src/Translations/AdminTranslations.php:680
 msgid " Learn more"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:684, ../../src/Translations/StoreTranslations.php:305
+#: ../../src/Translations/AdminTranslations.php:685, ../../src/Translations/StoreTranslations.php:305
 msgctxt "credits banner"
 msgid "Pay in up to 12 installments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:685
+#: ../../src/Translations/AdminTranslations.php:686
 msgctxt "credits seller banner"
 msgid "without credit card. Learn more"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:705, ../../src/Translations/AdminTranslations.php:711
+#: ../../src/Translations/AdminTranslations.php:706, ../../src/Translations/AdminTranslations.php:712
 msgid "Transparent Checkout for credit or debit cards is"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:717, ../../src/Translations/AdminTranslations.php:723
+#: ../../src/Translations/AdminTranslations.php:718, ../../src/Translations/AdminTranslations.php:724
 msgid "Transparent Checkout for credit cards is"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:741, ../../src/Translations/AdminTranslations.php:747
+#: ../../src/Translations/AdminTranslations.php:742, ../../src/Translations/AdminTranslations.php:748
 msgid "Payments via Mercado Pago accounts are"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:742
+#: ../../src/Translations/AdminTranslations.php:743
 msgctxt "payments via account (plural)"
 msgid "enabled"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:748
+#: ../../src/Translations/AdminTranslations.php:749
 msgctxt "payments via account (plural)"
 msgid "disabled"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:764
+#: ../../src/Translations/AdminTranslations.php:765
 msgid "Credit or debit card"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:765
+#: ../../src/Translations/AdminTranslations.php:766
 msgid "Credit card"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:766, ../../src/Translations/AdminTranslations.php:768
+#: ../../src/Translations/AdminTranslations.php:767, ../../src/Translations/AdminTranslations.php:769
 msgid "Payments without leaving your store with our customizable checkout"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:767
+#: ../../src/Translations/AdminTranslations.php:768
 msgid "Mercado Pago - Checkout API"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:769
+#: ../../src/Translations/AdminTranslations.php:770
 msgid "Transparent Checkout | Credit or debit card"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:770
+#: ../../src/Translations/AdminTranslations.php:771
 msgid "Transparent Checkout | Credit card"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:771
+#: ../../src/Translations/AdminTranslations.php:772
 msgid "With the Transparent Checkout, you can sell inside your store environment, without redirection and with the security from Mercado Pago."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:772
+#: ../../src/Translations/AdminTranslations.php:773
 msgid "Mercado Pago Plugin general settings"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:776
+#: ../../src/Translations/AdminTranslations.php:777
 msgid "By disabling it, you will disable all credit card payments from Mercado Pago Transparent Checkout."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:784
+#: ../../src/Translations/AdminTranslations.php:785
 msgid "Installments Fees"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:785
+#: ../../src/Translations/AdminTranslations.php:786
 msgid "Set installment fees and whether they will be charged from the store or from the buyer."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:786
+#: ../../src/Translations/AdminTranslations.php:787
 msgid "Set fees"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:791
+#: ../../src/Translations/AdminTranslations.php:792
 msgid "Payments via Mercado Pago account"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:792
+#: ../../src/Translations/AdminTranslations.php:793
 msgid "Your customers pay faster with saved cards, money balance or other available methods in their Mercado Pago accounts."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:795
+#: ../../src/Translations/AdminTranslations.php:796
 msgid "Check an example of how it will appear in your store:"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:796
+#: ../../src/Translations/AdminTranslations.php:797
 msgid "Advanced configuration of the personalized payment experience"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:808
+#: ../../src/Translations/AdminTranslations.php:809
 msgid "Enable recurring payments"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:809
+#: ../../src/Translations/AdminTranslations.php:810
 msgid "Allow your customers to subscribe to products and services and be charged automatically."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:810
+#: ../../src/Translations/AdminTranslations.php:811
 msgid "Recurring payments are active."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:811
+#: ../../src/Translations/AdminTranslations.php:812
 msgid "Recurring payments are disabled."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:812
+#: ../../src/Translations/AdminTranslations.php:813
 msgid "Disable recurring payments?"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:813
+#: ../../src/Translations/AdminTranslations.php:814
 msgid "By disabling, new subscriptions of your customers will not be able to be charged by Mercado Pago."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:814
+#: ../../src/Translations/AdminTranslations.php:815
 msgid "Keep active"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:815
+#: ../../src/Translations/AdminTranslations.php:816
 msgid "Deactivate"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:816
+#: ../../src/Translations/AdminTranslations.php:817
 msgid "Recurring payment credential (Production)"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:817
+#: ../../src/Translations/AdminTranslations.php:818
 msgid "Token to process subscriptions in production."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:818
+#: ../../src/Translations/AdminTranslations.php:819
 msgid "Recurring payment credential (Sandbox)"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:819
+#: ../../src/Translations/AdminTranslations.php:820
 msgid "Token to process subscriptions in tests."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:820
+#: ../../src/Translations/AdminTranslations.php:821
 msgid "Recurring payment public key (Production)"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:821
+#: ../../src/Translations/AdminTranslations.php:822
 msgid "Public key to tokenize cards in production."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:822
+#: ../../src/Translations/AdminTranslations.php:823
 msgid "Recurring payment public key (Sandbox)"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:823
+#: ../../src/Translations/AdminTranslations.php:824
 msgid "Public key to tokenize cards in tests."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:824
+#: ../../src/Translations/AdminTranslations.php:825
 msgid "This feature is available only for pre-approved sellers."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:825
+#: ../../src/Translations/AdminTranslations.php:826
 msgid "If you have a Mercado Pago consultant, contact them to obtain the credentials for this section."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:850, ../../src/Translations/AdminTranslations.php:864
+#: ../../src/Translations/AdminTranslations.php:851, ../../src/Translations/AdminTranslations.php:865
 msgid "Invoice"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:851, ../../src/Translations/AdminTranslations.php:913, ../../src/Translations/AdminTranslations.php:993, ../../src/Translations/AdminTranslations.php:995, ../../src/Translations/AdminTranslations.php:1086, ../../src/Translations/AdminTranslations.php:1088
+#: ../../src/Translations/AdminTranslations.php:852, ../../src/Translations/AdminTranslations.php:914, ../../src/Translations/AdminTranslations.php:994, ../../src/Translations/AdminTranslations.php:996, ../../src/Translations/AdminTranslations.php:1087, ../../src/Translations/AdminTranslations.php:1089
 msgid "Payments without leaving your store with our customizable checkout."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:852
+#: ../../src/Translations/AdminTranslations.php:853
 msgid "Mercado Pago - Checkout API Invoice"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:853
+#: ../../src/Translations/AdminTranslations.php:854
 msgid "Transparent Checkout | Invoice or Loterica"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:854, ../../src/Translations/AdminTranslations.php:916, ../../src/Translations/AdminTranslations.php:997
+#: ../../src/Translations/AdminTranslations.php:855, ../../src/Translations/AdminTranslations.php:917, ../../src/Translations/AdminTranslations.php:998
 msgid "With the Transparent Checkout, you can sell inside your store environment, without redirection and all the safety from Mercado Pago."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:858, ../../src/Translations/AdminTranslations.php:920
+#: ../../src/Translations/AdminTranslations.php:859, ../../src/Translations/AdminTranslations.php:921
 msgid "Enable the Checkout"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:859
+#: ../../src/Translations/AdminTranslations.php:860
 msgid "By disabling it, you will disable all invoice payments from Mercado Pago Transparent Checkout."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:860
+#: ../../src/Translations/AdminTranslations.php:861
 msgid "The transparent checkout for tickets is <b>enabled</b>."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:861
+#: ../../src/Translations/AdminTranslations.php:862
 msgid "The transparent checkout for tickets is <b>disabled</b>."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:870
+#: ../../src/Translations/AdminTranslations.php:871
 msgid "Payment Due"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:871
+#: ../../src/Translations/AdminTranslations.php:872
 msgid "In how many days will cash payments expire."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:872
+#: ../../src/Translations/AdminTranslations.php:873
 msgid "Advanced configuration of the cash payment experience"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:874, ../../src/Translations/AdminTranslations.php:934
+#: ../../src/Translations/AdminTranslations.php:875, ../../src/Translations/AdminTranslations.php:935
 msgid "Reduce inventory"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:875, ../../src/Translations/AdminTranslations.php:935
+#: ../../src/Translations/AdminTranslations.php:876, ../../src/Translations/AdminTranslations.php:936
 msgid "Activates inventory reduction during the creation of an order, whether or not the final payment is credited. Disable this option to reduce it only when payments are approved."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:876, ../../src/Translations/AdminTranslations.php:936
+#: ../../src/Translations/AdminTranslations.php:877, ../../src/Translations/AdminTranslations.php:937
 msgid "Reduce inventory is <b>enabled</b>."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:877, ../../src/Translations/AdminTranslations.php:937
+#: ../../src/Translations/AdminTranslations.php:878, ../../src/Translations/AdminTranslations.php:938
 msgid "Reduce inventory is <b>disabled</b>."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:879, ../../src/Translations/AdminTranslations.php:939
+#: ../../src/Translations/AdminTranslations.php:880, ../../src/Translations/AdminTranslations.php:940
 msgid "Enable the available payment methods"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:880, ../../src/Translations/AdminTranslations.php:940
+#: ../../src/Translations/AdminTranslations.php:881, ../../src/Translations/AdminTranslations.php:941
 msgid "Choose the available payment methods in your store."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:881, ../../src/Translations/AdminTranslations.php:941
+#: ../../src/Translations/AdminTranslations.php:882, ../../src/Translations/AdminTranslations.php:942
 msgid "All payment methods"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:912, ../../src/Translations/AdminTranslations.php:926
+#: ../../src/Translations/AdminTranslations.php:913, ../../src/Translations/AdminTranslations.php:927
 msgid "PSE"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:914
+#: ../../src/Translations/AdminTranslations.php:915
 msgid "Mercado Pago - Checkout API PSE"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:915
+#: ../../src/Translations/AdminTranslations.php:916
 msgid "Transparent Checkout PSE"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:921
+#: ../../src/Translations/AdminTranslations.php:922
 msgid "By deactivating it, you will disable PSE payments from Mercado Pago Transparent Checkout."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:922
+#: ../../src/Translations/AdminTranslations.php:923
 msgid "The transparent checkout for PSE is <b>enabled</b>."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:923
+#: ../../src/Translations/AdminTranslations.php:924
 msgid "The transparent checkout for PSE is <b>disabled</b>."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:932
+#: ../../src/Translations/AdminTranslations.php:933
 msgid "Advanced configuration of the PSE payment experience"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:961, ../../src/Translations/AdminTranslations.php:967
+#: ../../src/Translations/AdminTranslations.php:962, ../../src/Translations/AdminTranslations.php:968
 msgid "The transparent checkout for Pix payment is"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:985
+#: ../../src/Translations/AdminTranslations.php:986
 msgid "Go to the"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:986
+#: ../../src/Translations/AdminTranslations.php:987
 msgid "Your Profile"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:987
+#: ../../src/Translations/AdminTranslations.php:988
 msgid "area and choose the"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:988
+#: ../../src/Translations/AdminTranslations.php:989
 msgid "Your Pix Keys section"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:992, ../../src/Translations/AdminTranslations.php:1007
+#: ../../src/Translations/AdminTranslations.php:993, ../../src/Translations/AdminTranslations.php:1008
 msgid "Pix"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:994
+#: ../../src/Translations/AdminTranslations.php:995
 msgid "Mercado Pago - Checkout API Pix"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:996
+#: ../../src/Translations/AdminTranslations.php:997
 msgid "Transparent Checkout | Pix"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1002
+#: ../../src/Translations/AdminTranslations.php:1003
 msgid "By disabling it, you will disable all Pix payments from Mercado Pago Transparent Checkout."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1009
+#: ../../src/Translations/AdminTranslations.php:1010
 msgid "Expiration for payments via Pix"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1010
+#: ../../src/Translations/AdminTranslations.php:1011
 msgid "Set the limit in minutes for your clients to pay via Pix."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1011
+#: ../../src/Translations/AdminTranslations.php:1012
 msgid "15 minutes"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1012
+#: ../../src/Translations/AdminTranslations.php:1013
 msgid "30 minutes (recommended)"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1013
+#: ../../src/Translations/AdminTranslations.php:1014
 msgid "60 minutes"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1014
+#: ../../src/Translations/AdminTranslations.php:1015
 msgid "12 hours"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1015
+#: ../../src/Translations/AdminTranslations.php:1016
 msgid "24 hours"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1016
+#: ../../src/Translations/AdminTranslations.php:1017
 msgid "2 days"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1017
+#: ../../src/Translations/AdminTranslations.php:1018
 msgid "3 days"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1018
+#: ../../src/Translations/AdminTranslations.php:1019
 msgid "4 days"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1019
+#: ../../src/Translations/AdminTranslations.php:1020
 msgid "5 days"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1020
+#: ../../src/Translations/AdminTranslations.php:1021
 msgid "6 days"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1021
+#: ../../src/Translations/AdminTranslations.php:1022
 msgid "7 days"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1026
+#: ../../src/Translations/AdminTranslations.php:1027
 msgid "Would you like to know how Pix works?"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1027
+#: ../../src/Translations/AdminTranslations.php:1028
 msgid "We have a dedicated page where we explain how it works and its advantages."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1028
+#: ../../src/Translations/AdminTranslations.php:1029
 msgid "Find out more about Pix"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1029
+#: ../../src/Translations/AdminTranslations.php:1030
 msgid "Advanced configuration of the Pix experience"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1037
+#: ../../src/Translations/AdminTranslations.php:1038
 msgid "To activate Pix, you must have a key registered in Mercado Pago."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1038
+#: ../../src/Translations/AdminTranslations.php:1039
 msgid "Download the Mercado Pago app on your cell phone."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1040
+#: ../../src/Translations/AdminTranslations.php:1041
 msgid "Choose which data to register as Pix keys. After registering, you can set up Pix in your checkout."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1041
+#: ../../src/Translations/AdminTranslations.php:1042
 msgid "Remember that, for the time being, the Central Bank of Brazil is open Monday through Friday, from 9am to 6pm."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1042
+#: ../../src/Translations/AdminTranslations.php:1043
 msgid "If you requested your registration outside these hours, we will confirm it within the next business day."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1043
+#: ../../src/Translations/AdminTranslations.php:1044
 msgid "Learn more about Pix"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1044
+#: ../../src/Translations/AdminTranslations.php:1045
 msgid "If you have already registered a Pix key at Mercado Pago and cannot activate Pix in the checkout, "
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1045
+#: ../../src/Translations/AdminTranslations.php:1046
 msgid "click here."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1059, ../../src/Translations/AdminTranslations.php:1066
+#: ../../src/Translations/AdminTranslations.php:1060, ../../src/Translations/AdminTranslations.php:1067
 msgid "Checkout API is"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1060
+#: ../../src/Translations/AdminTranslations.php:1061
 msgid "active"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1061, ../../src/Translations/AdminTranslations.php:1068
+#: ../../src/Translations/AdminTranslations.php:1062, ../../src/Translations/AdminTranslations.php:1069
 msgid "for payments with Yape"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1085, ../../src/Translations/AdminTranslations.php:1100
+#: ../../src/Translations/AdminTranslations.php:1086, ../../src/Translations/AdminTranslations.php:1101
 msgid "Yape"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1087
+#: ../../src/Translations/AdminTranslations.php:1088
 msgid "Mercado Pago - Checkout API Yape"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1089
+#: ../../src/Translations/AdminTranslations.php:1090
 msgid "Checkout API | Yape"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1090
+#: ../../src/Translations/AdminTranslations.php:1091
 msgid "Receive payments through the Yape app automatically, without redirects, and with all the security of Mercado Pago. "
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1095
+#: ../../src/Translations/AdminTranslations.php:1096
 msgid "By disabling it, you will disable Yape from the Mercado Pago Checkout API."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1098
+#: ../../src/Translations/AdminTranslations.php:1099
 msgid "Title in the website’s checkout"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1099
+#: ../../src/Translations/AdminTranslations.php:1100
 msgid "Enter a title and a description for Yape in your Checkout API , maximum characters: 85"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1127
+#: ../../src/Translations/AdminTranslations.php:1128
 msgid "To enable test mode"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1129
+#: ../../src/Translations/AdminTranslations.php:1130
 msgid "copy your test credentials"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1130
+#: ../../src/Translations/AdminTranslations.php:1131
 msgid "and paste them above in section 1 of this page"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1135
+#: ../../src/Translations/AdminTranslations.php:1136
 msgid "Create your"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1137
+#: ../../src/Translations/AdminTranslations.php:1138
 msgid "test user"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1138
+#: ../../src/Translations/AdminTranslations.php:1139
 msgid "(Optional. Can be used in Production Mode and Test Mode, to test payments)"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1144
+#: ../../src/Translations/AdminTranslations.php:1145
 msgid "Use our test cards"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1145
+#: ../../src/Translations/AdminTranslations.php:1146
 msgid "never use real cards"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1151
+#: ../../src/Translations/AdminTranslations.php:1152
 msgid "Visit your store"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1152
+#: ../../src/Translations/AdminTranslations.php:1153
 msgid "to test purchases"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1156
+#: ../../src/Translations/AdminTranslations.php:1157
 msgid "4. Test your store before you start to sell"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1157
+#: ../../src/Translations/AdminTranslations.php:1158
 msgid "Choose how you want to operate your store:"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1158
+#: ../../src/Translations/AdminTranslations.php:1159
 msgid "Test Mode"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1159
+#: ../../src/Translations/AdminTranslations.php:1160
 msgid "Sale Mode (Production)"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1160
+#: ../../src/Translations/AdminTranslations.php:1161
 msgid "Mercado Pago payment methods in Production Mode"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1161
+#: ../../src/Translations/AdminTranslations.php:1162
 msgid "Mercado Pago payment methods in Test Mode"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1162
+#: ../../src/Translations/AdminTranslations.php:1163
 msgid "Enter test credentials"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1163
+#: ../../src/Translations/AdminTranslations.php:1164
 msgid "Select “Test Mode” if you want to try the payment experience before you start to sell or “Sales Mode” (Production) to start now."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1164
+#: ../../src/Translations/AdminTranslations.php:1165
 msgid "Mercado Pago Checkouts disabled for real collections."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1165
+#: ../../src/Translations/AdminTranslations.php:1166
 msgid "Test Mode rules."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1166
+#: ../../src/Translations/AdminTranslations.php:1167
 msgid "Mercado Pago Checkouts enabled for real collections."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1167
+#: ../../src/Translations/AdminTranslations.php:1168
 msgid "The clients can make real purchases in your store."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1172
+#: ../../src/Translations/AdminTranslations.php:1173
 msgid "Store in sale mode (Production)"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1173
+#: ../../src/Translations/AdminTranslations.php:1174
 msgid "Store under test"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1174
+#: ../../src/Translations/AdminTranslations.php:1175
 msgid "Save changes"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1186
+#: ../../src/Translations/AdminTranslations.php:1187
 msgid "Store business fields are valid"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1187
+#: ../../src/Translations/AdminTranslations.php:1188
 msgid "Store business fields could not be validated"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1188
+#: ../../src/Translations/AdminTranslations.php:1189
 msgid "At least one payment method is enabled"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1189
+#: ../../src/Translations/AdminTranslations.php:1190
 msgid "No payment method enabled"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1201
+#: ../../src/Translations/AdminTranslations.php:1202
 msgid "We’ll take you to Mercado Pago to choose the account where you’ll receive the money from your sales"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1202
+#: ../../src/Translations/AdminTranslations.php:1203
 msgid "It will only take a few minutes."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1203
+#: ../../src/Translations/AdminTranslations.php:1204
 msgid "Start linking"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1204
+#: ../../src/Translations/AdminTranslations.php:1205
 msgid "Well done! You linked your Mercado Pago account to receive the money from your sales"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1205
+#: ../../src/Translations/AdminTranslations.php:1206
 msgid "Now, finish setting up the sections below to start selling."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1206
+#: ../../src/Translations/AdminTranslations.php:1207
 msgid "Store name"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1207
+#: ../../src/Translations/AdminTranslations.php:1208
 msgid "Store contact"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1209
+#: ../../src/Translations/AdminTranslations.php:1210
 msgid "Switch account"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1211
+#: ../../src/Translations/AdminTranslations.php:1212
 msgid "linking process details"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1212
+#: ../../src/Translations/AdminTranslations.php:1213
 msgid "We’re sorry. It wasn’t possible to link your store to a Mercado Pago account"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1213
+#: ../../src/Translations/AdminTranslations.php:1214
 msgid "Try linking it again to receive the money from your sales."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1214
+#: ../../src/Translations/AdminTranslations.php:1215
 msgid "Try again"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1215
+#: ../../src/Translations/AdminTranslations.php:1216
 msgid "Update your store’s link to Mercado Pago"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1216
+#: ../../src/Translations/AdminTranslations.php:1217
 msgid "This action is necessary to keep receiving payments in your store as usual."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1218
+#: ../../src/Translations/AdminTranslations.php:1219
 msgid "You updated your Mercado Pago account to receive the money from your sales"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1219
+#: ../../src/Translations/AdminTranslations.php:1220
 msgid "Keep selling as usual."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1220
+#: ../../src/Translations/AdminTranslations.php:1221
 msgid "You linked your Mercado Pago account to receive the money from your sales"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1221
+#: ../../src/Translations/AdminTranslations.php:1222
 msgid "If you haven’t done so yet, finish setting up the sections below to start selling."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1222
+#: ../../src/Translations/AdminTranslations.php:1223
 msgid "Something went wrong"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1223
+#: ../../src/Translations/AdminTranslations.php:1224
 msgid "It wasn’t possible to upload your details."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1224
+#: ../../src/Translations/AdminTranslations.php:1225
 msgid "We can’t display your credentials at the moment"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1225
+#: ../../src/Translations/AdminTranslations.php:1226
 msgid "Please try again in a few minutes."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1226
+#: ../../src/Translations/AdminTranslations.php:1227
 msgid "Linking process details"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1227
+#: ../../src/Translations/AdminTranslations.php:1228
 msgid "During the linking process, an app is created to identify your store within Mercado Pago and your credentials (authentication keys) are generated. These enable you to receive payments or run tests in your checkout."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1228
+#: ../../src/Translations/AdminTranslations.php:1229
 msgid "App name"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1230
+#: ../../src/Translations/AdminTranslations.php:1231
 msgid "These enable the checkout to receive real payments in your store."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1231
+#: ../../src/Translations/AdminTranslations.php:1232
 msgid "Testing credentials"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1232
+#: ../../src/Translations/AdminTranslations.php:1233
 msgid "These enable you to simulate payments in the checkout or run tests."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1233
+#: ../../src/Translations/AdminTranslations.php:1234
 msgid "Test credentials allow you to simulate payments or run tests at checkout. Find and copy them from the"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1234
+#: ../../src/Translations/AdminTranslations.php:1235
 msgid "Are you a developer? Access the"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1235
+#: ../../src/Translations/AdminTranslations.php:1236
 msgid "Developer Dashboard"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1236
+#: ../../src/Translations/AdminTranslations.php:1237
 msgid "Change country"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1237
+#: ../../src/Translations/AdminTranslations.php:1238
 msgid "Store"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1239
+#: ../../src/Translations/AdminTranslations.php:1240
 msgid "Before linking, select your store’s location"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1240
+#: ../../src/Translations/AdminTranslations.php:1241
 msgid "In which country is your Mercado Pago account registered?"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1241
+#: ../../src/Translations/AdminTranslations.php:1242
 msgid "Select a country"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1242
+#: ../../src/Translations/AdminTranslations.php:1243
 msgid "Select a country to proceed."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1243
+#: ../../src/Translations/AdminTranslations.php:1244
 msgid "You selected {{country}} as the country for your store."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1257
+#: ../../src/Translations/AdminTranslations.php:1258
 msgid "Valid Public Key"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1258
+#: ../../src/Translations/AdminTranslations.php:1259
 msgid "Invalid Public Key"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1259
+#: ../../src/Translations/AdminTranslations.php:1260
 msgid "Valid Access Token"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1260
+#: ../../src/Translations/AdminTranslations.php:1261
 msgid "Invalid Access Token"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1272
+#: ../../src/Translations/AdminTranslations.php:1273
 msgid "You saved your credentials."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1273
+#: ../../src/Translations/AdminTranslations.php:1274
 msgid "Your store has exited Test Mode and is making real sales in Production Mode."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1274
+#: ../../src/Translations/AdminTranslations.php:1275
 msgid "To test the store, re-enter both test credentials."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1275
+#: ../../src/Translations/AdminTranslations.php:1276
 msgid "Something went wrong. Please paste your key again."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1276, ../../src/Translations/StoreTranslations.php:330, ../../src/Translations/StoreTranslations.php:334, ../../src/Translations/StoreTranslations.php:336, ../../src/Translations/StoreTranslations.php:338, ../../src/Translations/StoreTranslations.php:350, ../../src/Translations/StoreTranslations.php:355, ../../src/Translations/StoreTranslations.php:358, ../../src/Translations/StoreTranslations.php:526, ../../src/Translations/StoreTranslations.php:528
+#: ../../src/Translations/AdminTranslations.php:1277, ../../src/Translations/StoreTranslations.php:330, ../../src/Translations/StoreTranslations.php:334, ../../src/Translations/StoreTranslations.php:336, ../../src/Translations/StoreTranslations.php:338, ../../src/Translations/StoreTranslations.php:350, ../../src/Translations/StoreTranslations.php:355, ../../src/Translations/StoreTranslations.php:358, ../../src/Translations/StoreTranslations.php:545, ../../src/Translations/StoreTranslations.php:547
 msgid "Fill out this field."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1277
+#: ../../src/Translations/AdminTranslations.php:1278
 msgid "This is a production key, please paste a test key instead."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1278
+#: ../../src/Translations/AdminTranslations.php:1279
 msgid "Enter the test key that appears in the application created for this store."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1279
+#: ../../src/Translations/AdminTranslations.php:1280
 msgid "Invalid credentials"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1280
+#: ../../src/Translations/AdminTranslations.php:1281
 msgid " for test mode"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1292
+#: ../../src/Translations/AdminTranslations.php:1293
 msgid "Store information is valid"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1305
+#: ../../src/Translations/AdminTranslations.php:1306
 msgid "Attention:"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1306
+#: ../../src/Translations/AdminTranslations.php:1307
 msgid "The currency settings you have in WooCommerce are not compatible with the currency you use in your Mercado Pago account. Please activate the currency conversion."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1309
+#: ../../src/Translations/AdminTranslations.php:1310
 msgid "We are converting your currency from: "
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1325
+#: ../../src/Translations/AdminTranslations.php:1326
 msgid "to "
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1336
+#: ../../src/Translations/AdminTranslations.php:1337
 msgid "Payment status on Mercado Pago"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1337
+#: ../../src/Translations/AdminTranslations.php:1338
 msgid "This is the payment status of your Mercado Pago Activities. To check the order status, please refer to Order details."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1338, ../../src/Translations/AdminTranslations.php:1340
+#: ../../src/Translations/AdminTranslations.php:1339, ../../src/Translations/AdminTranslations.php:1341
 msgid "View purchase details at Mercado Pago"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1339, ../../src/Translations/AdminTranslations.php:1341, ../../src/Translations/AdminTranslations.php:1343
+#: ../../src/Translations/AdminTranslations.php:1340, ../../src/Translations/AdminTranslations.php:1342, ../../src/Translations/AdminTranslations.php:1344
 msgid "Sync order status"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1342
+#: ../../src/Translations/AdminTranslations.php:1343
 msgid "Consult the reasons for refusal"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1344
+#: ../../src/Translations/AdminTranslations.php:1345
 msgid "Order update successfully. This page will be reloaded..."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1345
+#: ../../src/Translations/AdminTranslations.php:1346
 msgid "Unable to update order:"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1346
+#: ../../src/Translations/AdminTranslations.php:1347
 msgid "Payment made"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1347
+#: ../../src/Translations/AdminTranslations.php:1348
 msgid "Payment made by the buyer and already credited in the account."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1348
+#: ../../src/Translations/AdminTranslations.php:1349
 msgid "Call resolved"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1349, ../../src/Translations/AdminTranslations.php:1399
+#: ../../src/Translations/AdminTranslations.php:1350, ../../src/Translations/AdminTranslations.php:1400
 msgid "Please contact Mercado Pago for further details."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1350
+#: ../../src/Translations/AdminTranslations.php:1351
 msgid "Payment refunded"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1351
+#: ../../src/Translations/AdminTranslations.php:1352
 msgid "Your refund request has been made. Please contact Mercado Pago for further details."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1352, ../../src/Translations/AdminTranslations.php:1354
+#: ../../src/Translations/AdminTranslations.php:1353, ../../src/Translations/AdminTranslations.php:1355
 msgid "Payment returned"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1353
+#: ../../src/Translations/AdminTranslations.php:1354
 msgid "The payment has been returned to the client."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1355
+#: ../../src/Translations/AdminTranslations.php:1356
 msgid "The payment has been partially returned to the client."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1356
+#: ../../src/Translations/AdminTranslations.php:1357
 msgid "Payment canceled"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1357
+#: ../../src/Translations/AdminTranslations.php:1358
 msgid "The payment has been successfully canceled."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1358
+#: ../../src/Translations/AdminTranslations.php:1359
 msgid "Purchase canceled"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1359
+#: ../../src/Translations/AdminTranslations.php:1360
 msgid "The payment has been canceled by the customer."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1360, ../../src/Translations/AdminTranslations.php:1362, ../../src/Translations/AdminTranslations.php:1364, ../../src/Translations/AdminTranslations.php:1366, ../../src/Translations/AdminTranslations.php:1368, ../../src/Translations/AdminTranslations.php:1376, ../../src/Translations/AdminTranslations.php:1378, ../../src/Translations/AdminTranslations.php:1380, ../../src/Translations/AdminTranslations.php:1382, ../../src/Translations/AdminTranslations.php:1384, ../../src/Translations/AdminTranslations.php:1386, ../../src/Translations/AdminTranslations.php:1388, ../../src/Translations/AdminTranslations.php:1443
+#: ../../src/Translations/AdminTranslations.php:1361, ../../src/Translations/AdminTranslations.php:1363, ../../src/Translations/AdminTranslations.php:1365, ../../src/Translations/AdminTranslations.php:1367, ../../src/Translations/AdminTranslations.php:1369, ../../src/Translations/AdminTranslations.php:1377, ../../src/Translations/AdminTranslations.php:1379, ../../src/Translations/AdminTranslations.php:1381, ../../src/Translations/AdminTranslations.php:1383, ../../src/Translations/AdminTranslations.php:1385, ../../src/Translations/AdminTranslations.php:1387, ../../src/Translations/AdminTranslations.php:1389, ../../src/Translations/AdminTranslations.php:1444
 msgid "Pending payment"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1361, ../../src/Translations/AdminTranslations.php:1363, ../../src/Translations/AdminTranslations.php:1365, ../../src/Translations/AdminTranslations.php:1367
+#: ../../src/Translations/AdminTranslations.php:1362, ../../src/Translations/AdminTranslations.php:1364, ../../src/Translations/AdminTranslations.php:1366, ../../src/Translations/AdminTranslations.php:1368
 msgid "Awaiting payment from the buyer."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1369
+#: ../../src/Translations/AdminTranslations.php:1370
 msgid "We are veryfing the payment. We will notify you by email in up to 6 hours if everything is fine so that you can deliver the product or provide the service."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1370, ../../src/Translations/AdminTranslations.php:1394, ../../src/Translations/AdminTranslations.php:1410, ../../src/Translations/AdminTranslations.php:1429, ../../src/Translations/AdminTranslations.php:1433, ../../src/Translations/AdminTranslations.php:1435, ../../src/Translations/AdminTranslations.php:1437, ../../src/Translations/AdminTranslations.php:1441
+#: ../../src/Translations/AdminTranslations.php:1371, ../../src/Translations/AdminTranslations.php:1395, ../../src/Translations/AdminTranslations.php:1411, ../../src/Translations/AdminTranslations.php:1430, ../../src/Translations/AdminTranslations.php:1434, ../../src/Translations/AdminTranslations.php:1436, ../../src/Translations/AdminTranslations.php:1438, ../../src/Translations/AdminTranslations.php:1442
 msgid "Declined payment"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1371, ../../src/Translations/AdminTranslations.php:1395
+#: ../../src/Translations/AdminTranslations.php:1372, ../../src/Translations/AdminTranslations.php:1396
 msgid "The card-issuing bank declined the payment. Please ask your client to use another card or to get in touch with the bank."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1372
+#: ../../src/Translations/AdminTranslations.php:1373
 msgid "Payment authorized. Awaiting capture."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1373
+#: ../../src/Translations/AdminTranslations.php:1374
 msgid "The payment has been authorized on the client's card. Please capture the payment."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1374
+#: ../../src/Translations/AdminTranslations.php:1375
 msgid "Payment in process"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1375, ../../src/Translations/AdminTranslations.php:1385
+#: ../../src/Translations/AdminTranslations.php:1376, ../../src/Translations/AdminTranslations.php:1386
 msgid "Please wait or contact Mercado Pago for further details"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1377
+#: ../../src/Translations/AdminTranslations.php:1378
 msgid "The bank is reviewing the payment. As soon as we have their confirmation, we will notify you via email so that you can deliver the product or provide the service."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1379, ../../src/Translations/AdminTranslations.php:1381, ../../src/Translations/AdminTranslations.php:1383
+#: ../../src/Translations/AdminTranslations.php:1380, ../../src/Translations/AdminTranslations.php:1382, ../../src/Translations/AdminTranslations.php:1384
 msgid "Awaiting payment information validation."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1387
+#: ../../src/Translations/AdminTranslations.php:1388
 msgid "Waiting for the buyer."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1389
+#: ../../src/Translations/AdminTranslations.php:1390
 msgid "Waiting for the card issuer."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1390, ../../src/Translations/AdminTranslations.php:1392, ../../src/Translations/AdminTranslations.php:1396, ../../src/Translations/AdminTranslations.php:1417, ../../src/Translations/AdminTranslations.php:1439
+#: ../../src/Translations/AdminTranslations.php:1391, ../../src/Translations/AdminTranslations.php:1393, ../../src/Translations/AdminTranslations.php:1397, ../../src/Translations/AdminTranslations.php:1418, ../../src/Translations/AdminTranslations.php:1440
 msgid "The card issuing bank declined the payment"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1391, ../../src/Translations/AdminTranslations.php:1393, ../../src/Translations/AdminTranslations.php:1397, ../../src/Translations/AdminTranslations.php:1418, ../../src/Translations/AdminTranslations.php:1440
+#: ../../src/Translations/AdminTranslations.php:1392, ../../src/Translations/AdminTranslations.php:1394, ../../src/Translations/AdminTranslations.php:1398, ../../src/Translations/AdminTranslations.php:1419, ../../src/Translations/AdminTranslations.php:1441
 msgid "Please recommend your customer to pay with another payment method or to contact their bank."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1398
+#: ../../src/Translations/AdminTranslations.php:1399
 msgid "Mercado Pago did not process the payment"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1400, ../../src/Translations/AdminTranslations.php:1445
+#: ../../src/Translations/AdminTranslations.php:1401, ../../src/Translations/AdminTranslations.php:1446
 msgid "Expired payment deadline"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1401, ../../src/Translations/AdminTranslations.php:1446
+#: ../../src/Translations/AdminTranslations.php:1402, ../../src/Translations/AdminTranslations.php:1447
 msgid "The client did not pay within the time limit."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1402, ../../src/Translations/AdminTranslations.php:1404, ../../src/Translations/AdminTranslations.php:1406, ../../src/Translations/AdminTranslations.php:1447
+#: ../../src/Translations/AdminTranslations.php:1403, ../../src/Translations/AdminTranslations.php:1405, ../../src/Translations/AdminTranslations.php:1407, ../../src/Translations/AdminTranslations.php:1448
 msgid "Your customer entered one or more incorrect card details"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1403, ../../src/Translations/AdminTranslations.php:1405, ../../src/Translations/AdminTranslations.php:1407, ../../src/Translations/AdminTranslations.php:1448, ../../src/Translations/AdminTranslations.php:1449
+#: ../../src/Translations/AdminTranslations.php:1404, ../../src/Translations/AdminTranslations.php:1406, ../../src/Translations/AdminTranslations.php:1408, ../../src/Translations/AdminTranslations.php:1449, ../../src/Translations/AdminTranslations.php:1450
 msgid "Please ask them to enter to enter them again exactly as they appear on the card or on their bank app to complete the payment."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1408, ../../src/Translations/AdminTranslations.php:1431
+#: ../../src/Translations/AdminTranslations.php:1409, ../../src/Translations/AdminTranslations.php:1432
 msgid "We protected you from a suspicious payment"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1409
+#: ../../src/Translations/AdminTranslations.php:1410
 msgid "For safety reasons, this transaction cannot be completed."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1411, ../../src/Translations/AdminTranslations.php:1430
+#: ../../src/Translations/AdminTranslations.php:1412, ../../src/Translations/AdminTranslations.php:1431
 msgid "The buyer is suspended in our platform. Your client must contact us to check what happened."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1412
+#: ../../src/Translations/AdminTranslations.php:1413
 msgid "For safety reasons, the card issuing bank declined the payment"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1413, ../../src/Translations/AdminTranslations.php:1432
+#: ../../src/Translations/AdminTranslations.php:1414, ../../src/Translations/AdminTranslations.php:1433
 msgid "Recommend your customer to pay with their usual payment method and device for online purchases."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1414
+#: ../../src/Translations/AdminTranslations.php:1415
 msgid "Your customer's credit card has no available limit"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1415, ../../src/Translations/AdminTranslations.php:1416, ../../src/Translations/AdminTranslations.php:1420
+#: ../../src/Translations/AdminTranslations.php:1416, ../../src/Translations/AdminTranslations.php:1417, ../../src/Translations/AdminTranslations.php:1421
 msgid "Please ask them to pay with another card or to choose another payment method."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1419
+#: ../../src/Translations/AdminTranslations.php:1420
 msgid "Your customer reached the limit of payment attempts with this card"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1421
+#: ../../src/Translations/AdminTranslations.php:1422
 msgid "Your customer's card  does not accept the number of installments selected"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1422
+#: ../../src/Translations/AdminTranslations.php:1423
 msgid "Please ask them to choose a different number of installments or to pay with another method."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1423, ../../src/Translations/AdminTranslations.php:1450
+#: ../../src/Translations/AdminTranslations.php:1424, ../../src/Translations/AdminTranslations.php:1451
 msgid "Your customer needs to authorize the payment through their bank"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1424, ../../src/Translations/AdminTranslations.php:1451
+#: ../../src/Translations/AdminTranslations.php:1425, ../../src/Translations/AdminTranslations.php:1452
 msgid "Please ask them to call the telephone number on their card or to pay with another method."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1425
+#: ../../src/Translations/AdminTranslations.php:1426
 msgid "The payment was declined because your customer already paid for this purchase"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1426
+#: ../../src/Translations/AdminTranslations.php:1427
 msgid "Check your approved payments to verify it."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1427
+#: ../../src/Translations/AdminTranslations.php:1428
 msgid "Your customer's card was is not activated yet"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1428
+#: ../../src/Translations/AdminTranslations.php:1429
 msgid "Please ask them to contact their bank by calling the number on the back of their card or to pay with another method."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1434
+#: ../../src/Translations/AdminTranslations.php:1435
 msgid "This payment was declined because it did not pass Mercado Pago security controls. Please ask your client to use another card."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1436
+#: ../../src/Translations/AdminTranslations.php:1437
 msgid "The amount exceeded the card limit. Please ask your client to use another card or to get in touch with the bank."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1438, ../../src/Translations/AdminTranslations.php:1442
+#: ../../src/Translations/AdminTranslations.php:1439, ../../src/Translations/AdminTranslations.php:1443
 msgid "Please ask your client to use another card or to get in touch with the card issuer."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1444
+#: ../../src/Translations/AdminTranslations.php:1445
 msgid "The amount exceeded the card's limit. Please ask your client to use another card or to get in touch with the bank."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1452
+#: ../../src/Translations/AdminTranslations.php:1453
 msgid "Your customer's debit card has insufficient funds"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1453
+#: ../../src/Translations/AdminTranslations.php:1454
 msgid "Please recommend your customer to pay with another card or to choose another payment method."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1454
+#: ../../src/Translations/AdminTranslations.php:1455
 msgid "Something went wrong and the payment was declined"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1455
+#: ../../src/Translations/AdminTranslations.php:1456
 msgid "Please recommend you customer to try again or to pay with another payment method."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1468
+#: ../../src/Translations/AdminTranslations.php:1469
 msgid "Any questions?"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1469
+#: ../../src/Translations/AdminTranslations.php:1470
 msgid "Please check the"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1470, ../../src/Translations/AdminTranslations.php:1486
+#: ../../src/Translations/AdminTranslations.php:1471, ../../src/Translations/AdminTranslations.php:1487
 msgid "FAQs"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1471
+#: ../../src/Translations/AdminTranslations.php:1472
 msgid "on the dev website."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1484
+#: ../../src/Translations/AdminTranslations.php:1485
 msgid "Check our"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1487
+#: ../../src/Translations/AdminTranslations.php:1488
 msgid "or open a ticket to contact the Mercado Pago team."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1492
+#: ../../src/Translations/AdminTranslations.php:1493
 msgid "1. Go to the dev website and open a"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1494
+#: ../../src/Translations/AdminTranslations.php:1495
 msgid "ticket"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1495
+#: ../../src/Translations/AdminTranslations.php:1496
 msgid "in the Support section."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1500
+#: ../../src/Translations/AdminTranslations.php:1501
 msgid "4. Download the"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1501
+#: ../../src/Translations/AdminTranslations.php:1502
 msgid "error history"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1502
+#: ../../src/Translations/AdminTranslations.php:1503
 msgid "and share it with the Mercado Pago team when asked for it."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1506
+#: ../../src/Translations/AdminTranslations.php:1507
 msgid "Do you need help?"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1507
+#: ../../src/Translations/AdminTranslations.php:1508
 msgid "How to open a ticket:"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1509
+#: ../../src/Translations/AdminTranslations.php:1510
 msgid "2. Fill out the form with your store details."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1510
+#: ../../src/Translations/AdminTranslations.php:1511
 msgid "3. Copy and paste the following details when asked for the the technical information:"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1513
+#: ../../src/Translations/AdminTranslations.php:1514
 msgid "Version:"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1514
+#: ../../src/Translations/AdminTranslations.php:1515
 msgid "History of errors"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1515
+#: ../../src/Translations/AdminTranslations.php:1516
 msgid "Select the files you want to share with our team and click on Download. This information will be requested by e-mail if necessary."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1518
+#: ../../src/Translations/AdminTranslations.php:1519
 msgid "Source"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1519
+#: ../../src/Translations/AdminTranslations.php:1520
 msgid "File date"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1520
+#: ../../src/Translations/AdminTranslations.php:1521
 msgid "Download"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1521
+#: ../../src/Translations/AdminTranslations.php:1522
 msgid "Next Page"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1522
+#: ../../src/Translations/AdminTranslations.php:1523
 msgid "Previous page"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1523
+#: ../../src/Translations/AdminTranslations.php:1524
 msgid "The plugin has not yet recorded any logs in your store."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1530
+#: ../../src/Translations/AdminTranslations.php:1531
 msgid "Argentina"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1531
+#: ../../src/Translations/AdminTranslations.php:1532
 msgid "Brazil"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1532
+#: ../../src/Translations/AdminTranslations.php:1533
 msgid "Chile"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1533
+#: ../../src/Translations/AdminTranslations.php:1534
 msgid "Colombia"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1534
+#: ../../src/Translations/AdminTranslations.php:1535
 msgid "Mexico"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1535
+#: ../../src/Translations/AdminTranslations.php:1536
 msgid "Peru"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1536
+#: ../../src/Translations/AdminTranslations.php:1537
 msgid "Uruguay"
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1543
+#: ../../src/Translations/AdminTranslations.php:1544
 msgid "The amount entered for the refund must be greater than zero. Please enter the amount you need to refund."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1544, ../../src/Translations/AdminTranslations.php:1549, ../../src/Translations/AdminTranslations.php:1555
+#: ../../src/Translations/AdminTranslations.php:1545, ../../src/Translations/AdminTranslations.php:1550, ../../src/Translations/AdminTranslations.php:1556
 msgid "Something went wrong. Please contact the Mercado Pago support team and we will help you resolve it."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1545
+#: ../../src/Translations/AdminTranslations.php:1546
 msgid "You do not have sufficient balance in your account. To make the refund, please deposit money in your account."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1546
+#: ../../src/Translations/AdminTranslations.php:1547
 msgid "Something went wrong. The refund could not be processed at this time. Please try again later."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1547
+#: ../../src/Translations/AdminTranslations.php:1548
 msgid "You can only refund a payment that has already been approved. Please wait for approval and try again."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1548
+#: ../../src/Translations/AdminTranslations.php:1549
 msgid "The requested refund amount is greater than the total amount of the order. Please check the amount and try again."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1550
+#: ../../src/Translations/AdminTranslations.php:1551
 msgid "You do not have permission to process a refund. Please check your access to the site and try again."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1551, ../../src/Translations/AdminTranslations.php:1552
+#: ../../src/Translations/AdminTranslations.php:1552, ../../src/Translations/AdminTranslations.php:1553
 msgid "The refund could not be processed. Please try again or contact the Mercado Pago support team."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1553
+#: ../../src/Translations/AdminTranslations.php:1554
 msgid "This payment is too old to be refunded. If you need help, please contact the Mercado Pago support team."
 msgstr ""
 
-#: ../../src/Translations/AdminTranslations.php:1554
+#: ../../src/Translations/AdminTranslations.php:1555
 msgid "Your access credentials are incorrect or have expired. Please renew your credentials in the Mercado Pago settings and try again."
 msgstr ""
 
@@ -2308,15 +2316,15 @@ msgstr ""
 msgid "Mercado Pago Commission"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:185, ../../src/Translations/StoreTranslations.php:239, ../../src/Translations/StoreTranslations.php:365, ../../src/Translations/StoreTranslations.php:499, ../../src/Translations/StoreTranslations.php:582, ../../src/Translations/StoreTranslations.php:640
+#: ../../src/Translations/StoreTranslations.php:185, ../../src/Translations/StoreTranslations.php:239, ../../src/Translations/StoreTranslations.php:365, ../../src/Translations/StoreTranslations.php:501, ../../src/Translations/StoreTranslations.php:602, ../../src/Translations/StoreTranslations.php:660
 msgid "There was an error. Please try again in a few minutes."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:186, ../../src/Translations/StoreTranslations.php:229, ../../src/Translations/StoreTranslations.php:482, ../../src/Translations/StoreTranslations.php:516, ../../src/Translations/StoreTranslations.php:574, ../../src/Translations/StoreTranslations.php:638
+#: ../../src/Translations/StoreTranslations.php:186, ../../src/Translations/StoreTranslations.php:229, ../../src/Translations/StoreTranslations.php:482, ../../src/Translations/StoreTranslations.php:535, ../../src/Translations/StoreTranslations.php:594, ../../src/Translations/StoreTranslations.php:658
 msgid "By continuing, you agree to our"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:187, ../../src/Translations/StoreTranslations.php:230, ../../src/Translations/StoreTranslations.php:483, ../../src/Translations/StoreTranslations.php:518, ../../src/Translations/StoreTranslations.php:575, ../../src/Translations/StoreTranslations.php:639
+#: ../../src/Translations/StoreTranslations.php:187, ../../src/Translations/StoreTranslations.php:230, ../../src/Translations/StoreTranslations.php:483, ../../src/Translations/StoreTranslations.php:537, ../../src/Translations/StoreTranslations.php:595, ../../src/Translations/StoreTranslations.php:659
 msgid "Terms and conditions"
 msgstr ""
 
@@ -2328,7 +2336,7 @@ msgstr ""
 msgid "Use Mercado Pago's payment methods without real charges. "
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:201, ../../src/Translations/StoreTranslations.php:224, ../../src/Translations/StoreTranslations.php:327, ../../src/Translations/StoreTranslations.php:514, ../../src/Translations/StoreTranslations.php:566, ../../src/Translations/StoreTranslations.php:626
+#: ../../src/Translations/StoreTranslations.php:201, ../../src/Translations/StoreTranslations.php:224, ../../src/Translations/StoreTranslations.php:327, ../../src/Translations/StoreTranslations.php:533, ../../src/Translations/StoreTranslations.php:586, ../../src/Translations/StoreTranslations.php:646
 msgid "See the rules for the test mode."
 msgstr ""
 
@@ -2498,7 +2506,7 @@ msgstr ""
 msgid "Security Code"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:337, ../../src/Translations/StoreTranslations.php:567, ../../src/Translations/StoreTranslations.php:627
+#: ../../src/Translations/StoreTranslations.php:337, ../../src/Translations/StoreTranslations.php:587, ../../src/Translations/StoreTranslations.php:647
 msgid "Holder ID"
 msgstr ""
 
@@ -2966,7 +2974,7 @@ msgstr ""
 msgid "Pix in Test Mode"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:478, ../../src/Translations/StoreTranslations.php:515
+#: ../../src/Translations/StoreTranslations.php:478, ../../src/Translations/StoreTranslations.php:534
 msgid "You can test the flow to generate a code, but you cannot finalize the payment."
 msgstr ""
 
@@ -2982,737 +2990,876 @@ msgstr ""
 msgid "Pix logo"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:484, ../../src/Translations/StoreTranslations.php:493
+#: ../../src/Translations/StoreTranslations.php:484
+msgid "Sufficient balance for this purchase."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:485, ../../src/SmartPix/Adapters/WooCommerce/SmartPixRepaymentGuard.php:92
+msgid "We are processing your Pix via Open Finance payment. Your order remains pending until the payment is confirmed."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:486, ../../src/Translations/StoreTranslations.php:495
 msgid "Code valid for "
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:485
+#: ../../src/Translations/StoreTranslations.php:487
 msgid "Now you just need to pay with Pix to finalize your purchase"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:486
+#: ../../src/Translations/StoreTranslations.php:488
 msgid "How to pay with Pix:"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:487
+#: ../../src/Translations/StoreTranslations.php:489
 msgid "Go to your bank's app or website"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:488
+#: ../../src/Translations/StoreTranslations.php:490
 msgid "Search for the option to pay with Pix"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:489
+#: ../../src/Translations/StoreTranslations.php:491
 msgid "Scan the QR code or Pix code"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:490
+#: ../../src/Translations/StoreTranslations.php:492
 msgid "Done! You will see the payment confirmation"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:491
+#: ../../src/Translations/StoreTranslations.php:493
 msgid "Value: "
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:492
+#: ../../src/Translations/StoreTranslations.php:494
 msgid "Scan the QR code:"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:494
+#: ../../src/Translations/StoreTranslations.php:496
 msgid "If you prefer, you can pay by copying and pasting the following code"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:495
+#: ../../src/Translations/StoreTranslations.php:497
 msgid "Copy code"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:496, ../../src/Translations/StoreTranslations.php:581, ../../src/Translations/StoreTranslations.php:637
+#: ../../src/Translations/StoreTranslations.php:498, ../../src/Translations/StoreTranslations.php:601, ../../src/Translations/StoreTranslations.php:657
 msgid "Mercado Pago: The customer has not paid yet."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:497
+#: ../../src/Translations/StoreTranslations.php:499
 msgid "Mercado Pago: Now you just need to pay with Pix to finalize your purchase."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:498
+#: ../../src/Translations/StoreTranslations.php:500
 msgid "Scan the QR code below or copy and paste the code into your bank's application."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:500
+#: ../../src/Translations/StoreTranslations.php:502
 msgid "Payment Approved"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:501
+#: ../../src/Translations/StoreTranslations.php:503
 msgid "Your payment with PIX has been successfully approved."
 msgstr ""
 
+#: ../../src/Translations/StoreTranslations.php:504
+msgid "We are processing your payment"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:505
+msgid "This may take a few seconds"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:506
+msgid "Finalizing your payment"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:507
+msgid "We are still processing your payment"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:508
+msgid "Your payment is still being processed"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:509
+msgid "Confirmation may take up to 15 minutes. Check the status in the store's orders."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:510
+msgid "Your payment is still being processed. Check your order status again later."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:511
+msgid "Your payment was approved"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:512
+msgid "We have updated your order status."
+msgstr ""
+
 #: ../../src/Translations/StoreTranslations.php:513
-msgid "Yape in Test Mode"
+msgid "We could not process your payment"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:514
+msgid "Make a new purchase with another payment method."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:515
+msgid "Insufficient balance"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:516
+msgid "Pix limit reached"
 msgstr ""
 
 #: ../../src/Translations/StoreTranslations.php:517
-msgid "Cell phone linked to Yape"
+msgid "Make a new purchase with another account or payment method."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:518
+msgid "Make a new purchase"
 msgstr ""
 
 #: ../../src/Translations/StoreTranslations.php:519
-msgid "Verify in Yape that the option \"Compra por internet\" is activated and that the daily limit is enough."
+msgid "Your payment was cancelled"
 msgstr ""
 
 #: ../../src/Translations/StoreTranslations.php:520
+msgid "The order was cancelled. Check your orders on the website or contact the store."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:532
+msgid "Yape in Test Mode"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:536
+msgid "Cell phone linked to Yape"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:538
+msgid "Verify in Yape that the option \"Compra por internet\" is activated and that the daily limit is enough."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:539
 msgid "Pay with Yape in a few minutes"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:521
+#: ../../src/Translations/StoreTranslations.php:540
 msgid "Fill out the following details and confirm your purchase."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:522
+#: ../../src/Translations/StoreTranslations.php:541
 msgid "Approval code"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:523
+#: ../../src/Translations/StoreTranslations.php:542
 msgid "Processed by Mercado Pago"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:524
+#: ../../src/Translations/StoreTranslations.php:543
 msgid "The code is available in the Yape app menu."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:525, ../../src/Translations/StoreTranslations.php:527
+#: ../../src/Translations/StoreTranslations.php:544, ../../src/Translations/StoreTranslations.php:546
 msgid "Enter the entire number."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:540
+#: ../../src/Translations/StoreTranslations.php:559
+msgid "Pix via Open Finance"
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:560
 msgid "Payment approved."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:541
+#: ../../src/Translations/StoreTranslations.php:561
 msgid "Waiting for the Pix payment."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:542
+#: ../../src/Translations/StoreTranslations.php:562
 msgid "Waiting for the ticket payment."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:543
+#: ../../src/Translations/StoreTranslations.php:563
 msgid "The customer has not made the payment yet."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:544
+#: ../../src/Translations/StoreTranslations.php:564
 msgid "Payment is pending review."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:545
+#: ../../src/Translations/StoreTranslations.php:565
 msgid "Payment was declined. The customer can try again."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:546
+#: ../../src/Translations/StoreTranslations.php:566
 msgid "Payment was returned to the customer."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:547
+#: ../../src/Translations/StoreTranslations.php:567
 msgid "The payment was partially returned to the customer. the amount refunded was : "
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:548
+#: ../../src/Translations/StoreTranslations.php:568
 msgid "Payment was canceled."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:549, ../../src/Translations/StoreTranslations.php:550
+#: ../../src/Translations/StoreTranslations.php:569, ../../src/Translations/StoreTranslations.php:570
 msgid "The payment is in mediation or the purchase was unknown by the customer."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:551
+#: ../../src/Translations/StoreTranslations.php:571
 msgid "The payment"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:552
+#: ../../src/Translations/StoreTranslations.php:572
 msgid "was notified by Mercado Pago with status"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:564
+#: ../../src/Translations/StoreTranslations.php:584
 msgid "Offline Methods in Test Mode"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:565
+#: ../../src/Translations/StoreTranslations.php:585
 msgid "You can test the flow to generate an invoice, but you cannot finalize the payment."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:568, ../../src/Translations/StoreTranslations.php:587, ../../src/Translations/StoreTranslations.php:595, ../../src/Translations/StoreTranslations.php:599, ../../src/Translations/StoreTranslations.php:603, ../../src/Translations/StoreTranslations.php:610, ../../src/Translations/StoreTranslations.php:628
+#: ../../src/Translations/StoreTranslations.php:588, ../../src/Translations/StoreTranslations.php:607, ../../src/Translations/StoreTranslations.php:615, ../../src/Translations/StoreTranslations.php:619, ../../src/Translations/StoreTranslations.php:623, ../../src/Translations/StoreTranslations.php:630, ../../src/Translations/StoreTranslations.php:648
 msgid "Please complete this field."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:569, ../../src/Translations/StoreTranslations.php:629
+#: ../../src/Translations/StoreTranslations.php:589, ../../src/Translations/StoreTranslations.php:649
 msgid "Please enter the full ID number."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:570, ../../src/Translations/StoreTranslations.php:630
+#: ../../src/Translations/StoreTranslations.php:590, ../../src/Translations/StoreTranslations.php:650
 msgid "Please enter a valid ID."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:571
+#: ../../src/Translations/StoreTranslations.php:591
 msgid "Select your payment method"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:572, ../../src/Translations/StoreTranslations.php:632
+#: ../../src/Translations/StoreTranslations.php:592, ../../src/Translations/StoreTranslations.php:652
 msgid "more options"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:573
+#: ../../src/Translations/StoreTranslations.php:593
 msgid "Select a payment method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:576
+#: ../../src/Translations/StoreTranslations.php:596
 msgid "Great, we processed your purchase order. Complete the payment with ticket so that we finish approving it."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:577
+#: ../../src/Translations/StoreTranslations.php:597
 msgid "Print ticket"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:578
+#: ../../src/Translations/StoreTranslations.php:598
 msgid " and "
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:579
+#: ../../src/Translations/StoreTranslations.php:599
 msgid "To print the ticket again click"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:580
+#: ../../src/Translations/StoreTranslations.php:600
 msgid "here"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:583
+#: ../../src/Translations/StoreTranslations.php:603
 msgid "Enter payment details"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:584
+#: ../../src/Translations/StoreTranslations.php:604
 msgid "Use delivery details."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:585
+#: ../../src/Translations/StoreTranslations.php:605
 msgid "ZIP code"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:586
+#: ../../src/Translations/StoreTranslations.php:606
 msgid "E.g.: 01310-200"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:588
+#: ../../src/Translations/StoreTranslations.php:608
 msgid "Please enter the full ZIP code."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:589
+#: ../../src/Translations/StoreTranslations.php:609
 msgid "Please enter a valid ZIP code."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:590
+#: ../../src/Translations/StoreTranslations.php:610
 msgid "State"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:591
+#: ../../src/Translations/StoreTranslations.php:611
 msgid "Select a state"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:592
+#: ../../src/Translations/StoreTranslations.php:612
 msgid "Please select an option."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:593
+#: ../../src/Translations/StoreTranslations.php:613
 msgid "City"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:594
+#: ../../src/Translations/StoreTranslations.php:614
 msgid "E.g.: São Paulo"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:596
+#: ../../src/Translations/StoreTranslations.php:616
 msgid "Please enter the full name of the city."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:597
+#: ../../src/Translations/StoreTranslations.php:617
 msgid "Neighborhood"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:598
+#: ../../src/Translations/StoreTranslations.php:618
 msgid "E.g.: Jardim das flores"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:600
+#: ../../src/Translations/StoreTranslations.php:620
 msgid "Please enter the full neighborhood name."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:601
+#: ../../src/Translations/StoreTranslations.php:621
 msgid "Address"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:602
+#: ../../src/Translations/StoreTranslations.php:622
 msgid "E.g.: Avenida das Flores"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:604
+#: ../../src/Translations/StoreTranslations.php:624
 msgid "Please enter the full address."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:605
+#: ../../src/Translations/StoreTranslations.php:625
 msgid "Complement (optional)"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:606
+#: ../../src/Translations/StoreTranslations.php:626
 msgid "E.g.: Apartament 52 block C"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:607
+#: ../../src/Translations/StoreTranslations.php:627
 msgid "Number"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:608
+#: ../../src/Translations/StoreTranslations.php:628
 msgid "E.g.: 148"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:609
+#: ../../src/Translations/StoreTranslations.php:629
 msgid "No number"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:611
+#: ../../src/Translations/StoreTranslations.php:631
 msgid "Please enter a valid number."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:624
+#: ../../src/Translations/StoreTranslations.php:644
 msgid "Checkout PSE in Test Mode"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:625
+#: ../../src/Translations/StoreTranslations.php:645
 msgid "You can test the flow to generate a payment with PSE"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:631
+#: ../../src/Translations/StoreTranslations.php:651
 msgid "Select where you want to pay"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:633
+#: ../../src/Translations/StoreTranslations.php:653
 msgid "Person type "
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:634
+#: ../../src/Translations/StoreTranslations.php:654
 msgid "Financial institution"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:635
+#: ../../src/Translations/StoreTranslations.php:655
 msgid "Select the financial institution"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:636
+#: ../../src/Translations/StoreTranslations.php:656
 msgid "Select the institution"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:653
+#: ../../src/Translations/StoreTranslations.php:673
 msgid "A problem was occurred when processing your payment. Please, try again."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:654
+#: ../../src/Translations/StoreTranslations.php:674
 msgctxt "card checkout"
 msgid "<strong>Your payment was declined because something went wrong</strong><br>Please make sure all the information was entered correctly."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:655
+#: ../../src/Translations/StoreTranslations.php:675
 msgid "This payment method is temporarily unavailable. Please choose another option or contact the store."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:656
+#: ../../src/Translations/StoreTranslations.php:676
+msgid "Pix via Open Finance is temporarily unavailable. Please choose another payment option."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:677
+msgid "We could not process your payment. Try again or use another payment method."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:678
+msgid "There is already a pending payment for this order. To change the payment method, contact the store."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:679
+msgid "We could not complete the payment. Choose another payment method."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:680
+msgid "Insufficient balance in this account. Choose another account or payment method."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:681
+msgid "This amount exceeds the daily limit. Choose another account or payment method."
+msgstr ""
+
+#: ../../src/Translations/StoreTranslations.php:682
 msgid "See your order form"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:657
+#: ../../src/Translations/StoreTranslations.php:683
 msgid "Your payment was declined. You can try again."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:658
+#: ../../src/Translations/StoreTranslations.php:684
 msgid "Click to try again"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:659
+#: ../../src/Translations/StoreTranslations.php:685
 msgid "That's it, payment accepted!"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:660
+#: ../../src/Translations/StoreTranslations.php:686
 msgid "We are processing your payment. In less than an hour we will send you the result by email."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:661
+#: ../../src/Translations/StoreTranslations.php:687
 msgid "We are processing your payment. In less than 2 days we will send you by email if the payment has been approved or if additional information is needed."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:662
+#: ../../src/Translations/StoreTranslations.php:688
 msgid "Check the card number."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:663
+#: ../../src/Translations/StoreTranslations.php:689
 msgid "Check the expiration date."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:664
+#: ../../src/Translations/StoreTranslations.php:690
 msgid "Check the information provided."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:665
+#: ../../src/Translations/StoreTranslations.php:691
 msgid "Check the informed security code."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:666, ../../src/Translations/StoreTranslations.php:667
+#: ../../src/Translations/StoreTranslations.php:692, ../../src/Translations/StoreTranslations.php:693
 msgid "Your payment cannot be processed."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:668
+#: ../../src/Translations/StoreTranslations.php:694
 msgid "You must authorize payments for your orders."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:669
+#: ../../src/Translations/StoreTranslations.php:695
 msgid "Contact your card issuer to activate it. The phone is on the back of your card."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:670
+#: ../../src/Translations/StoreTranslations.php:696
 msgid "You have already made a payment of this amount. If you have to pay again, use another card or other method of payment."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:671
+#: ../../src/Translations/StoreTranslations.php:697
 msgid "Your payment was declined. Please select another payment method. It is recommended in cash."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:672
+#: ../../src/Translations/StoreTranslations.php:698
 msgid "Your payment does not have sufficient funds."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:673
+#: ../../src/Translations/StoreTranslations.php:699
 msgid "Payment cannot process the selected fee."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:674
+#: ../../src/Translations/StoreTranslations.php:700
 msgid "You have reached the limit of allowed attempts. Choose another card or other payment method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:675
+#: ../../src/Translations/StoreTranslations.php:701
 msgid "This payment method cannot process your payment."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:687, ../../src/Translations/StoreTranslations.php:757
+#: ../../src/Translations/StoreTranslations.php:713, ../../src/Translations/StoreTranslations.php:783
 msgctxt "card checkout"
 msgid "<strong>Your bank needs you to authorize the payment</strong><br>Please call the telephone number on your card or pay with another method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:688, ../../src/Translations/StoreTranslations.php:689
+#: ../../src/Translations/StoreTranslations.php:714, ../../src/Translations/StoreTranslations.php:715
 msgctxt "card checkout"
 msgid "<strong>For safety reasons, your payment was declined</strong><br>We recommended paying with your usual payment method and device for online purchases."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:690, ../../src/Translations/StoreTranslations.php:691, ../../src/Translations/StoreTranslations.php:692, ../../src/Translations/StoreTranslations.php:693
+#: ../../src/Translations/StoreTranslations.php:716, ../../src/Translations/StoreTranslations.php:717, ../../src/Translations/StoreTranslations.php:718, ../../src/Translations/StoreTranslations.php:719
 msgctxt "card checkout"
 msgid "<strong>One or more card details were entered incorrectly</strong><br>Please enter them again as they appear on the card to complete the payment."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:694
+#: ../../src/Translations/StoreTranslations.php:720
 msgctxt "card checkout"
 msgid "<strong>Your credit card has no available limit</strong><br>Please pay using another card or choose another payment method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:695
+#: ../../src/Translations/StoreTranslations.php:721
 msgctxt "card checkout"
 msgid "<strong>Your debit card has insufficient funds</strong><br>Please pay using another card or choose another payment method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:696, ../../src/Translations/StoreTranslations.php:734
+#: ../../src/Translations/StoreTranslations.php:722, ../../src/Translations/StoreTranslations.php:760
 msgctxt "card checkout"
 msgid "<strong>Your card does not accept the number of installments selected</strong><br>Please choose a different number of installments or use a different payment method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:697
+#: ../../src/Translations/StoreTranslations.php:723
 msgctxt "card checkout"
 msgid "<strong>You need to activate your card</strong><br>Please contact your bank by calling the number on the back of your card or choose another payment method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:698
+#: ../../src/Translations/StoreTranslations.php:724
 msgctxt "card checkout"
 msgid "<strong>You reached the limit of payment attempts with this card</strong><br>Please pay using another card or choose another payment method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:699
+#: ../../src/Translations/StoreTranslations.php:725
 msgctxt "card checkout"
 msgid "<strong>Your payment was declined because you already paid for this purchase</strong><br>Check your card transactions to verify it."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:700, ../../src/Translations/StoreTranslations.php:701, ../../src/Translations/StoreTranslations.php:702
+#: ../../src/Translations/StoreTranslations.php:726, ../../src/Translations/StoreTranslations.php:727, ../../src/Translations/StoreTranslations.php:728
 msgctxt "card checkout"
 msgid "<strong>The card issuing bank declined the payment</strong><br>We recommended paying with another payment method or contact your bank."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:703
+#: ../../src/Translations/StoreTranslations.php:729
 msgctxt "card checkout"
 msgid "<strong>For safety reasons, the card issuing bank declined the payment</strong><br>We recommended paying with your usual payment method and device for online purchases."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:704
+#: ../../src/Translations/StoreTranslations.php:730
 msgctxt "card checkout"
 msgid "<strong>Your payment was declined because something went wrong</strong><br>We recommended trying again or paying with another method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:705
+#: ../../src/Translations/StoreTranslations.php:731
 msgid "<strong>Yape declined your payment</strong><br>Your payment could not be processed. Please try again or choose another payment method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:706
+#: ../../src/Translations/StoreTranslations.php:732
 msgid "<strong>Yape declined your payment</strong><br>Your payment could not be processed. You can contact Yape to find out why or try again with this or another payment method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:707
+#: ../../src/Translations/StoreTranslations.php:733
 msgid "<strong>Yape declined your payment</strong><br>Your payment was rejected because something went wrong. We recommend trying again or paying with another method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:708
+#: ../../src/Translations/StoreTranslations.php:734
 msgid "<strong>Yape declined your payment</strong><br>This payment exceeds your daily limit for online purchases with Yape. We recommend paying with another method or trying again tomorrow."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:709
+#: ../../src/Translations/StoreTranslations.php:735
 msgid "<strong>Yape declined your payment</strong><br>After three incorrect approval codes, the payment can't be done with Yape for your safety. Pay with another method or try again in 24 hours."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:721
+#: ../../src/Translations/StoreTranslations.php:747
 msgctxt "card checkout"
 msgid "<strong>Choose the number of installments to complete the payment</strong>"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:722
+#: ../../src/Translations/StoreTranslations.php:748
 msgctxt "card checkout"
 msgid "<strong>One or more of the buyer details were entered incorrectly</strong><br>Please check the identification number and try again."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:723, ../../src/Translations/StoreTranslations.php:762
+#: ../../src/Translations/StoreTranslations.php:749, ../../src/Translations/StoreTranslations.php:788
 msgctxt "card checkout"
 msgid "<strong>One or more card details were entered incorrectly</strong><br>Please enter them again exactly as they appear on the card to complete the payment."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:724, ../../src/Translations/StoreTranslations.php:751
+#: ../../src/Translations/StoreTranslations.php:750, ../../src/Translations/StoreTranslations.php:777
 msgctxt "card checkout"
 msgid "<strong>For safety reasons, the card issuing bank declined the payment</strong><br>We recommend paying with your usual payment method and device for online purchases."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:725
+#: ../../src/Translations/StoreTranslations.php:751
 msgctxt "card checkout"
 msgid "<strong>The amount to be paid is outside the allowed limit for this payment method</strong><br>Enter an amount within the limits or use another payment method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:726
+#: ../../src/Translations/StoreTranslations.php:752
 msgctxt "card checkout"
 msgid "<strong>The discount code is not valid</strong><br>Check the code you entered and try again."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:727
+#: ../../src/Translations/StoreTranslations.php:753
 msgctxt "card checkout"
 msgid "<strong>The discount amount must be a number</strong><br>Enter a valid value to continue."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:728
+#: ../../src/Translations/StoreTranslations.php:754
 msgctxt "card checkout"
 msgid "<strong>Credentials don’t match the environment</strong><br>Enter the correct test or production keys to complete the payment."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:729
+#: ../../src/Translations/StoreTranslations.php:755
 msgctxt "card checkout"
 msgid "<strong>The e-mail is incorrect</strong><br>Make sure to enter it correctly to complete the payment."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:730
+#: ../../src/Translations/StoreTranslations.php:756
 msgctxt "card checkout"
 msgid "<strong>The e-mail isn't valid for payment</strong><br>Enter another e-mail to complete the payment."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:731, ../../src/Translations/StoreTranslations.php:759
+#: ../../src/Translations/StoreTranslations.php:757, ../../src/Translations/StoreTranslations.php:785
 msgctxt "card checkout"
 msgid "<strong>The payment method you selected is not available</strong><br>Choose another method to complete your purchase."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:732, ../../src/Translations/StoreTranslations.php:746, ../../src/Translations/StoreTranslations.php:747
+#: ../../src/Translations/StoreTranslations.php:758, ../../src/Translations/StoreTranslations.php:772, ../../src/Translations/StoreTranslations.php:773
 msgctxt "card checkout"
 msgid "<strong>Your payment was declined because something went wrong</strong><br>We recommend trying again or paying with another method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:733, ../../src/Translations/StoreTranslations.php:748
+#: ../../src/Translations/StoreTranslations.php:759, ../../src/Translations/StoreTranslations.php:774
 msgctxt "card checkout"
 msgid "<strong>Your payment was declined by the store</strong><br>Try another payment method or contact the seller."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:749
+#: ../../src/Translations/StoreTranslations.php:775
 msgctxt "card checkout"
 msgid "<strong>Your payment was declined because you already paid for this purchase</strong><br>Please check your card transactions to verify it."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:750
+#: ../../src/Translations/StoreTranslations.php:776
 msgctxt "card checkout"
 msgid "<strong>For safety reasons, your payment was declined</strong><br>We recommend paying with your usual payment method and device for online purchases."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:752
+#: ../../src/Translations/StoreTranslations.php:778
 msgctxt "card checkout"
 msgid "<strong>For safety reasons, your payment was declined</strong><br>We recommend paying with your usual payment method and device for online purchases. "
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:753
+#: ../../src/Translations/StoreTranslations.php:779
 msgctxt "card checkout"
 msgid "<strong>It was not possible to complete the payment</strong><br>Please use another method to complete the purchase."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:754
+#: ../../src/Translations/StoreTranslations.php:780
 msgctxt "card checkout"
 msgid "<strong>Your credit card has no available limit</strong><br>Choose another payment method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:755
+#: ../../src/Translations/StoreTranslations.php:781
 msgctxt "card checkout"
 msgid "<strong>You have to activate your card</strong><br>Please contact your bank by calling the number on the back of your card or choose another payment method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:756
+#: ../../src/Translations/StoreTranslations.php:782
 msgctxt "card checkout"
 msgid "<strong>You reached the limit of payment attempts with this card</strong><br>Please pay with another card or choose another payment method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:758
+#: ../../src/Translations/StoreTranslations.php:784
 msgctxt "card checkout"
 msgid "<strong>The card issuing bank declined the payment</strong><br>We recommend using another payment method or contacting your bank."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:760
+#: ../../src/Translations/StoreTranslations.php:786
 msgctxt "card checkout"
 msgid "<strong>The test e-mail you entered is not valid</strong><br>Enter a valid email to complete the payment."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:761
+#: ../../src/Translations/StoreTranslations.php:787
 msgctxt "card checkout"
 msgid "<strong>The email you entered is not valid</strong><br>Enter a valid email to complete the payment."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:777
+#: ../../src/Translations/StoreTranslations.php:803
 msgctxt "super token"
 msgid "<strong>It wasn't possible to validate the payment</strong><br>Try again in a moment. If the issue persists, please contact the seller for next steps."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:778
+#: ../../src/Translations/StoreTranslations.php:804
 msgctxt "super token"
 msgid "<strong>Your payment was declined due to an error</strong><br>Please try again or use a different payment method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:779
+#: ../../src/Translations/StoreTranslations.php:805
 msgctxt "super token"
 msgid "<strong>This payment method isn't available</strong><br>Please use a different payment method to complete your purchase."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:780
+#: ../../src/Translations/StoreTranslations.php:806
 msgctxt "super token"
 msgid "<strong>Something went wrong while processing your payment</strong><br>Check if the charge appears on your card. If not, please try again or use a different payment method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:781
+#: ../../src/Translations/StoreTranslations.php:807
 msgctxt "super token"
 msgid "<strong>It wasn't possible to validate your card</strong><br>Check if you have available credit or use a different payment method."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:782, ../../src/Translations/StoreTranslations.php:783
+#: ../../src/Translations/StoreTranslations.php:808, ../../src/Translations/StoreTranslations.php:809
 msgctxt "super token"
 msgid "<strong>For security reasons, your payment was declined</strong><br>We recommend using your usual payment method and device for online purchases."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:784
+#: ../../src/Translations/StoreTranslations.php:810
 msgctxt "super token"
 msgid "<strong>The purchase amount exceeds the limit for this payment method</strong><br>Please use a different payment method to complete your purchase."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:785
+#: ../../src/Translations/StoreTranslations.php:811
 msgctxt "super token"
 msgid "<strong>Some card details are incorrect</strong><br>Please review the information entered to complete the payment."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:798
+#: ../../src/Translations/StoreTranslations.php:824
 msgctxt "super token"
 msgid "<strong>Your payment session has expired</strong><br>Please try again to complete your purchase."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:813
+#: ../../src/Translations/StoreTranslations.php:839
 msgctxt "card checkout"
 msgid "We could not activate your subscription. Please try again."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:814
+#: ../../src/Translations/StoreTranslations.php:840
 msgid "Recurring payments credential is not configured. Please contact the store."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:815
+#: ../../src/Translations/StoreTranslations.php:841
 msgctxt "card checkout"
 msgid "Card data is incomplete. Please review and try again."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:816
+#: ../../src/Translations/StoreTranslations.php:842
 msgid "Pre-approval access token is not configured."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:817
+#: ../../src/Translations/StoreTranslations.php:843
 msgid "Card data is incomplete."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:827
+#: ../../src/Translations/StoreTranslations.php:853
 msgid "We are taking you to validate the card"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:828
+#: ../../src/Translations/StoreTranslations.php:854
 msgid "with your bank"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:829
+#: ../../src/Translations/StoreTranslations.php:855
 msgid "We need to confirm that you are the cardholder."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:830
+#: ../../src/Translations/StoreTranslations.php:856
 msgid "We are receiving the response from your bank"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:831
+#: ../../src/Translations/StoreTranslations.php:857
 msgid "Complete the bank validation so your payment can be approved"
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:832
+#: ../../src/Translations/StoreTranslations.php:858
 msgid "Please keep this page open. If you close it, you will not be able to resume the validation."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:833
+#: ../../src/Translations/StoreTranslations.php:859
 msgid "<b>For safety reasons, your payment was declined</b><br>We recommend paying with your usual payment method and device for online purchases."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:851, ../../src/Translations/StoreTranslations.php:866
+#: ../../src/Translations/StoreTranslations.php:877, ../../src/Translations/StoreTranslations.php:892
 msgid "We could not process this card. Please try again."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:852
+#: ../../src/Translations/StoreTranslations.php:878
 msgid "Payment was declined by the card issuer."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:853
+#: ../../src/Translations/StoreTranslations.php:879
 msgid "3D Secure authentication failed. Please try another card."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:854, ../../src/Translations/StoreTranslations.php:856, ../../src/Translations/StoreTranslations.php:857, ../../src/Translations/StoreTranslations.php:863, ../../src/Translations/StoreTranslations.php:873
+#: ../../src/Translations/StoreTranslations.php:880, ../../src/Translations/StoreTranslations.php:882, ../../src/Translations/StoreTranslations.php:883, ../../src/Translations/StoreTranslations.php:889, ../../src/Translations/StoreTranslations.php:899
 msgid "A technical error occurred. Please contact support."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:855
+#: ../../src/Translations/StoreTranslations.php:881
 msgid "The card linked to this subscription has expired. Please update the card."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:862
+#: ../../src/Translations/StoreTranslations.php:888
 msgid "We could not save the card. Please try again."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:867
+#: ../../src/Translations/StoreTranslations.php:893
 msgid "We could not complete the operation. Please try another card."
 msgstr ""
 
-#: ../../src/Translations/StoreTranslations.php:870
+#: ../../src/Translations/StoreTranslations.php:896
 msgid "Service temporarily unavailable. Please try again in a moment."
+msgstr ""
+
+#: ../../src/SmartPix/UseCases/SmartPixOrderOperations.php:125
+msgid "Smart Pix cancellation could not be confirmed. The order status was preserved."
+msgstr ""
+
+#: ../../src/SmartPix/UseCases/SmartPixOrderOperations.php:193
+msgid "Mercado Pago: the merchant cancelled this order locally. The Smart Pix creation had no confirmed Order, so no cancellation was sent to Mercado Pago."
+msgstr ""
+
+#: ../../src/SmartPix/UseCases/SmartPixReconciliation.php:210
+msgid "Mercado Pago: the Smart Pix payment status could not be reconciled automatically. Review the order and its payment in the Mercado Pago panel."
+msgstr ""
+
+#: ../../src/SmartPix/UseCases/SmartPixRefundReconciler.php:92, ../../src/SmartPix/UseCases/SmartPixRefundReconciler.php:276
+msgid "Mercado Pago: payment refunded."
+msgstr ""
+
+#: ../../src/SmartPix/UseCases/SmartPixRefundReconciler.php:124
+msgid "Mercado Pago: partial refund of %s."
+msgstr ""
+
+#. translators: %s: Mercado Pago Order ID
+#: ../../src/SmartPix/Adapters/Notification/SmartPixNotificationLinkage.php:232
+msgid "Mercado Pago: a Smart Pix payment (Order %s) was approved after this order was paid with another method. Review it in the Mercado Pago panel and refund it if it is a duplicate."
+msgstr ""
+
+#. translators: %s: Mercado Pago Order ID
+#: ../../src/SmartPix/Adapters/Notification/SmartPixNotificationLinkage.php:240
+msgid "Mercado Pago: a Smart Pix payment (Order %s) was approved after another payment method was selected for this order. Review it in the Mercado Pago panel before changing the order."
+msgstr ""
+
+#. translators: %s: Mercado Pago payment id
+#: ../../src/SmartPix/Adapters/WooCommerce/SmartPixLegacyPaymentNotice.php:67
+msgid "Mercado Pago: payment %s was approved on an order with a Smart Pix payment. The order status was not changed; check whether a refund is needed."
 msgstr ""

@@ -2,7 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const PUBLIC_EXPORT_COMMIT = 'de8a3afcec0f74c8085632c0ce5585355eb2ef24';
+const PUBLIC_EXPORT_COMMIT = '0226dfc321409b297edffb254de98885089d4d45';
 function present(filename) {
   try { return fs.lstatSync(filename); } catch (error) {
     if (error.code === 'ENOENT') return null;

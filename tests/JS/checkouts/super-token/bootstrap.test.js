@@ -6,6 +6,7 @@ const mockPublishSelectors = jest.fn();
 const mockPublishReset = jest.fn();
 const mockPublishOrderAndDecorate = jest.fn();
 const mockPublishAccountPaymentMethods = jest.fn();
+const mockPublishFastPaymentsEligibility = jest.fn();
 const mockPublishAuthorizePayment = jest.fn();
 const mockPublishFetchAndRender = jest.fn();
 const mockPublishLoad = jest.fn();
@@ -35,6 +36,7 @@ jest.mock('@super-token/adapters/legacy/globalBridge', () => ({
   publishReset: mockPublishReset,
   publishOrderAndDecorate: mockPublishOrderAndDecorate,
   publishAccountPaymentMethods: mockPublishAccountPaymentMethods,
+  publishFastPaymentsEligibility: mockPublishFastPaymentsEligibility,
   publishAuthorizePayment: mockPublishAuthorizePayment,
   publishFetchAndRender: mockPublishFetchAndRender,
   publishLoad: mockPublishLoad,
@@ -67,6 +69,7 @@ describe('super-token/bootstrap wiring', () => {
     expect(mockPublishReset).toHaveBeenCalledTimes(1);
     expect(mockPublishOrderAndDecorate).toHaveBeenCalledTimes(1);
     expect(mockPublishAccountPaymentMethods).toHaveBeenCalledTimes(1);
+    expect(mockPublishFastPaymentsEligibility).toHaveBeenCalledTimes(1);
     expect(mockPublishAuthorizePayment).toHaveBeenCalledTimes(1);
     expect(mockPublishFetchAndRender).toHaveBeenCalledTimes(1);
     expect(mockPublishLoad).toHaveBeenCalledTimes(1);

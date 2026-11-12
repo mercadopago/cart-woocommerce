@@ -16,9 +16,3 @@ jQuery(document).ready(function ($) {
     });
   });
 });
-
-function clearInfo() {
-  setTimeout(() => {
-    document.getElementById('message-feedback-info').remove();
-  }, 10000);
-}

@@ -154,6 +154,37 @@ export class CoreMonitorMetricsAdapter implements MetricsPort {
     this.errorWith('error_to_get_account_payment_methods', this.CUSTOM_CHECKOUT_STEPS.LOAD_SUPER_TOKEN, error);
   }
 
+  /** The shared eligibility load also supplies Smart Pix; capture before its error becomes null. */
+  smartPixEligibilityFailure(error: unknown, secrets: readonly string[]): void {
+    const config = (window as unknown as {
+      wc_mercadopago_smart_pix_params?: { site_id?: string; standalone_bridge?: string };
+    }).wc_mercadopago_smart_pix_params;
+    if (config?.site_id !== 'MLB' || config.standalone_bridge !== 'disabled') return;
+    const fields: Record<string, string | number> = {};
+    if (error && typeof error === 'object') {
+      for (const key of ['name', 'code', 'errorCode', 'message', 'description', 'status']) {
+        try {
+          const value = (error as Record<string, unknown>)[key];
+          if (typeof value === 'string' || typeof value === 'number') fields[key] = value;
+        } catch { /* SDK getters are optional diagnostics. */ }
+      }
+    }
+    let message = this.normalizeErrorMessage(typeof error === 'string' ? error : JSON.stringify(fields));
+    // An empty method list is valid unavailability, not an SDK eligibility exception.
+    if (error === 'EMPTY_ACCOUNT_PAYMENT_METHODS' || fields.message === 'EMPTY_ACCOUNT_PAYMENT_METHODS') return;
+    secrets.forEach((secret) => {
+      if (secret) message = message.split(secret).join('[REDACTED]');
+    });
+    const payload = this.buildPayload('1', message.slice(0, 4096));
+    payload.details.event = 'eligibility_failed';
+    const code = String(fields.errorCode || fields.code || '');
+    payload.details.reason = /^[A-Za-z0-9][A-Za-z0-9_./ -]{0,127}$/.test(code)
+      ? code.toLowerCase() : 'sdk_code_unavailable';
+    if (payload.details.sdk_instance_id === 'Unknown') delete payload.details.sdk_instance_id;
+    // no-mse: rule=sensitive-logging reason="Selected redacted SDK diagnostic"
+    sendToCoreMonitor('smart_pix_checkout_error', payload);
+  }
+
   errorToUpdateSecurityCode(error: unknown, paymentMethod: { id: string } | null): void {
     const errorMessage = this.normalizeErrorMessage(error);
     this.melidata.dispatchMelidataErrorEvent(errorMessage, this.CUSTOM_CHECKOUT_STEPS.POST_SUBMIT);

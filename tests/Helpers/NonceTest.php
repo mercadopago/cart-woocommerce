@@ -103,4 +103,25 @@ class NonceTest extends TestCase
 
         $this->nonce->validateNonce('checkout-action', 'invalid-fixture');
     }
+
+    /**
+     * @dataProvider nonceValidityResults
+     */
+    public function testIsValidNonceReturnsAResultWithoutLoggingTheNonce($result, bool $expected): void
+    {
+        WP_Mock::userFunction('wp_verify_nonce')->once()->with('synthetic-nonce', 'notice-action')->andReturn($result);
+        WP_Mock::userFunction('wp_send_json_error')->never();
+        $this->file->shouldNotReceive('error');
+
+        $this->assertSame($expected, $this->nonce->isValidNonce('notice-action', 'synthetic-nonce'));
+    }
+
+    public static function nonceValidityResults(): array
+    {
+        return [
+            'current validity window' => [1, true],
+            'previous validity window' => [2, true],
+            'invalid' => [false, false],
+        ];
+    }
 }

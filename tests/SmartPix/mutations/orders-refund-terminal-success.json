@@ -1,0 +1,59 @@
+{
+  "contract_version": "smart-pix-mutations/v1",
+  "scenario_id": "orders-refund-terminal-success",
+  "port": "orders",
+  "operation": "refund",
+  "request": {
+    "surface": "server",
+    "country": "MLB",
+    "payment_contract": "orders_smart_pix_v1",
+    "attempt_reference": "WC-321",
+    "order_reference": "ORDER_SYNTHETIC_001",
+    "amount": null,
+    "refund_amount": {
+      "value": "25.50",
+      "currency": "BRL"
+    },
+    "operation_context": {
+      "contract_version": "smart-pix-mutations/v1",
+      "idempotency_key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "seller_reference": "12345"
+    }
+  },
+  "response": {
+    "outcome": "success",
+    "state": "terminal_success",
+    "order_reference": "ORDER_SYNTHETIC_001",
+    "eligibility": null,
+    "authorization": null,
+    "payments": [
+      {
+        "reference": "payment_fixture_refund_001",
+        "state": "refunded",
+        "amount": {
+          "value": "25.50",
+          "currency": "BRL"
+        }
+      }
+    ],
+    "error": null,
+    "order_context": {
+      "contract_version": "smart-pix-mutations/v1",
+      "seller_reference": "12345",
+      "attempt_reference": "WC-321",
+      "amount": {
+        "value": "125.50",
+        "currency": "BRL"
+      },
+      "refunded_amount": "25.50"
+    }
+  },
+  "expected_effects": {
+    "persist_attempt": false,
+    "link_order_reference": false,
+    "orders_create_calls": 0,
+    "payments_create_calls": 0,
+    "state_transition": "apply_once",
+    "reconciliation": "terminal"
+  }
+}

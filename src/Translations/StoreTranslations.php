@@ -481,6 +481,8 @@ class StoreTranslations
             'pix_template_alt'                 => __('Pix logo', 'woocommerce-mercadopago'),
             'terms_and_conditions_description' => __('By continuing, you agree to our', 'woocommerce-mercadopago'),
             'terms_and_conditions_link_text'   => __('Terms and conditions', 'woocommerce-mercadopago'),
+            'smart_pix_selected_account_text'  => __('Sufficient balance for this purchase.', 'woocommerce-mercadopago'),
+            'smart_pix_processing_message'     => __('We are processing your Pix via Open Finance payment. Your order remains pending until the payment is confirmed.', 'woocommerce-mercadopago'),
             'expiration_date_text'             => __('Code valid for ', 'woocommerce-mercadopago'),
             'title_purchase_pix'               => __('Now you just need to pay with Pix to finalize your purchase', 'woocommerce-mercadopago'),
             'title_how_to_pay'                 => __('How to pay with Pix:', 'woocommerce-mercadopago'),
@@ -499,6 +501,23 @@ class StoreTranslations
             'message_error_amount'             => __('There was an error. Please try again in a few minutes.', 'woocommerce-mercadopago'),
             'approved_template_title'          => __('Payment Approved', 'woocommerce-mercadopago'),
             'approved_template_description'    => __('Your payment with PIX has been successfully approved.', 'woocommerce-mercadopago'),
+            'smart_pix_status_processing_title'              => __('We are processing your payment', 'woocommerce-mercadopago'),
+            'smart_pix_status_processing_description'        => __('This may take a few seconds', 'woocommerce-mercadopago'),
+            'smart_pix_status_finalizing_description'        => __('Finalizing your payment', 'woocommerce-mercadopago'),
+            'smart_pix_status_delayed_description'           => __('We are still processing your payment', 'woocommerce-mercadopago'),
+            'smart_pix_status_waiting_description'           => __('Your payment is still being processed', 'woocommerce-mercadopago'),
+            'smart_pix_status_long_wait_description'         => __('Confirmation may take up to 15 minutes. Check the status in the store\'s orders.', 'woocommerce-mercadopago'),
+            'smart_pix_status_timeout_description'           => __('Your payment is still being processed. Check your order status again later.', 'woocommerce-mercadopago'),
+            'smart_pix_status_approved_title'                => __('Your payment was approved', 'woocommerce-mercadopago'),
+            'smart_pix_status_approved_description'          => __('We have updated your order status.', 'woocommerce-mercadopago'),
+            'smart_pix_status_rejected_title'                => __('We could not process your payment', 'woocommerce-mercadopago'),
+            'smart_pix_status_rejected_description'          => __('Make a new purchase with another payment method.', 'woocommerce-mercadopago'),
+            'smart_pix_status_insufficient_title'            => __('Insufficient balance', 'woocommerce-mercadopago'),
+            'smart_pix_status_limit_title'                   => __('Pix limit reached', 'woocommerce-mercadopago'),
+            'smart_pix_status_alternative_description'       => __('Make a new purchase with another account or payment method.', 'woocommerce-mercadopago'),
+            'smart_pix_status_new_purchase'                  => __('Make a new purchase', 'woocommerce-mercadopago'),
+            'smart_pix_status_cancelled_title'               => __('Your payment was cancelled', 'woocommerce-mercadopago'),
+            'smart_pix_status_cancelled_description'         => __('The order was cancelled. Check your orders on the website or contact the store.', 'woocommerce-mercadopago'),
         ];
     }
 
@@ -537,6 +556,7 @@ class StoreTranslations
     private function setOrderStatusTranslations(): void
     {
         $this->orderStatus = [
+            'smart_transfer' => __('Pix via Open Finance', 'woocommerce-mercadopago'),
             'payment_approved' => __('Payment approved.', 'woocommerce-mercadopago'),
             'pending_pix'      => __('Waiting for the Pix payment.', 'woocommerce-mercadopago'),
             'pending_ticket'   => __('Waiting for the ticket payment.', 'woocommerce-mercadopago'),
@@ -653,6 +673,12 @@ class StoreTranslations
             'cho_default_error'                        => __('A problem was occurred when processing your payment. Please, try again.', 'woocommerce-mercadopago'),
             'cho_form_error'                           => _x('<strong>Your payment was declined because something went wrong</strong><br>Please make sure all the information was entered correctly.', 'card checkout', 'woocommerce-mercadopago'),
             'missing_credentials_at_payment'           => __('This payment method is temporarily unavailable. Please choose another option or contact the store.', 'woocommerce-mercadopago'),
+            'smart_pix_unavailable'                    => __('Pix via Open Finance is temporarily unavailable. Please choose another payment option.', 'woocommerce-mercadopago'),
+            'smart_pix_processing_failed'              => __('We could not process your payment. Try again or use another payment method.', 'woocommerce-mercadopago'),
+            'smart_pix_existing_pix'                   => __('There is already a pending payment for this order. To change the payment method, contact the store.', 'woocommerce-mercadopago'),
+            'smart_pix_rejected'                       => __('We could not complete the payment. Choose another payment method.', 'woocommerce-mercadopago'),
+            'smart_pix_insufficient_balance'           => __('Insufficient balance in this account. Choose another account or payment method.', 'woocommerce-mercadopago'),
+            'smart_pix_limit_exceeded'                 => __('This amount exceeds the daily limit. Choose another account or payment method.', 'woocommerce-mercadopago'),
             'cho_see_order_form'                       => __('See your order form', 'woocommerce-mercadopago'),
             'cho_payment_declined'                     => __('Your payment was declined. You can try again.', 'woocommerce-mercadopago'),
             'cho_button_try_again'                     => __('Click to try again', 'woocommerce-mercadopago'),

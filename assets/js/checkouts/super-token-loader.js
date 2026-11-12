@@ -1,6 +1,8 @@
-/* globals wc_mercadopago_woocommerce_scripts_params */
+/* globals wc_mercadopago_woocommerce_scripts_params, wc_mercadopago_supertoken_params */
 (function () {
-    const SUPER_TOKEN_BUNDLE_ENV = 'v1'; // 'v1' = prod | 'homol' = homologação
+    // Only fixed server-selected environments can influence the CDN namespace.
+    const SUPER_TOKEN_BUNDLE_ENV = typeof wc_mercadopago_supertoken_params !== 'undefined'
+        && wc_mercadopago_supertoken_params.environment === 'homologation' ? 'homol' : 'v1';
     const SUPER_TOKEN_STORAGE_BASE_URL = `https://http2.mlstatic.com/storage/${SUPER_TOKEN_BUNDLE_ENV}/mercadopago/woocommerce/scripts`;
     const SUPER_TOKEN_CSS_ID = 'wc_mercadopago_supertoken_bundle_css';
     const SUPER_TOKEN_JS_ID = 'wc_mercadopago_supertoken_bundle_js';
@@ -22,6 +24,11 @@
         }
 
         return wc_mercadopago_woocommerce_scripts_params;
+    }
+
+    // Telemetry keeps the plugin-wide `prod`/`homol` tag (MetricContext) so dashboards keep matching.
+    function getMetricEnvironment() {
+        return SUPER_TOKEN_BUNDLE_ENV === 'homol' ? 'homol' : 'prod';
     }
 
     function sendMetric(metricName, payload) {
@@ -63,7 +70,7 @@
             },
             details: {
                 site_id: scriptsParams.site_id || '',
-                environment: 'prod',
+                environment: getMetricEnvironment(),
                 cust_id: scriptsParams.cust_id || '',
             },
         };

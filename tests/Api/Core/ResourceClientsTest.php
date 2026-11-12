@@ -10,6 +10,7 @@ use MercadoPago\Woocommerce\Api\Core\NotificationsClient;
 use MercadoPago\Woocommerce\Api\Core\PaymentsClient;
 use MercadoPago\Woocommerce\Api\Core\PreferencesClient;
 use MercadoPago\Woocommerce\Api\Http\HttpResponse;
+use MercadoPago\Woocommerce\SmartPix\Adapters\Notification\SmartPixCoreNotificationIdentifiers;
 use Mockery;
 use PHPUnit\Framework\TestCase;
 
@@ -168,6 +169,97 @@ class ResourceClientsTest extends TestCase
 
         $this->assertSame('WC-1', $notification->toArray()['external_reference']);
         $this->assertSame(5.25, $rate->getRate());
+    }
+
+    public function testNotificationsClientFetchesSmartPixOrdersNotificationIds(): void
+    {
+        $context = new CoreRequestContext('token', 'platform', 'product', 'integrator');
+        $apiClient = Mockery::mock(CoreApiClient::class);
+        $apiClient->expects()
+            ->get('/plugins-platforms/v1/notification/order/PPORD01ABC', [
+                'Authorization' => 'Bearer token',
+                'x-platform-id' => 'platform',
+                'x-product-id' => 'product',
+                'x-integrator-id' => 'integrator',
+            ])
+            ->andReturn(new HttpResponse(200, [], '', ['notification_id' => 'PPORD01ABC']));
+
+        $notification = (new NotificationsClient($apiClient))->find('PPORD01ABC', $context);
+
+        $this->assertSame(['notification_id' => 'PPORD01ABC'], $notification->toArray());
+        $this->assertSame(
+            SmartPixCoreNotificationIdentifiers::NOTIFICATION_ID_PATTERN,
+            NotificationsClient::SMART_PIX_ORDERS_ID_PATTERN
+        );
+    }
+
+    /**
+     * @testWith ["P-123"]
+     *           ["M-123"]
+     */
+    public function testNotificationsClientKeepsLegacyIdsOnTheAsgardRoute(string $notificationId): void
+    {
+        $apiClient = Mockery::mock(CoreApiClient::class);
+        $apiClient->expects()
+            ->get('/v1/asgard/notification/' . $notificationId, ['Authorization' => 'Bearer token'])
+            ->andReturn(new HttpResponse(200, [], '', ['notification_id' => $notificationId]));
+
+        $notification = (new NotificationsClient($apiClient))->find($notificationId, new CoreRequestContext('token'));
+
+        $this->assertSame(['notification_id' => $notificationId], $notification->toArray());
+    }
+
+    /**
+     * @testWith ["PPORD-01ABC"]
+     *           ["PPORD01ABC\n"]
+     *           ["ppord01abc"]
+     *           ["PPORD"]
+     *           ["PPORD01ABC/../payments"]
+     *           ["PPORD01ABC?caller.id=123"]
+     *           ["PPORD01ABC%2Fpayments"]
+     *           ["https://example.com/PPORD01ABC"]
+     *           [" PPORD01ABC"]
+     *           [""]
+     *           ["ORD01ABC"]
+     */
+    public function testNotificationsClientRejectsMalformedSmartPixIdsWithoutRequest(string $notificationId): void
+    {
+        $apiClient = Mockery::mock(CoreApiClient::class);
+        $apiClient->shouldNotReceive('get');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid Core notification id.');
+
+        (new NotificationsClient($apiClient))->find($notificationId, new CoreRequestContext('token'));
+    }
+
+    public function testNotificationsClientKeepsTheLegacyTrailingNewlineAcceptance(): void
+    {
+        // The legacy pattern has no end-of-subject anchor, so "P-1\n" is still fetched (encoded).
+        $apiClient = Mockery::mock(CoreApiClient::class);
+        $apiClient->expects()
+            ->get('/v1/asgard/notification/P-1%0A', ['Authorization' => 'Bearer token'])
+            ->andReturn(new HttpResponse(200, [], '', ['notification_id' => 'P-1']));
+
+        $notification = (new NotificationsClient($apiClient))->find("P-1\n", new CoreRequestContext('token'));
+
+        $this->assertSame(['notification_id' => 'P-1'], $notification->toArray());
+    }
+
+    /**
+     * @testWith ["PPORD01ABC", "/plugins-platforms/v1/notification/order/PPORD01ABC"]
+     *           ["M-123", "/v1/asgard/notification/M-123"]
+     */
+    public function testNotificationsClientRejectsANonObjectNotification(string $notificationId, string $path): void
+    {
+        $apiClient = Mockery::mock(CoreApiClient::class);
+        $apiClient->expects()
+            ->get($path, ['Authorization' => 'Bearer token'])
+            ->andReturn(new HttpResponse(200, [], '', $notificationId));
+
+        $this->expectException(\UnexpectedValueException::class);
+
+        (new NotificationsClient($apiClient))->find($notificationId, new CoreRequestContext('token'));
     }
 
     public function testFunnelClientUsesHeaderTokenWithoutPuttingItInPayload(): void

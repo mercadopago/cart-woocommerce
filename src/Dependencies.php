@@ -186,6 +186,12 @@ class Dependencies
 
     public PaymentReconciliation $paymentReconciliation;
 
+    public \MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderOperations $smartPixOperations;
+
+    public \MercadoPago\Woocommerce\SmartPix\Adapters\WooCommerce\SmartPixNativeEffects $smartPixNativeEffects;
+
+    public \MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderSync $smartPixOrderSync;
+
     public AdminTranslations $adminTranslations;
 
     public StoreTranslations $storeTranslations;
@@ -247,6 +253,9 @@ class Dependencies
         $this->gatewayHook             = $this->setGateway();
         $this->nonceHelper             = $this->setNonce();
         $this->orderStatus             = $this->setOrderStatus();
+        $this->smartPixNativeEffects   = new \MercadoPago\Woocommerce\SmartPix\Adapters\WooCommerce\SmartPixNativeEffects();
+        $this->smartPixOrderSync       = $this->setSmartPixOrderSync();
+        $this->smartPixOperations      = $this->setSmartPixOperations();
         $this->paymentReconciliation   = $this->setPaymentReconciliation();
         $this->cronHelper              = $this->setCronHelper();
         $this->currentUserHelper       = $this->setCurrentUser();
@@ -406,13 +415,114 @@ class Dependencies
         );
     }
 
+    private function setSmartPixOperations(): \MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderOperations
+    {
+        global $wpdb;
+
+        $context = new \MercadoPago\Woocommerce\SmartPix\Adapters\Telemetry\SmartPixMetricContext();
+        $telemetry = \MercadoPago\Woocommerce\SmartPix\Adapters\Telemetry\SmartPixTelemetry::fromPlugin($this, $context);
+
+        $applicator = new \MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixStateApplicator(
+            $this->orderMetadata,
+            new \MercadoPago\Woocommerce\SmartPix\Core\SmartPixStateReducer(),
+            $this->sellerConfig,
+            new \MercadoPago\Woocommerce\SmartPix\Adapters\Persistence\SmartPixEffectOwnership($wpdb),
+            $telemetry,
+            $this->smartPixNativeEffects,
+            [$this->orderStatus, 'addSmartPixStatusNotes']
+        );
+        $processor = new \MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixMutationProcessor(
+            new \MercadoPago\Woocommerce\SmartPix\Adapters\Http\RealSmartPixOrderClient(
+                new WordPressHttpClient('https://api.mercadopago.com', 10),
+                $this->sellerConfig,
+                $this->storeConfig,
+                $telemetry,
+                'pending_query',
+                null,
+                true
+            ),
+            $this->orderMetadata,
+            $this->sellerConfig,
+            new \MercadoPago\Woocommerce\SmartPix\Adapters\Persistence\SmartPixOperationRepository(),
+            static function (string $event, $value, ?string $message): void {
+                // Compatibility callback for standalone mutation harnesses. Production uses the semantic sink.
+            },
+            [$applicator, 'apply'],
+            $telemetry
+        );
+        return new \MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderOperations(
+            $this->orderMetadata,
+            $processor,
+            new \MercadoPago\Woocommerce\SmartPix\Adapters\WooCommerce\SmartPixRefundContext($this->orderMetadata),
+            null,
+            $this->smartPixNativeEffects
+        );
+    }
+
     private function setPaymentReconciliation(): PaymentReconciliation
     {
         return new PaymentReconciliation(
             $this->orderMetadata,
             $this->orderStatus,
             $this->requesterHelper,
-            $this->logs
+            $this->logs,
+            $this->smartPixOperations
+        );
+    }
+
+    private function setSmartPixOrderSync(): \MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderSync
+    {
+        global $wpdb;
+
+        $telemetry = \MercadoPago\Woocommerce\SmartPix\Adapters\Telemetry\SmartPixTelemetry::fromPlugin($this);
+        $query = new \MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderQuery(
+            new \MercadoPago\Woocommerce\SmartPix\Adapters\Http\RealSmartPixOrderClient(
+                new WordPressHttpClient(Requester::BASEURL_MP, 10),
+                $this->sellerConfig,
+                $this->storeConfig,
+                $telemetry
+            ),
+            $this->orderMetadata,
+            $this->sellerConfig,
+            $telemetry
+        );
+        // A native partial refund needs the authenticated refund-history snapshot.
+        // Keep ordinary reads for orders without a local refund, including external
+        // partial refunds that cannot safely be reconciled by this admin action.
+        $partialRefundQuery = new \MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderQuery(
+            new \MercadoPago\Woocommerce\SmartPix\Adapters\Http\RealSmartPixOrderClient(
+                new WordPressHttpClient(Requester::BASEURL_MP, 10),
+                $this->sellerConfig,
+                $this->storeConfig,
+                $telemetry,
+                'pending_query',
+                null,
+                true
+            ),
+            $this->orderMetadata,
+            $this->sellerConfig,
+            $telemetry
+        );
+        $apply = new \MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixStateApplicator(
+            $this->orderMetadata,
+            new \MercadoPago\Woocommerce\SmartPix\Core\SmartPixStateReducer(),
+            $this->sellerConfig,
+            new \MercadoPago\Woocommerce\SmartPix\Adapters\Persistence\SmartPixEffectOwnership($wpdb),
+            $telemetry,
+            $this->smartPixNativeEffects,
+            [$this->orderStatus, 'addSmartPixStatusNotes']
+        );
+        return new \MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderSync(
+            $this->orderMetadata,
+            static function (\WC_Order $order) use ($query, $partialRefundQuery): array {
+                $refunded = \MercadoPago\Woocommerce\SmartPix\Core\SmartPixMoney::normalize((string) $order->get_total_refunded());
+                $total = \MercadoPago\Woocommerce\SmartPix\Core\SmartPixMoney::normalize($order->get_total('edit'));
+                $hasPartialRefund = $refunded !== null && $total !== null
+                    && $refunded !== '0.00'
+                    && \MercadoPago\Woocommerce\SmartPix\Core\SmartPixMoney::compare($refunded, $total) < 0;
+                return ($hasPartialRefund ? $partialRefundQuery : $query)->query($order, 'server');
+            },
+            [$apply, 'apply']
         );
     }
 
@@ -485,7 +595,9 @@ class Dependencies
             $this->cronHelper,
             $this->currentUserHelper,
             $this->requesterHelper,
-            $this->logs
+            $this->logs,
+            $this->smartPixOperations,
+            $this->smartPixOrderSync
         );
     }
 

@@ -22,6 +22,7 @@ const buildEmailListener = (overrides = {}) => ({
 
 const buildPaymentMethods = (overrides = {}) => ({
   SUPER_TOKEN_STYLES: { PAYMENT_METHOD_LIST: 'mp-payment-method-list' },
+  clearRememberedSelections: jest.fn(),
   reset: jest.fn(),
   renderAccountPaymentMethods: jest.fn().mockResolvedValue(undefined),
   getStoredPaymentMethods: jest.fn().mockReturnValue([]),
@@ -343,11 +344,12 @@ describe('SuperTokenTriggerHandler', () => {
 
     it('Given the amount changed, When loaded, Then it resets the flow and reports the amount-change metric', async () => {
       const authenticator = buildAuthenticator({ getAmountUsed: jest.fn().mockReturnValue('5.00') });
-      const { handler, metrics } = build({ authenticator });
+      const { handler, metrics, paymentMethods } = build({ authenticator });
 
       await handler.loadSuperToken('10.00');
 
       expect(authenticator.reset).toHaveBeenCalled();
+      expect(paymentMethods.clearRememberedSelections).toHaveBeenCalledTimes(1);
       expect(metrics.sendMetric).toHaveBeenCalledWith('super_token_reset_on_amount_change', 'true', '');
     });
 
@@ -388,7 +390,7 @@ describe('SuperTokenTriggerHandler', () => {
     });
 
     it('Given a valid e-mail and returned methods, When fetched, Then it captures the e-mail, fetches and renders', async () => {
-      const methods = [{ token: 'PM_1' }];
+      const methods = [{ type: 'credit_card', token: 'PM_1' }];
       const authenticator = buildAuthenticator({ getAccountPaymentMethods: jest.fn().mockResolvedValue(methods) });
       const { handler, paymentMethods, metrics } = build({ authenticator });
       handler.wcBuyerEmail = 'buyer@example.com';

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.10.1] 2026-11-12
+### Added
+- Pix via Open Finance (Brazil): eligible buyers can pay with a bank account already connected to their Mercado Pago account, without copying a Pix code or scanning a QR code. Available on the Classic, Blocks and Order Pay checkouts. The conventional Pix QR code and copy-and-paste code remain available as an option. While Open Finance loads, the Pix option shows a loading indicator; if it cannot load, the conventional Pix is shown
+- Pix via Open Finance order confirmation: the page shows the payment progress and updates automatically when the payment is approved, rejected or cancelled, with specific messages for insufficient balance and daily limit, and a link to start a new purchase
+- Pix via Open Finance orders are confirmed by Mercado Pago notifications and respect the store's paid order status. Cancellations and full or partial refunds stay in sync with Mercado Pago, including refunds made outside WooCommerce
+- Show the Mercado Pago Order ID of Pix via Open Finance orders in the order Custom Fields, as "Mercado Pago - Order ID"
+- Add an account-linking notice to the WooCommerce admin, with a "Vincular conta" / "Vincular cuenta" button. Merchants can close it temporarily, and it does not overlap other notices
+
+### Fixed
+- Always show and require the cardholder name in the card checkout, and move the focus to the field when it is empty. Before, the field could be hidden for some cards, and the payment was rejected after the order was placed
+- Restore the card checkout fields on mobile when the checkout is updated several times in a row
+- Stop unnecessary reloads of the fast payment styles in Safari
+
 ## [8.10.0] 2026-11-05
 ### Added
 - Add Colombian Spanish: stores in Colombian Spanish now use their own translation instead of the generic Spanish one, with "Cuotas" and "cuotas sin interés" in the new card form and, once fast payment is available in Colombia, in the saved payment methods; card errors and admin credential messages in neutral Spanish; and a Colombian Wallet Button preview in the admin

@@ -16,6 +16,7 @@ export interface CoreMonitorDetails {
   js_version?: string | null;
   ab_variant?: string;
   event?: string;
+  reason?: string;
 }
 
 export interface CoreMonitorPayload {

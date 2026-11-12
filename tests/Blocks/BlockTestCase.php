@@ -120,6 +120,10 @@ abstract class BlockTestCase extends TestCase
             WP_Mock::onHookAdded('wp_enqueue_scripts', 'action')
                 ->with(Mockery::type('callable'), $priority, 1)->perform(function () {});
         }
+        // The Pix gateway (Smart Pix epic) marks its allow-listed stylesheet as crossorigin.
+        WP_Mock::onFilterAdded('style_loader_tag')
+            ->with([new \WP_Mock\Matcher\AnyInstance(\MercadoPago\Woocommerce\Hooks\Scripts::class), 'addSmartPixStyleCrossOrigin'], 10, 2)
+            ->perform(function () {});
         WP_Mock::onHookAdded('enqueue_block_assets', 'action')
             ->with(Mockery::type('callable'), 10, 1)->perform(function () {});
         foreach ([

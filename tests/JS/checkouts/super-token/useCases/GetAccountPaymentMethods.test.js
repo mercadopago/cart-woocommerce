@@ -24,15 +24,25 @@ const buildMetrics = (overrides = {}) => ({
   ...overrides,
 });
 
-const run = (session, metrics) =>
+const run = (session, metrics, overrides = {}) =>
   new GetAccountPaymentMethods().execute({
     session,
     metrics,
     amount: '10.00',
     buyerEmail: 'buyer@test.com',
+    ...overrides,
   });
 
 describe('GetAccountPaymentMethods', () => {
+  it('reports a shared SDK error before returning null, with the current secret for redaction', async () => {
+    const failure = new Error('Original SDK failure');
+    const session = buildSession({ fetchAccountPaymentMethods: jest.fn(async () => { throw failure; }) });
+    const metrics = buildMetrics({ smartPixEligibilityFailure: jest.fn() });
+    await expect(run(session, metrics)).resolves.toBeNull();
+    expect(metrics.smartPixEligibilityFailure).toHaveBeenCalledWith(failure, ['buyer@test.com', FAST_TOKEN]);
+    expect(metrics.errorToGetAccountPaymentMethods).toHaveBeenCalledWith(failure);
+  });
+
   it('Given the full auth flow succeeds, When executed, Then it stores the handle and token and returns the methods', async () => {
     const session = buildSession();
     const metrics = buildMetrics();
@@ -143,5 +153,26 @@ describe('GetAccountPaymentMethods', () => {
 
     expect(result).toBeNull();
     expect(metrics.errorToGetAccountPaymentMethods).toHaveBeenCalledWith(failure);
+  });
+
+  it('Given the generation is aborted while the SDK is pending, When it settles, Then stale state is not stored', async () => {
+    let resolveAuthenticator;
+    const session = buildSession({
+      buildAuthenticator: jest.fn(() => new Promise((resolve) => {
+        resolveAuthenticator = resolve;
+      })),
+    });
+    const metrics = buildMetrics();
+    const controller = new AbortController();
+
+    const result = run(session, metrics, { signal: controller.signal });
+    await Promise.resolve();
+    controller.abort();
+    resolveAuthenticator(AUTHENTICATOR);
+
+    await expect(result).resolves.toBeNull();
+    expect(session.storeAuthenticator).not.toHaveBeenCalled();
+    expect(session.getSimplifiedAuth).not.toHaveBeenCalled();
+    expect(metrics.errorToGetAccountPaymentMethods).not.toHaveBeenCalled();
   });
 });

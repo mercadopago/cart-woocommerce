@@ -102,6 +102,19 @@ describe('SuperTokenAuthenticator', () => {
       expect(authenticator.getStoredAuthenticator()).toBeNull();
     });
 
+    it('Given a completed authorization, When the flow resets after an order error, Then backend authorization fields are invalidated', () => {
+      document.body.innerHTML = `
+        <input id="super_token_validation" value="true" />
+        <input id="authorized_pseudotoken" value="PSEUDO_1" />
+      `;
+      const { authenticator } = build();
+
+      authenticator.reset();
+
+      expect(document.getElementById('super_token_validation').value).toBe('false');
+      expect(document.getElementById('authorized_pseudotoken').value).toBe('');
+    });
+
     it('Given a stored handle, When read, Then it returns the handle unchanged', () => {
       const { authenticator } = build();
       const handle = { getSimplifiedAuth: jest.fn() };
@@ -334,6 +347,9 @@ describe('SuperTokenAuthenticator', () => {
       const { authenticator } = build({ sdk, paymentMethods });
 
       const oldLoad = authenticator.getAccountPaymentMethods('10.00', 'buyer@example.com');
+      // The coordinator starts the fetch asynchronously; let the old load reach the SDK first.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(sdk.authenticator).toHaveBeenCalledTimes(1);
       authenticator.reset();
       await authenticator.getAccountPaymentMethods('20.00', 'buyer@example.com');
       resolveOldSdkCall(oldHandle);
@@ -376,7 +392,7 @@ describe('SuperTokenAuthenticator', () => {
 
     it('Given a full happy path, When loading, Then it stores the handle/token and returns the account methods', async () => {
       const sdk = buildLoadSdk();
-      const methods = [{ token: 'PM_1' }];
+      const methods = [{ type: 'credit_card', token: 'PM_1' }];
       const paymentMethods = { getAccountPaymentMethods: jest.fn().mockResolvedValue({ data: methods }) };
       const metrics = buildMetrics();
       const { authenticator } = build({ sdk, paymentMethods, metrics });
@@ -387,6 +403,34 @@ describe('SuperTokenAuthenticator', () => {
       expect(authenticator.getStoredAuthenticator()).toBe(sdk.handle);
       expect(paymentMethods.getAccountPaymentMethods).toHaveBeenCalledWith('FAST_1');
       expect(metrics.canUseSuperToken).toHaveBeenCalledWith(true);
+    });
+
+    it('Given a mixed response, When Custom Gateway and Smart Pix load, Then one SDK call serves isolated results', async () => {
+      const sdk = buildLoadSdk();
+      const savedCard = { type: 'credit_card', token: 'PM_1' };
+      const smartTransfer = {
+        id: 'smart-transfer-bb',
+        name: 'Banco do Brasil',
+        thumbnail: '',
+        token: 'smart-transfer-token',
+        type: 'smart_transfer',
+        open_finance_account_id: 'open-finance-account',
+      };
+      const paymentMethods = {
+        getAccountPaymentMethods: jest.fn().mockResolvedValue({
+          data: [savedCard, smartTransfer],
+        }),
+      };
+      const { authenticator } = build({ sdk, paymentMethods });
+
+      const [customMethods, smartTransfers] = await Promise.all([
+        authenticator.getAccountPaymentMethods('10.00', 'buyer@example.com'),
+        authenticator.getSmartTransferPaymentMethods('10.00', 'buyer@example.com'),
+      ]);
+
+      expect(paymentMethods.getAccountPaymentMethods).toHaveBeenCalledTimes(1);
+      expect(customMethods).toEqual([savedCard]);
+      expect(smartTransfers).toEqual([smartTransfer]);
     });
 
     it('Given auth is not simplified, When loading, Then it reports the metric and returns null (fail-safe)', async () => {

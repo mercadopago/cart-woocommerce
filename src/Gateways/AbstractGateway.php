@@ -598,6 +598,12 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
 
             $this->setCheckoutSessionDataOnSessionHelperByOrderId($order->get_id());
 
+            // Another method supersedes an earlier unanswered Smart Pix attempt: its contract must stop
+            // owning this order's notifications and refunds. PixGateway decides per Pix flow.
+            if (static::ID !== PixGateway::ID) {
+                $this->mercadopago->orderMetadata->endSmartPixAttempt($order);
+            }
+
             return $this->proccessPaymentInternal($order);
         } catch (Exception $e) {
             return $this->processReturnFail(
@@ -751,27 +757,7 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
             throw $e;
         }
 
-        $errorContext = [
-            'exception_type' => (new \ReflectionClass($e))->getShortName(),
-            'exception_code' => (string) $e->getCode(),
-            'exception_origin' => basename($e->getFile()) . ':' . $e->getLine(),
-            'context_fields' => array_keys($context),
-        ];
-        if ($e instanceof TransportException) {
-            $errorContext['transport_code'] = $e->getTransportCode();
-        }
-        if ($e instanceof ApiException) {
-            $errorContext['api_message'] = $e->getMessage();
-            $errorContext['http_status'] = $e->getHttpStatus();
-            $errorContext['api_status'] = $e->getApiStatus();
-            $errorContext['api_error_code'] = $e->getErrorCode();
-        }
-
-        $this->mercadopago->logs->file->error(
-            'Checkout processing failed',
-            $source,
-            $errorContext
-        );
+        $this->logCheckoutFailure($e, $source, $context);
 
         $originalMessage = $message;
 
@@ -800,6 +786,40 @@ abstract class AbstractGateway extends WC_Payment_Gateway implements MercadoPago
             'redirect' => '',
             'message'  => $translatedMessage,
         ];
+    }
+
+    /**
+     * Log a checkout failure; a gateway may lower the level of an expected business outcome.
+     *
+     * @param Exception $e
+     * @param string $source
+     * @param array $context
+     *
+     * @return void
+     */
+    protected function logCheckoutFailure(Exception $e, string $source, array $context = []): void
+    {
+        $errorContext = [
+            'exception_type' => (new \ReflectionClass($e))->getShortName(),
+            'exception_code' => (string) $e->getCode(),
+            'exception_origin' => basename($e->getFile()) . ':' . $e->getLine(),
+            'context_fields' => array_keys($context),
+        ];
+        if ($e instanceof TransportException) {
+            $errorContext['transport_code'] = $e->getTransportCode();
+        }
+        if ($e instanceof ApiException) {
+            $errorContext['api_message'] = $e->getMessage();
+            $errorContext['http_status'] = $e->getHttpStatus();
+            $errorContext['api_status'] = $e->getApiStatus();
+            $errorContext['api_error_code'] = $e->getErrorCode();
+        }
+
+        $this->mercadopago->logs->file->error(
+            'Checkout processing failed',
+            $source,
+            $errorContext
+        );
     }
 
     /**

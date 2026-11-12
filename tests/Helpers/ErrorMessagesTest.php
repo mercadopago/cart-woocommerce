@@ -39,6 +39,12 @@ class ErrorMessagesTest extends TestCase
             return 'A problem was occurred when processing your payment. Please, try again.';
         });
         $this->storeTranslationsMock->commonMessages['cho_form_error'] = '<strong>Your payment was declined because something went wrong</strong><br>Please make sure all the information was entered correctly.';
+        $this->storeTranslationsMock->commonMessages['smart_pix_unavailable'] = 'Smart Pix is temporarily unavailable. Please choose another payment option.';
+        $this->storeTranslationsMock->commonMessages['smart_pix_processing_failed'] = 'We could not process your payment. Try again or use another payment method.';
+        $this->storeTranslationsMock->commonMessages['smart_pix_existing_pix'] = 'There is already a pending payment for this order. To change the payment method, contact the store.';
+        $this->storeTranslationsMock->commonMessages['smart_pix_rejected'] = 'We could not complete the payment. Choose another payment method.';
+        $this->storeTranslationsMock->commonMessages['smart_pix_insufficient_balance'] = 'Insufficient balance in this account. Choose another account or payment method.';
+        $this->storeTranslationsMock->commonMessages['smart_pix_limit_exceeded'] = 'This amount exceeds the daily limit. Choose another account or payment method.';
 
         $this->storeTranslationsMock->checkoutErrorMessages = new ArrayMock(function () {
             return '<strong>Your payment was declined because something went wrong</strong><br>We recommend trying again or paying with another method.';
@@ -85,6 +91,50 @@ class ErrorMessagesTest extends TestCase
     public function tearDown(): void
     {
         Mockery::close();
+    }
+
+    public function testSmartPixUnavailableUsesDedicatedBuyerMessage(): void
+    {
+        $this->assertSame(
+            'Smart Pix is temporarily unavailable. Please choose another payment option.',
+            $this->errorMessages->findErrorMessage('smart_pix_unavailable')
+        );
+    }
+
+    /**
+     * @dataProvider smartPixBuyerErrorProvider
+     */
+    public function testGivenASmartPixBuyerErrorCodeWhenTranslatedThenItUsesTheDedicatedMessage(
+        string $code,
+        string $expectedMessage
+    ): void {
+        $this->assertSame($expectedMessage, $this->errorMessages->findErrorMessage($code));
+    }
+
+    public static function smartPixBuyerErrorProvider(): array
+    {
+        return [
+            'post-authentication failure' => [
+                'smart_pix_processing_failed',
+                'We could not process your payment. Try again or use another payment method.',
+            ],
+            'existing conventional Pix' => [
+                'smart_pix_existing_pix',
+                'There is already a pending payment for this order. To change the payment method, contact the store.',
+            ],
+            'rejected' => [
+                'smart_pix_rejected',
+                'We could not complete the payment. Choose another payment method.',
+            ],
+            'insufficient balance' => [
+                'smart_pix_insufficient_balance',
+                'Insufficient balance in this account. Choose another account or payment method.',
+            ],
+            'daily limit exceeded' => [
+                'smart_pix_limit_exceeded',
+                'This amount exceeds the daily limit. Choose another account or payment method.',
+            ],
+        ];
     }
 
     /**

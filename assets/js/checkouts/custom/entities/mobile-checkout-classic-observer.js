@@ -9,6 +9,8 @@ class MobileCheckoutClassicObserver {
         this._onCheckoutUpdate            = onCheckoutUpdate;
         this._onOrderPayInit              = onOrderPayInit;
         this._updateInFlight              = false;
+        this._updatePending               = false;
+        this._destroyed                   = false;
         this._recoveryInFlight            = false;
         this._checkoutUpdateReceived      = false;
         this._structure                   = this._getCheckoutStructureLabel();
@@ -24,15 +26,24 @@ class MobileCheckoutClassicObserver {
     }
 
     _guardedUpdate() {
+        if (this._destroyed) return;
         this._checkoutUpdateReceived = true;
         clearTimeout(this._initTimeout);
-        if (this._updateInFlight) return;
+        if (this._updateInFlight) {
+            this._updatePending = true;
+            return;
+        }
         this._updateInFlight = true;
         const wasRecovery = this._recoveryInFlight;
         this._recoveryInFlight = false;
         let errored = false;
         Promise.resolve()
-            .then(() => this._onCheckoutUpdate())
+            .then(() => {
+                // This execution already sees synchronous events from the same cycle.
+                // Later events may replace the payment fragment while SDK work is pending.
+                this._updatePending = false;
+                if (!this._destroyed) return this._onCheckoutUpdate();
+            })
             .catch((error) => {
                 errored = true;
                 this._cardForm?.removeLoadSpinner?.();
@@ -40,9 +51,11 @@ class MobileCheckoutClassicObserver {
             })
             .finally(() => {
                 this._updateInFlight = false;
+                if (this._destroyed) return;
                 if (wasRecovery && !errored) {
                     this._emitRecoveredMetric(!!this._cardForm?.formMounted);
                 }
+                if (this._updatePending) this._guardedUpdate();
             });
     }
 
@@ -56,24 +69,34 @@ class MobileCheckoutClassicObserver {
         }
     }
 
+    // Runs inside catch: a metrics failure must not reject the update chain (Error Cascade rule).
     _emitUpdateErrorMetric(error) {
-        if (typeof sendMetric === 'function') {
-            const reason = error?.message || error?.name || 'unknown';
-            sendMetric(
-                this._getDeviceLabel(),
-                `${this._structure}/reason:${reason}`,
-                'mp_custom_checkout_mobile_update_error',
-            );
+        try {
+            if (typeof sendMetric === 'function') {
+                const reason = error?.message || error?.name || 'unknown';
+                sendMetric(
+                    this._getDeviceLabel(),
+                    `${this._structure}/reason:${reason}`,
+                    'mp_custom_checkout_mobile_update_error',
+                );
+            }
+        } catch (metricError) {
+            // Telemetry is optional.
         }
     }
 
+    // Runs inside finally, before the pending update replays: it must never throw.
     _emitRecoveredMetric(mounted) {
-        if (typeof sendMetric === 'function') {
-            sendMetric(
-                this._getDeviceLabel(),
-                `${this._structure}/mounted:${mounted ? 'yes' : 'no'}`,
-                'mp_custom_checkout_mobile_recovered',
-            );
+        try {
+            if (typeof sendMetric === 'function') {
+                sendMetric(
+                    this._getDeviceLabel(),
+                    `${this._structure}/mounted:${mounted ? 'yes' : 'no'}`,
+                    'mp_custom_checkout_mobile_recovered',
+                );
+            }
+        } catch (metricError) {
+            // Telemetry is optional; the pending update still runs.
         }
     }
 
@@ -134,6 +157,8 @@ class MobileCheckoutClassicObserver {
     }
 
     destroy() {
+        this._destroyed = true;
+        this._updatePending = false;
         clearTimeout(this._initTimeout);
         jQuery(document.body).off('cfw_pre_updated_checkout', this._boundGuardedUpdate);
         jQuery(document).off('updated_checkout', this._boundGuardedUpdate);

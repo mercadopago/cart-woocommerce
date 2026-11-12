@@ -135,7 +135,7 @@ test('real Jest validates its snapshot before executing tests and keeps generic 
     collectCoverage: true, coverageProvider: 'v8', collectCoverageFrom: [sourcePath], coverageDirectory: path.join(fixture, 'output'),
     coverageReporters: ['json'], globalSetup: GLOBAL_SETUP, setupFilesAfterEnv: [SETUP] };
   const configPath = put(fixture, 'jest.config.cjs', 'module.exports=' + JSON.stringify(config));
-  const execute = () => spawnSync(process.execPath, ['--no-compilation-cache', path.join(ROOT, 'node_modules/jest/bin/jest.js'), '--config', configPath, '--runInBand'], { cwd: fixture, encoding: 'utf8', timeout: 30000 });
+  const execute = () => spawnSync(process.execPath, ['--no-compilation-cache', path.join(ROOT, 'node_modules/jest/bin/jest.js'), '--config', configPath, '--runInBand'], { cwd: fixture, env: { ...process.env, COVERAGE_VM_RECEIPT_DIR: path.join(fixture, 'coverage', 'vm-metadata') }, encoding: 'utf8', timeout: 30000 });
   let result = execute();
   expect(result.status).toBe(0);
   const files = normalizeJs(JSON.parse(fs.readFileSync(path.join(fixture, 'output/coverage-final.json'))), fixture);
@@ -180,7 +180,7 @@ test('one real common Jest harness attributes both old and new aliases in separa
       collectCoverage: true, coverageProvider: 'v8', collectCoverageFrom: [sourcePath], coverageDirectory: path.join(root, 'output'),
       coverageReporters: ['json'], globalSetup: commonGlobalSetup, setupFilesAfterEnv: [commonSetup] };
     const configPath = put(root, 'jest.config.cjs', 'module.exports=' + JSON.stringify(config));
-    const result = spawnSync(process.execPath, ['--no-compilation-cache', path.join(ROOT, 'node_modules/jest/bin/jest.js'), '--config', configPath, '--runInBand'], { cwd: root, encoding: 'utf8', timeout: 30000 });
+    const result = spawnSync(process.execPath, ['--no-compilation-cache', path.join(ROOT, 'node_modules/jest/bin/jest.js'), '--config', configPath, '--runInBand'], { cwd: root, env: { ...process.env, COVERAGE_VM_RECEIPT_DIR: path.join(root, 'coverage', 'vm-metadata') }, encoding: 'utf8', timeout: 30000 });
     expect(result.status).toBe(0);
     expect(fs.readFileSync(physicalTest, 'utf8')).toBe(body);
     expect(fs.readFileSync(path.join(root, sourcePath), 'utf8')).toBe(source);

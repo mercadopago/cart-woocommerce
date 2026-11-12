@@ -9,6 +9,15 @@
     convertDeprecationsToExceptions="true"
     verbose="true">
     <php>
+        <!--
+            The full suite peaks at about 150 MB, above PHP's default 128M limit
+            (mostly WP_Mock/Mockery state retained across tests). With Xdebug coverage
+            the CI run ends at about 210-230 MB and the HTML report then needs more, so
+            256M failed with a fatal memory error after all tests passed.
+            Profile the heaviest tests (e.g. AbstractGatewayTest, WordPressHttpClientTest)
+            before raising it again.
+        -->
+        <ini name="memory_limit" value="512M"/>
         <env name="PHPUNIT_TEST" value="true"/>
     </php>
 
@@ -27,6 +36,7 @@
             <directory suffix=".php">src/Helpers</directory>
             <directory suffix=".php">src/Order</directory>
             <directory suffix=".php">src/Notification</directory>
+            <directory suffix=".php">src/SmartPix</directory>
             <directory suffix=".php">src/SuperToken</directory>
             <directory suffix=".php">src/Refund</directory>
             <directory suffix=".php">src/Hooks</directory>

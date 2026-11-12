@@ -279,6 +279,10 @@ describe('MobileCheckoutClassicObserver — PSW-4054', () => {
   // guardedUpdate — deduplication
   // -------------------------------------------------------------------------
   describe('guardedUpdate deduplication', () => {
+    const flushMicrotasks = async () => {
+      for (let i = 0; i < 12; i++) await Promise.resolve();
+    };
+
     it('should call onCheckoutUpdate once when only cfw_pre fires', async () => {
       new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
       handlers['cfw_pre_updated_checkout']();
@@ -324,6 +328,84 @@ describe('MobileCheckoutClassicObserver — PSW-4054', () => {
       handlers['updated_checkout']();
       await Promise.resolve();
       expect(onCheckoutUpdate).toHaveBeenCalledTimes(2);
+    });
+
+    it('should replay one update for events received while the previous update is pending', async () => {
+      let finishUpdate;
+      onCheckoutUpdate.mockReturnValueOnce(new Promise((resolve) => { finishUpdate = resolve; }));
+      const obs = new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
+
+      handlers['updated_checkout']();
+      await flushMicrotasks();
+      handlers['updated_checkout']();
+      handlers['payment_method_selected']();
+      handlers['updated_checkout']();
+      await flushMicrotasks();
+      expect(onCheckoutUpdate).toHaveBeenCalledTimes(1);
+
+      finishUpdate();
+      await flushMicrotasks();
+
+      expect(onCheckoutUpdate).toHaveBeenCalledTimes(2);
+      expect(obs._updateInFlight).toBe(false);
+    });
+
+    it('should replay a pending update after the previous update rejects', async () => {
+      let failUpdate;
+      onCheckoutUpdate.mockReturnValueOnce(new Promise((resolve, reject) => { failUpdate = reject; }));
+      const obs = new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
+
+      handlers['updated_checkout']();
+      await flushMicrotasks();
+      handlers['updated_checkout']();
+      failUpdate(new Error('update failed'));
+      await flushMicrotasks();
+
+      expect(onCheckoutUpdate).toHaveBeenCalledTimes(2);
+      expect(obs._updateInFlight).toBe(false);
+      expect(sendMetricMock).toHaveBeenCalledWith(
+        'ios_14.0',
+        'no-wc-form/reason:update failed',
+        'mp_custom_checkout_mobile_update_error'
+      );
+    });
+
+    it('should coalesce synchronous events without replaying the same checkout state', async () => {
+      new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
+
+      handlers['cfw_pre_updated_checkout']();
+      handlers['updated_checkout']();
+      handlers['payment_method_selected']();
+      await flushMicrotasks();
+
+      expect(onCheckoutUpdate).toHaveBeenCalledTimes(1);
+    });
+
+    it('should discard a pending replay when destroyed during an update', async () => {
+      let finishUpdate;
+      onCheckoutUpdate.mockReturnValueOnce(new Promise((resolve) => { finishUpdate = resolve; }));
+      const obs = new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
+
+      handlers['updated_checkout']();
+      await flushMicrotasks();
+      handlers['updated_checkout']();
+      obs.destroy();
+      finishUpdate();
+      await flushMicrotasks();
+
+      expect(onCheckoutUpdate).toHaveBeenCalledTimes(1);
+      expect(obs._updateInFlight).toBe(false);
+    });
+
+    it('should not start an update destroyed before its microtask runs', async () => {
+      const obs = new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
+
+      handlers['updated_checkout']();
+      obs.destroy();
+      await flushMicrotasks();
+
+      expect(onCheckoutUpdate).not.toHaveBeenCalled();
+      expect(obs._updateInFlight).toBe(false);
     });
 
     it('should reset _updateInFlight when onCheckoutUpdate rejects so next event runs', async () => {
@@ -425,6 +507,36 @@ describe('MobileCheckoutClassicObserver — PSW-4054', () => {
       expect(offCalls).toEqual(
         expect.arrayContaining(['cfw_pre_updated_checkout', 'updated_checkout', 'payment_method_selected'])
       );
+    });
+  });
+  describe('metric failures', () => {
+    it('given a throwing recovery metric, when the recovered update finishes, then the pending update still runs', async () => {
+      const obs = new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
+      sendMetricMock.mockImplementation(() => { throw new Error('metrics down'); });
+      obs._recoveryInFlight = true;
+      let release;
+      onCheckoutUpdate.mockImplementationOnce(() => new Promise((resolve) => { release = resolve; }));
+
+      obs._guardedUpdate();
+      for (let i = 0; i < 5; i++) await Promise.resolve();
+      obs._guardedUpdate();
+      release();
+      for (let i = 0; i < 20; i++) await Promise.resolve();
+
+      expect(onCheckoutUpdate).toHaveBeenCalledTimes(2);
+      expect(obs._updateInFlight).toBe(false);
+      sendMetricMock.mockReset();
+      obs.destroy();
+    });
+
+    it('given a throwing metrics script, when an update error or recovery is reported, then nothing throws', () => {
+      const obs = new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
+      sendMetricMock.mockImplementation(() => { throw new Error('metrics down'); });
+
+      expect(() => obs._emitUpdateErrorMetric(new Error('update failed'))).not.toThrow();
+      expect(() => obs._emitRecoveredMetric(true)).not.toThrow();
+      sendMetricMock.mockReset();
+      obs.destroy();
     });
   });
 });

@@ -2,6 +2,7 @@ import type { PaymentSdkPort, SdkAuthenticator, SdkCardTokenFields } from '@supe
 import type {
   RawMpSdkInstance,
   RawSdkCreditsContractController,
+  AccountPaymentMethod,
   PaymentMethod,
 } from '@super-token/types/external-globals';
 
@@ -30,7 +31,7 @@ export class MpSdkAdapter implements PaymentSdkPort {
     return this.sdk.authenticator(amount, buyerEmail, options);
   }
 
-  getAccountPaymentMethods(superToken: string): Promise<{ data: PaymentMethod[] }> {
+  getAccountPaymentMethods(superToken: string): Promise<{ data: AccountPaymentMethod[] }> {
     return this.sdk.getAccountPaymentMethods(superToken);
   }
 

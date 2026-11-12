@@ -12,6 +12,7 @@ use MercadoPago\Woocommerce\Helpers\CurrentUser;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\Links;
 use MercadoPago\Woocommerce\Helpers\Nonce;
+use MercadoPago\Woocommerce\Helpers\Notices;
 use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Hooks\Admin;
@@ -231,7 +232,7 @@ class Settings
         }
 
         if ($this->canLoadScriptsNoticesAdmin()) {
-            $this->scripts->registerNoticesAdminScript();
+            $this->scripts->registerNoticesAdminScript(Notices::isSiteAdminContext());
         }
     }
 
@@ -255,13 +256,7 @@ class Settings
      */
     public function canLoadScriptsNoticesAdmin(): bool
     {
-        return $this->admin->isAdmin() && (
-            $this->url->validateUrl('index') ||
-            $this->url->validateUrl('plugins') ||
-            $this->url->validatePage('wc-admin') ||
-            $this->url->validatePage('wc-settings') ||
-            $this->url->validatePage('mercadopago-settings')
-        );
+        return $this->admin->isAdmin() && Notices::getNoticeScreen($this->url) !== '';
     }
 
     /**

@@ -2,11 +2,14 @@
 
 namespace MercadoPago\Woocommerce\Hooks;
 
+use MercadoPago\Woocommerce\Gateways\CustomGateway;
 use MercadoPago\Woocommerce\Helpers\Country;
+use MercadoPago\Woocommerce\Helpers\Paths;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Helpers\PaymentMethods;
 use MercadoPago\Woocommerce\HealthMonitor\ScriptHealthMonitor;
+use MercadoPago\Woocommerce\SmartPix\Core\SmartPixDecimal;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -18,13 +21,53 @@ class Scripts
 
     private const MELIDATA_SCRIPT_NAME = 'mercadopago_melidata';
 
+    private const MELIDATA_CLIENT_URL = 'https://http2.mlstatic.com/storage/v1/plugins/melidata/woocommerce.min.js';
+
     private const WOOCCOMMERCE_SCRIPTS_SCRIPT_NAME = 'wc_mercadopago_woocommerce_scripts';
 
     private const CARONTE_SCRIPT_NAME = 'wc_mercadopago';
 
     private const NOTICES_SCRIPT_NAME = 'wc_mercadopago_notices';
 
+    private const NATIVE_NOTICES_SCRIPT_NAME = 'wc_mercadopago_native_notices';
+
     private const HEALTH_MONITOR_SCRIPT_NAME = 'wc_mercadopago_health_monitor';
+
+    public const FAST_PAYMENTS_SCRIPT_NAME = 'wc_mercadopago_supertoken';
+
+    public const FAST_PAYMENTS_BUNDLE_PARAMS_OBJECT = 'wc_mercadopago_supertoken_bundle_params';
+
+    private ?string $fastPaymentsEnvironment = null;
+
+    private bool $fastPaymentsRegistered = false;
+
+    /** @var array<string, mixed> */
+    private array $fastPaymentsBundleParams = [];
+
+    public const SMART_PIX_ENV_HOMOLOGATION = 'homologation';
+
+    public const SMART_PIX_ENV_PRODUCTION = 'production';
+
+    public const SMART_PIX_SCRIPT_NAME = 'wc_mercadopago_smart_pix';
+
+    public const SMART_PIX_STYLE_NAME = 'wc_mercadopago_smart_pix';
+
+    private const SMART_PIX_ASSET_VERSION = 'v1';
+
+    private const SMART_PIX_LOCAL_SCRIPT_PATH = 'checkouts/smart-pix/smart-pix.bundle';
+
+    private const SMART_PIX_LOCAL_STYLE_PATH = 'checkouts/smart-pix/smart-pix.bundle';
+
+    private const SMART_PIX_ASSETS = [
+        self::SMART_PIX_ENV_HOMOLOGATION => [
+            'script_url' => 'https://http2.mlstatic.com/storage/homol/mercadopago/woocommerce/scripts/smart-pix/v1/smart-pix.bundle.min.js',
+            'style_url' => 'https://http2.mlstatic.com/storage/homol/mercadopago/woocommerce/scripts/smart-pix/v1/smart-pix.bundle.min.css',
+        ],
+        self::SMART_PIX_ENV_PRODUCTION => [
+            'script_url' => 'https://http2.mlstatic.com/storage/v1/mercadopago/woocommerce/scripts/smart-pix/v1/smart-pix.bundle.min.js',
+            'style_url' => 'https://http2.mlstatic.com/storage/v1/mercadopago/woocommerce/scripts/smart-pix/v1/smart-pix.bundle.min.css',
+        ],
+    ];
 
     private Url $url;
 
@@ -74,10 +117,10 @@ class Scripts
      *
      * @return void
      */
-    public function registerAdminScript(string $name, string $file, array $variables = []): void
+    public function registerAdminScript(string $name, string $file, array $variables = [], array $deps = []): void
     {
-        add_action('admin_enqueue_scripts', function () use ($name, $file, $variables) {
-            $this->registerScript($name, $file, $variables);
+        add_action('admin_enqueue_scripts', function () use ($name, $file, $variables, $deps) {
+            $this->registerScript($name, $file, $variables, $deps);
         });
     }
 
@@ -118,6 +161,88 @@ class Scripts
     }
 
     /**
+     * Register the Custom Gateway CDN loader once.
+     *
+     * @param string $environment
+     * @param array<string, mixed> $bundleParams Super Token runtime data localized as
+     *        wc_mercadopago_supertoken_bundle_params.
+     * @return void
+     */
+    public function registerFastPaymentsCheckoutAssets(string $environment, array $bundleParams = []): void
+    {
+        if (!in_array($environment, [self::SMART_PIX_ENV_HOMOLOGATION, self::SMART_PIX_ENV_PRODUCTION], true)) {
+            return;
+        }
+
+        if ($this->fastPaymentsEnvironment !== null && $this->fastPaymentsEnvironment !== $environment) {
+            return;
+        }
+
+        $this->fastPaymentsEnvironment = $environment;
+        $this->fastPaymentsBundleParams = $bundleParams;
+        if ($this->fastPaymentsRegistered) {
+            return;
+        }
+
+        $this->fastPaymentsRegistered = true;
+        add_action('wp_enqueue_scripts', function () {
+            $this->enqueueFastPaymentsCheckoutAssets();
+        });
+    }
+
+    /**
+     * Localize capabilities before the loader runs. CDN destinations remain fixed in the loader.
+     *
+     * @return void
+     */
+    public function enqueueFastPaymentsCheckoutAssets(): void
+    {
+        if ($this->fastPaymentsEnvironment === null || !$this->isPaymentFormPage()) {
+            return;
+        }
+
+        $this->registerScript(
+            self::FAST_PAYMENTS_SCRIPT_NAME,
+            $this->url->getJsAsset('checkouts/super-token-loader'),
+            ['environment' => $this->fastPaymentsEnvironment],
+            ['wc_mercadopago_sdk']
+        );
+
+        if ($this->fastPaymentsBundleParams) {
+            wp_localize_script(
+                self::FAST_PAYMENTS_SCRIPT_NAME,
+                self::FAST_PAYMENTS_BUNDLE_PARAMS_OBJECT,
+                $this->fastPaymentsBundleParams
+            );
+        }
+
+        $this->scriptHealthMonitor->trackEnqueued(self::FAST_PAYMENTS_SCRIPT_NAME);
+    }
+
+    /**
+     * Register Smart Pix assets selected exclusively by the server.
+     *
+     * Unknown environments fail closed: no remote URL is accepted from the browser or request.
+     * The browser waits for a loaded stylesheet before replacing conventional Pix.
+     *
+     * @param string $environment
+     *
+     * @return void
+     */
+    public function registerSmartPixCheckoutAssets(string $environment): void
+    {
+        if (!isset(self::SMART_PIX_ASSETS[$environment])) {
+            return;
+        }
+
+        add_filter('style_loader_tag', [$this, 'addSmartPixStyleCrossOrigin'], 10, 2);
+
+        add_action('wp_enqueue_scripts', function () use ($environment) {
+            $this->enqueueSmartPixCheckoutAssets($environment);
+        });
+    }
+
+    /**
      * Register a script only where the checkout payment form can render.
      */
     public function registerPaymentFormScript(string $name, string $file, array $variables = [], array $deps = [], string $objectName = ''): void
@@ -128,6 +253,193 @@ class Scripts
                 $this->scriptHealthMonitor->trackEnqueued($name);
             }
         });
+    }
+
+    /**
+     * Enqueue one allow-listed Smart Pix environment on payment-related pages.
+     *
+     * Kept separate from hook registration so the fixed URL/dependency contract is testable
+     * without invoking a captured WordPress closure.
+     *
+     * @param string $environment
+     *
+     * @return void
+     */
+    public function enqueueSmartPixCheckoutAssets(string $environment): void
+    {
+        if (!isset(self::SMART_PIX_ASSETS[$environment]) || !$this->isPaymentsRelatedPage()) {
+            return;
+        }
+
+        $this->enqueueSmartPixBootstrapAssets();
+
+        $assets = self::SMART_PIX_ASSETS[$environment];
+
+        wp_enqueue_style(
+            self::SMART_PIX_STYLE_NAME,
+            $assets['style_url'],
+            [],
+            self::SMART_PIX_ASSET_VERSION
+        );
+        wp_enqueue_script(
+            self::SMART_PIX_SCRIPT_NAME,
+            $assets['script_url'],
+            ['wc_mercadopago_sdk'],
+            self::SMART_PIX_ASSET_VERSION,
+            true
+        );
+        wp_localize_script(self::SMART_PIX_SCRIPT_NAME, 'wc_mercadopago_smart_pix_params', [
+            'site_id' => Country::SITE_ID_MLB,
+            'standalone_bridge' => in_array(CustomGateway::ID, $this->paymentMethods->getEnabledPaymentMethods(), true)
+                ? 'disabled' : 'enabled',
+            'platform_id'      => MP_PLATFORM_ID,
+            'order_pay_context' => $this->getSmartPixOrderPayContext(),
+        ]);
+        $this->scriptHealthMonitor->trackEnqueued(self::SMART_PIX_SCRIPT_NAME);
+    }
+
+    /**
+     * The plugin-local Smart Pix build is git-ignored and never shipped in the release ZIP, so it
+     * may be selected only when both built files exist on disk; otherwise its URLs would 404.
+     *
+     * @param string|null $pluginRoot Plugin directory; defaults to the one containing this file.
+     */
+    public function hasSmartPixLocalCheckoutAssets(?string $pluginRoot = null): bool
+    {
+        $pluginRoot ??= dirname(__DIR__, 2);
+
+        return is_file($pluginRoot . '/assets/js/' . self::SMART_PIX_LOCAL_SCRIPT_PATH . '.min.js')
+            && is_file($pluginRoot . '/assets/css/' . self::SMART_PIX_LOCAL_STYLE_PATH . '.min.css');
+    }
+
+    /**
+     * Load the real, plugin-local Smart Pix build independently of the Orders environment.
+     */
+    public function registerSmartPixLocalCheckoutAssets(): void
+    {
+        add_action('wp_enqueue_scripts', function () {
+            $this->enqueueSmartPixLocalCheckoutAssets();
+        });
+    }
+
+    public function enqueueSmartPixLocalCheckoutAssets(): void
+    {
+        if (!$this->isPaymentsRelatedPage()) {
+            return;
+        }
+
+        $this->enqueueSmartPixBootstrapAssets();
+
+        wp_enqueue_style(
+            self::SMART_PIX_STYLE_NAME,
+            $this->url->getCssAsset(self::SMART_PIX_LOCAL_STYLE_PATH),
+            [],
+            $this->url->assetVersion()
+        );
+        wp_enqueue_script(
+            self::SMART_PIX_SCRIPT_NAME,
+            $this->url->getJsAsset(self::SMART_PIX_LOCAL_SCRIPT_PATH),
+            ['wc_mercadopago_sdk'],
+            $this->url->assetVersion(),
+            true
+        );
+        wp_localize_script(self::SMART_PIX_SCRIPT_NAME, 'wc_mercadopago_smart_pix_params', [
+            'site_id' => Country::SITE_ID_MLB,
+            'standalone_bridge' => in_array(CustomGateway::ID, $this->paymentMethods->getEnabledPaymentMethods(), true)
+                ? 'disabled' : 'enabled',
+            'platform_id' => MP_PLATFORM_ID,
+            'order_pay_context' => $this->getSmartPixOrderPayContext(),
+        ]);
+        $this->scriptHealthMonitor->trackEnqueued(self::SMART_PIX_SCRIPT_NAME);
+    }
+
+    /** First-paint presentation must not wait for the SDK or the independently delivered bundle. */
+    private function enqueueSmartPixBootstrapAssets(): void
+    {
+        wp_enqueue_style(
+            'wc_mercadopago_pix_bootstrap',
+            $this->url->getCssAsset('checkouts/mp-pix-bootstrap'),
+            [],
+            $this->url->assetVersion()
+        );
+        wp_enqueue_script(
+            'wc_mercadopago_pix_bootstrap',
+            $this->url->getJsAsset('checkouts/pix/mp-pix-bootstrap'),
+            [],
+            $this->url->assetVersion(),
+            false
+        );
+    }
+
+    /**
+     * Read the minimum Order Pay context from the server-side WC_Order.
+     *
+     * @return array{amount: string, buyerEmail: string, orderId: int}|null
+     */
+    private function getSmartPixOrderPayContext(): ?array
+    {
+        if (!is_checkout_pay_page()) {
+            return null;
+        }
+
+        $orderId = (int) get_query_var('order-pay');
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if ($orderId <= 0 || !isset($_GET['key']) || !is_string($_GET['key'])) {
+            return null;
+        }
+
+        $order = wc_get_order($orderId);
+
+        if (!$order instanceof \WC_Order) {
+            return null;
+        }
+
+        // The WooCommerce order key is the Order Pay authorization proof, not a CSRF nonce.
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $requestOrderKey = sanitize_text_field(wp_unslash($_GET['key']));
+        $storedOrderKey  = (string) $order->get_order_key();
+
+        if (
+            $requestOrderKey === ''
+            || $storedOrderKey === ''
+            || !hash_equals($storedOrderKey, $requestOrderKey)
+        ) {
+            return null;
+        }
+
+        // Exact canonical BRL total; sub-cent, negative or malformed totals yield no context.
+        $amount     = SmartPixDecimal::canonical((string) $order->get_total());
+        $buyerEmail = trim((string) $order->get_billing_email());
+        $resolvedId = (int) $order->get_id();
+
+        if (
+            $amount === null
+            || $amount === '0.00'
+            || filter_var($buyerEmail, FILTER_VALIDATE_EMAIL) === false
+            || $resolvedId !== $orderId
+        ) {
+            return null;
+        }
+
+        return [
+            'amount'     => $amount,
+            'buyerEmail' => $buyerEmail,
+            'orderId'    => $resolvedId,
+        ];
+    }
+
+    /**
+     * Keep the loaded stylesheet readable by the existing browser readiness check.
+     * This adds no content hash and does not validate the downloaded bytes.
+     */
+    public function addSmartPixStyleCrossOrigin(string $tag, string $handle): string
+    {
+        if ($handle !== self::SMART_PIX_STYLE_NAME || preg_match('/\scrossorigin\s*=/i', $tag)) {
+            return $tag;
+        }
+
+        return str_replace(' href=', ' crossorigin="anonymous" href=', $tag);
     }
 
     /**
@@ -193,21 +505,56 @@ class Scripts
      *
      * @return void
      */
-    public function registerNoticesAdminScript(): void
+    public function registerNoticesAdminScript(bool $useSharedRegion = true): void
     {
         global $woocommerce;
 
         $file      = $this->url->getJsAsset('notices/notices-client');
         $variables = [
             'site_id'          => $this->seller->getSiteId() ?: Country::SITE_ID_MLA,
-            'container'        => '#wpbody-content',
+            'container'        => $useSharedRegion ? '#mp-jaiminho-notices-slot' : '#wpbody-content',
             'public_key'       => $this->seller->getCredentialsPublicKey(),
             'plugin_version'   => MP_VERSION,
             'platform_id'      => MP_PLATFORM_ID,
             'platform_version' => $woocommerce->version,
+            'css_url'          => 'https://http2.mlstatic.com/storage/v1/plugins/notices/woocommerce.css',
+            'js_url'           => 'https://http2.mlstatic.com/storage/v1/plugins/notices/woocommerce.js',
+            'metrics_url'      => 'https://api.mercadopago.com/v1/plugins/notices/metrics',
         ];
 
-        $this->registerAdminScript(self::NOTICES_SCRIPT_NAME, $file, $variables);
+        $dependencies = $useSharedRegion ? [self::NATIVE_NOTICES_SCRIPT_NAME] : [];
+        $this->registerAdminScript(self::NOTICES_SCRIPT_NAME, $file, $variables, $dependencies);
+    }
+
+    public function registerNativeNoticesAdminScript(array $variables): void
+    {
+        $this->registerAdminStyle(
+            'wc_mercadopago_native_notices_css',
+            $this->nativeNoticeAssetUrl(
+                $this->url->getCssAsset('admin/mp-admin-notices-layout'),
+                'assets/css/admin/mp-admin-notices-layout.min.css'
+            )
+        );
+        $this->registerAdminScript(
+            self::NATIVE_NOTICES_SCRIPT_NAME,
+            $this->nativeNoticeAssetUrl(
+                $this->url->getJsAsset('admin/mp-admin-notices-layout'),
+                'assets/js/admin/mp-admin-notices-layout.min.js'
+            ),
+            $variables
+        );
+    }
+
+    private function nativeNoticeAssetUrl(string $url, string $assetPath): string
+    {
+        $path = Paths::basePath($assetPath);
+        if (!is_file($path) || !is_readable($path)) {
+            return $url;
+        }
+
+        // The asset may disappear or become unreadable after the checks above.
+        $revision = @hash_file('sha256', $path);
+        return $revision === false ? $url : $this->url->setQueryVar('mp_native_rev', substr($revision, 0, 12), $url);
     }
 
     /**
@@ -290,8 +637,9 @@ class Scripts
     public function prioritizeMelidataStoreScriptEarly(string $location = ''): void
     {
         $file = $this->url->getJsAsset('melidata/melidata-client');
+        $clientUrl = $this->getMelidataClientUrl();
 
-        add_action('wp_enqueue_scripts', function () use ($file, $location) {
+        add_action('wp_enqueue_scripts', function () use ($file, $location, $clientUrl) {
             if ($this->isPaymentsRelatedPage() && !is_cart() && !is_view_order_page()) {
                 $deps = array_merge(
                     wp_script_is('wc_mercadopago_sdk', 'registered') ? ['wc_mercadopago_sdk'] : [],
@@ -316,6 +664,7 @@ class Scripts
                         'plugin_version'   => MP_VERSION,
                         'platform_version' => $woocommerce->version,
                         'payment_methods'  => $this->paymentMethods->getEnabledPaymentMethods(),
+                        'client_url'       => $clientUrl,
                     ];
 
                     wp_localize_script(
@@ -350,6 +699,7 @@ class Scripts
             'payment_method'   => $paymentMethod,
             'plugin_version'   => MP_VERSION,
             'platform_version' => $woocommerce->version,
+            'client_url'       => $this->getMelidataClientUrl(),
         ];
 
         if ($type == 'buyer') {
@@ -366,6 +716,11 @@ class Scripts
 
         $deps = wp_script_is('wc-blocks-registry', 'registered') ? ['wc-blocks-registry'] : [];
         $this->registerStoreScript(self::MELIDATA_SCRIPT_NAME, $file, $variables, $deps);
+    }
+
+    private function getMelidataClientUrl(): string
+    {
+        return self::MELIDATA_CLIENT_URL;
     }
 
     public function registerMpBehaviorTrackingScript(): void

@@ -8,6 +8,7 @@ use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Interfaces\NotificationInterface;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
+use MercadoPago\Woocommerce\SmartPix\Adapters\WooCommerce\SmartPixLegacyPaymentNotice;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use WC_Order;
 use WC_Order_Refund;
@@ -92,6 +93,16 @@ abstract class AbstractNotification implements NotificationInterface
                 $this->setResponse(422, $message);
             }
 
+            // Smart Pix Orders state is applied only by its own receiver; acknowledge the
+            // legacy notification without metadata writes or status effects.
+            if ($this->orderStatus->isOwnedBySmartPixOrders($order)) {
+                $this->logs->file->info('Legacy notification ignored for a Smart Pix Orders contract', __CLASS__);
+                // Keep a trace of an approved payment of another method without changing the order.
+                $this->smartPixLegacyPaymentNotice()->record($order, $data, 'notification');
+                $this->setResponse(200, 'Notification ignored');
+                return;
+            }
+
             $this->logs->file->info('Updating metadata and status with data', __CLASS__, $data);
 
             $this->handleSuccessfulRequestInternal($data, $order);
@@ -106,6 +117,12 @@ abstract class AbstractNotification implements NotificationInterface
      * @param WC_Order|WC_Order_Refund $order
      **/
     abstract public function handleSuccessfulRequestInternal($data, $order): void;
+
+    /** Composition seam for the Smart Pix legacy payment trace; tests replace it. */
+    protected function smartPixLegacyPaymentNotice(): SmartPixLegacyPaymentNotice
+    {
+        return SmartPixLegacyPaymentNotice::fromPlugin();
+    }
 
     /**
      * Process order status

@@ -17,6 +17,7 @@ use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\Order\OrderStatus;
 use MercadoPago\Woocommerce\Order\PaymentReconciliation;
+use MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderSync;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
@@ -64,6 +65,8 @@ class Order
 
     private Singleton $datadog;
 
+    private ?SmartPixOrderSync $smartPixOrderSync = null;
+
     /**
      * @const
      */
@@ -105,7 +108,9 @@ class Order
         Cron $cron,
         CurrentUser $currentUser,
         Requester $requester,
-        Logs $logs
+        Logs $logs,
+        ?\MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderOperations $smartPixOperations = null,
+        ?SmartPixOrderSync $smartPixOrderSync = null
     ) {
         $this->template          = $template;
         $this->orderMetadata     = $orderMetadata;
@@ -124,9 +129,14 @@ class Order
         $this->requester         = $requester;
         $this->logs              = $logs;
         $this->datadog           = Datadog::getInstance();
+        $this->smartPixOrderSync = $smartPixOrderSync;
 
         $this->registerStatusSyncMetaBox();
         $this->registerSyncPendingStatusOrdersAction();
+        if ($smartPixOperations !== null) {
+            add_action('woocommerce_create_refund', [$smartPixOperations->getRefundContext(), 'capture'], 10, 2);
+            add_action('woocommerce_before_order_object_save', [$smartPixOperations, 'beforeSave'], 10, 1);
+        }
         add_filter(
             'woocommerce_cancel_unpaid_order',
             [$this, 'reconcileUnpaidOrderCancellation'],
@@ -134,6 +144,57 @@ class Order
             2
         );
         $this->endpoints->registerAjaxEndpoint('mp_sync_payment_status', [$this, 'paymentStatusSync']);
+        add_filter('woocommerce_order_get_payment_method_title', [$this, 'paymentMethodTitle'], 10, 2);
+        add_filter('woocommerce_gateway_title', [$this, 'adminPaymentMethodTitle'], 20, 2);
+        add_action('woocommerce_before_order_object_save', [$this->orderMetadata, 'prepareSmartPixOrderIdCustomField']);
+    }
+
+    /**
+     * WooCommerce's order header reads the gateway title instead of the order title.
+     * Hooked for every gateway: another plugin may pass a null title or a non-string ID, so
+     * values are untyped and returned unchanged unless this is the Pix gateway's string title.
+     *
+     * @param mixed $title
+     * @param mixed $gatewayId
+     * @return mixed
+     */
+    public function adminPaymentMethodTitle($title, $gatewayId = null)
+    {
+        if (
+            !is_string($title) || $gatewayId !== PixGateway::ID
+            || !is_admin() || wp_doing_ajax() || !function_exists('get_current_screen')
+        ) {
+            return $title;
+        }
+        $screen = get_current_screen();
+        // Read WooCommerce's authorized editor context, never an order ID supplied in the URL.
+        $order = $GLOBALS['theorder'] ?? null;
+        if (
+            !in_array($screen->id ?? '', ['shop_order', 'woocommerce_page_wc-orders'], true)
+            || !$order instanceof WC_Order || $order->get_id() <= 0
+        ) {
+            return $title;
+        }
+        return $this->paymentMethodTitle($title, $order);
+    }
+
+    /**
+     * Filters every order's title, so a third-party null title or non-order object passes through.
+     *
+     * @param mixed $title
+     * @param mixed $order
+     * @return mixed
+     */
+    public function paymentMethodTitle($title, $order = null)
+    {
+        if (
+            is_string($title) && $order instanceof WC_Order
+            && $order->get_payment_method('edit') === PixGateway::ID
+            && $this->orderMetadata->getPaymentContract($order) === OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1
+        ) {
+            return $this->storeTranslations->orderStatus['smart_transfer'];
+        }
+        return $title;
     }
 
     /**
@@ -192,7 +253,7 @@ class Order
                 return $gateway::ID === $paymentMethod || $gateway::WEBHOOK_API_NAME === $paymentMethod;
             });
 
-            if (!$isMpPaymentMethod) {
+            if (!$isMpPaymentMethod && !$this->usesSmartPixSync($order)) {
                 return;
             }
 
@@ -246,7 +307,7 @@ class Order
     {
         try {
             $lastPayment = $this->getLastPaymentInfo($order);
-            $allPaymentsData = $this->orderStatus->getAllPaymentsData($order);
+            $allPaymentsData = $this->paymentsForDisplay($order);
         } catch (Exception $e) {
             $this->logs->file->error('Mercado Pago: Error getting payments data for metabox: ' . $e->getMessage(), __CLASS__);
             return [];
@@ -330,7 +391,7 @@ class Order
     private function getLastPaymentInfo(WC_Order $order)
     {
         try {
-            $paymentsData = $this->orderStatus->getAllPaymentsData($order);
+            $paymentsData = $this->paymentsForDisplay($order);
             if (empty($paymentsData)) {
                 return false;
             }
@@ -364,6 +425,19 @@ class Order
         return count($paymentsData) > 1;
     }
 
+    private function usesSmartPixSync(WC_Order $order): bool
+    {
+        return $this->smartPixOrderSync !== null
+            && $this->orderMetadata->getPaymentContract($order) === OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1;
+    }
+
+    private function paymentsForDisplay(WC_Order $order): array
+    {
+        return $this->usesSmartPixSync($order)
+            ? $this->smartPixOrderSync->paymentData($order)
+            : $this->orderStatus->getAllPaymentsData($order);
+    }
+
     /**
      * Check if the order has refunded payments
      *
@@ -394,6 +468,9 @@ class Order
 
             $orderId = Form::sanitizedPostData('order_id');
             $order = wc_get_order($orderId);
+            if (!$order instanceof WC_Order) {
+                throw new \InvalidArgumentException('Invalid order for payment synchronization.');
+            }
             $this->syncOrderStatus($order);
 
             wp_send_json_success(
@@ -421,6 +498,10 @@ class Order
      */
     public function syncOrderStatus(WC_Order $order): void
     {
+        if ($this->usesSmartPixSync($order)) {
+            $this->smartPixOrderSync->synchronize($order);
+            return;
+        }
         try {
             $notification = $this->orderStatus->getLastNotification($order);
             $notification = reset($notification);
@@ -588,58 +669,73 @@ class Order
      */
     public function registerSyncPendingStatusOrdersAction(): void
     {
-        add_action('mercadopago_sync_pending_status_order_action', function () {
-            try {
-                $orders = wc_get_orders(array(
-                    'limit'    => -1,
-                    'status'   => 'pending',
-                    'meta_query' => array(
-                        'relation' => 'AND',
-                        array(
-                            'key' => 'is_production_mode',
-                            'compare' => 'EXISTS'
-                        ),
-                        array(
-                            'key' => 'blocks_payment',
-                            'compare' => 'EXISTS'
-                        ),
+        add_action('mercadopago_sync_pending_status_order_action', [$this, 'syncPendingStatusOrders']);
+    }
+
+    public function syncPendingStatusOrders(): void
+    {
+        try {
+            $orders = wc_get_orders(array(
+                'limit'    => -1,
+                'status'   => 'pending',
+                'meta_query' => array(
+                    'relation' => 'AND',
+                    array(
+                        'key' => 'is_production_mode',
+                        'compare' => 'EXISTS'
+                    ),
+                    array(
+                        'key' => 'blocks_payment',
+                        'compare' => 'EXISTS'
+                    ),
+                    array(
+                        'relation' => 'OR',
                         array(
                             'key' => '_Mercado_Pago_Payment_IDs',
                             'value' => '',
                             'compare' => '!='
+                        ),
+                        array(
+                            'relation' => 'AND',
+                            array(
+                                'key' => '_mp_payment_contract',
+                                'value' => OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1,
+                                'compare' => '='
+                            ),
+                            array('key' => '_mp_pp_order_id', 'value' => '', 'compare' => '!=')
                         )
                     )
-                ));
+                )
+            ));
 
-                foreach ($orders as $order) {
-                    try {
-                        if ($this->orderMetadata->getSyncCronErrorCount($order) > 2) {
-                            continue;
-                        }
-
-                        $this->syncOrderStatus($order);
-                    } catch (Exception $ex) {
-                        $this->orderMetadata->incrementSyncCronErrorCount($order);
-                        $error_message = "Unable to update order {$order->get_id()} on action got error: {$ex->getMessage()}";
-
-                        $this->logs->file->error(
-                            $error_message,
-                            __CLASS__
-                        );
+            foreach ($orders as $order) {
+                try {
+                    if ($this->orderMetadata->getSyncCronErrorCount($order) > 2) {
+                        continue;
                     }
+
+                    $this->syncOrderStatus($order);
+                } catch (Exception $ex) {
+                    $this->orderMetadata->incrementSyncCronErrorCount($order);
+                    $error_message = "Unable to update order {$order->get_id()} on action got error: {$ex->getMessage()}";
+
+                    $this->logs->file->error(
+                        $error_message,
+                        __CLASS__
+                    );
                 }
-
-                $this->sendEventOnAction('success');
-            } catch (Exception $ex) {
-                $error_message = "Unable to update batch of orders on action got error: {$ex->getMessage()}";
-
-                $this->logs->file->error(
-                    $error_message,
-                    __CLASS__
-                );
-                $this->sendEventOnAction('error', $error_message);
             }
-        });
+
+            $this->sendEventOnAction('success');
+        } catch (Exception $ex) {
+            $error_message = "Unable to update batch of orders on action got error: {$ex->getMessage()}";
+
+            $this->logs->file->error(
+                $error_message,
+                __CLASS__
+            );
+            $this->sendEventOnAction('error', $error_message);
+        }
     }
 
     /**

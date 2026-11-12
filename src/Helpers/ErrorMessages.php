@@ -191,6 +191,12 @@ class ErrorMessages
         return [
             'cho_form_error' => $this->storeTranslations->commonMessages['cho_form_error'],
             'missing_credentials_at_payment' => $this->storeTranslations->commonMessages['missing_credentials_at_payment'],
+            'smart_pix_unavailable' => $this->storeTranslations->commonMessages['smart_pix_unavailable'],
+            'smart_pix_processing_failed' => $this->storeTranslations->commonMessages['smart_pix_processing_failed'],
+            'smart_pix_existing_pix' => $this->storeTranslations->commonMessages['smart_pix_existing_pix'],
+            'smart_pix_rejected' => $this->storeTranslations->commonMessages['smart_pix_rejected'],
+            'smart_pix_insufficient_balance' => $this->storeTranslations->commonMessages['smart_pix_insufficient_balance'],
+            'smart_pix_limit_exceeded' => $this->storeTranslations->commonMessages['smart_pix_limit_exceeded'],
         ];
     }
 

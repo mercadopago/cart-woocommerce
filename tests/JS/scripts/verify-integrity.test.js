@@ -21,6 +21,9 @@ const ASSET_CSS = 'assets/css/checkouts/mp-plugins-components.min.css';
 const SUPER_TOKEN_CSS = 'assets/css/checkouts/super-token/super-token.bundle.min.css';
 const SUPER_TOKEN_V2_CSS = 'assets/css/checkouts/super-token/super-token-v2.bundle.min.css';
 const SUPER_TOKEN_V21_CSS = 'assets/css/checkouts/super-token/super-token-v2.1.bundle.min.css';
+const SMART_PIX_MOCK_JS = 'assets/js/checkouts/smart-pix/smart-pix.mock.min.js';
+const SMART_PIX_MOCK_CSS = 'assets/css/checkouts/smart-pix/smart-pix.bundle.min.css';
+const SMART_PIX_MOCK_MELIDATA = 'assets/js/melidata/woocommerce.smart-pix-mock.min.js';
 const CONTENT_JS = 'console.log("mp-plugins-components");';
 const CONTENT_CSS = '.mp-checkout{color:#009ee3}';
 
@@ -126,7 +129,7 @@ describe('verify-integrity — gate de integridade dos assets (PPSP-1529)', () =
     expect(result.mismatched).toEqual([]);
   });
 
-  test('reporta qualquer CSS fora do manifest, inclusive arquivos legados reintroduzidos', () => {
+  test('reporta CSS legado fora do manifest e ignora só os mocks locais literais do Smart Pix', () => {
     const manifest = { [ASSET_JS]: hashOf(CONTENT_JS) };
     const manifestJson = JSON.stringify(manifest);
 
@@ -145,12 +148,18 @@ describe('verify-integrity — gate de integridade dos assets (PPSP-1529)', () =
       path.join('css', 'checkouts', 'super-token', 'super-token.bundle.min.css'),
       path.join('css', 'checkouts', 'super-token', 'super-token-v2.bundle.min.css'),
       path.join('css', 'checkouts', 'super-token', 'super-token-v2.1.bundle.min.css'),
+      path.join('js', 'checkouts', 'smart-pix', 'smart-pix.mock.min.js'),
+      path.join('css', 'checkouts', 'smart-pix', 'smart-pix.bundle.min.css'),
+      path.join('js', 'melidata', 'woocommerce.smart-pix-mock.min.js'),
     ]);
 
     const result = verifyIntegrity();
 
     expect(result.ok).toBe(false);
     expect(result.orphans).toEqual([SUPER_TOKEN_CSS, SUPER_TOKEN_V2_CSS, SUPER_TOKEN_V21_CSS]);
+    expect(result.orphans).not.toContain(SMART_PIX_MOCK_JS);
+    expect(result.orphans).not.toContain(SMART_PIX_MOCK_CSS);
+    expect(result.orphans).not.toContain(SMART_PIX_MOCK_MELIDATA);
   });
 
   test('trata caminho existente que não é arquivo como ausente', () => {

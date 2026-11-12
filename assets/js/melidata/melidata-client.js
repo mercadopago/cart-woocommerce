@@ -44,7 +44,8 @@
       window.melidata = null;
       const scriptTag = document.createElement('script');
       scriptTag.setAttribute('id', 'melidata_woocommerce_client');
-      scriptTag.src = 'https://http2.mlstatic.com/storage/v1/plugins/melidata/woocommerce.min.js';
+      scriptTag.src = mercadopago_melidata_params.client_url ||
+        'https://http2.mlstatic.com/storage/v1/plugins/melidata/woocommerce.min.js';
       scriptTag.async = true;
       scriptTag.defer = true;
       scriptTag.onerror = function () {

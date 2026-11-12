@@ -12,6 +12,7 @@ import type {
   SuperTokenBundleParams,
   WoocommerceScriptsParams,
   PaymentMethod,
+  SmartTransferPaymentMethod,
   Installment,
 } from './external-globals';
 import type { ClassicCheckoutDeps } from '../adapters/checkout/ClassicCheckout';
@@ -65,6 +66,15 @@ declare global {
       amount: string | null,
       buyerEmail: string,
     ) => Promise<PaymentMethod[] | null>;
+
+    // Shared fast-payments eligibility boundary. Smart Pix reuses the exact
+    // buyer-email rule and coordinated SDK call owned by the Super Token runtime,
+    // while receiving only smart_transfer entries from the mixed response.
+    mpFastPaymentsIsValidBuyerEmail?: (email: unknown) => boolean;
+    mpFastPaymentsGetSmartTransferPaymentMethods?: (
+      amount: string | null,
+      buyerEmail: string,
+    ) => Promise<SmartTransferPaymentMethod[] | null>;
 
     // Refactored submit-time authorize entry point the legacy authorizePayment delegates to,
     // published once by the bundle entrypoint (bootstrap.ts) via globalBridge.
@@ -125,6 +135,10 @@ declare global {
     // WooCommerce Blocks registry — used for Classic/Blocks checkout detection.
     wc?: { wcBlocksRegistry?: WcBlocksRegistry };
     wc_mercadopago_supertoken_bundle_params?: SuperTokenBundleParams;
+    wc_mercadopago_smart_pix_params?: {
+      site_id?: string;
+      standalone_bridge?: 'enabled' | 'disabled';
+    };
     wc_mercadopago_custom_checkout_params?: CustomCheckoutParams;
     wc_mercadopago_woocommerce_scripts_params?: WoocommerceScriptsParams;
 

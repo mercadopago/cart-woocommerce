@@ -8,6 +8,7 @@ use MercadoPago\Woocommerce\Entities\Metadata\PaymentMetadata;
 use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use MercadoPago\Woocommerce\Funnel\Funnel;
 use MercadoPago\Woocommerce\Gateways\CustomGateway;
+use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Helpers\Form;
 use MercadoPago\Woocommerce\Helpers\SubscriptionsCredentialsValidator;
 use MercadoPago\Woocommerce\Helpers\Session;
@@ -1823,6 +1824,9 @@ class CustomGatewayTest extends TestCase
 
         $registeredHandles = [];
         $scripts = $this->gateway->mercadopago->hooks->scripts;
+        // WooCommerce test mode must keep the production Super Token bundle: only the explicit
+        // MP_SMART_PIX_ENV override selects homologation (same resolver as PixGateway).
+        $this->gateway->mercadopago->storeConfig->shouldReceive('isTestMode')->andReturn(true);
         $scripts->shouldReceive('registerCheckoutStyle')->andReturnSelf();
         $scripts->shouldReceive('registerCheckoutScript')
             ->andReturnUsing(function ($handle) use (&$registeredHandles, $scripts) {
@@ -1832,11 +1836,11 @@ class CustomGatewayTest extends TestCase
 
         $localizedParams = [];
         $scripts->shouldNotReceive('registerPaymentFormStyle');
-        $scripts->shouldReceive('registerPaymentFormScript')->once()
-            ->with('wc_mercadopago_supertoken', 'test-js-url', Mockery::type('array'), [],
-                'wc_mercadopago_supertoken_bundle_params')
-            ->andReturnUsing(function ($handle, $file, $variables) use (&$registeredHandles, &$localizedParams) {
-                $registeredHandles[] = $handle;
+        $scripts->shouldNotReceive('registerPaymentFormScript');
+        $scripts->shouldReceive('registerFastPaymentsCheckoutAssets')->once()
+            ->with(Scripts::SMART_PIX_ENV_PRODUCTION, Mockery::type('array'))
+            ->andReturnUsing(function ($environment, $variables) use (&$registeredHandles, &$localizedParams) {
+                $registeredHandles[] = Scripts::FAST_PAYMENTS_SCRIPT_NAME;
                 $localizedParams = $variables;
             });
 
@@ -4431,6 +4435,26 @@ class CustomGatewayTest extends TestCase
             'result' => 'success',
             'redirect' => 'https://store.example/order-received/42',
         ], $gateway->handleResponseStatus($order, ['status' => 'approved']));
+    }
+
+    public function testRealPendingResponseWithoutChallengeOnOrderPayWritesTheRedirectAsJson(): void
+    {
+        $gateway = (new \ReflectionClass(CustomGateway::class))->newInstanceWithoutConstructor();
+        $gateway->mercadopago = $this->gateway->mercadopago;
+        $order = Mockery::mock('WC_Order');
+        $order->expects()->get_checkout_order_received_url()->andReturn('https://store.example/order-received/42');
+        $gateway->mercadopago->helpers->url->expects()->validateGetVar('pay_for_order')->andReturn(true);
+        $gateway->mercadopago->helpers->cart->expects()->emptyCart();
+        $gateway->mercadopago->helpers->session->shouldNotReceive('setSession');
+        WP_Mock::userFunction('wp_json_encode', ['return' => static fn($data) => json_encode($data)]);
+
+        $expected = ['result' => 'success', 'redirect' => 'https://store.example/order-received/42'];
+        $this->expectOutputString(json_encode($expected));
+
+        $this->assertSame($expected, $gateway->handleResponseStatus(
+            $order,
+            ['status' => 'pending', 'status_detail' => 'pending_contingency']
+        ));
     }
 
     /**

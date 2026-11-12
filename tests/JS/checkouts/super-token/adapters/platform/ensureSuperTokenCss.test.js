@@ -35,11 +35,70 @@ describe.each(['v1', 'v2.1'])('Super Token CSS cache safeguard in %s', (folder) 
     document.getElementById(FIX_ID).dispatchEvent(new Event(event));
   }
 
-  test('matching loaded CSS does not create a request or send a metric', async () => {
+  test.each([
+    SUPER_TOKEN_JS_VERSION,
+    `"${SUPER_TOKEN_JS_VERSION}"`,
+    `'${SUPER_TOKEN_JS_VERSION}'`,
+    ` \n"${SUPER_TOKEN_JS_VERSION}"\t`,
+    SUPER_TOKEN_JS_VERSION.replace(/\.(\d+)$/, '/**/.$1'),
+  ])('matching loaded CSS %s does not create a request or send a metric', async (version) => {
     original();
+    stamp = version;
     ensureSuperTokenCss(metrics);
     await settle();
     expect(document.getElementById(FIX_ID)).toBeNull();
+    expect(metrics.sendMetric).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ['1.2.11', '1.2.11'], ['"1.2.11"', '1.2.11'], ["'1.2.11'", '1.2.11'], ['1.2/**/.11', '1.2.11'],
+    ['1.2.12', '1.2.12'], ['"1.2.12"', '1.2.12'], ["'1.2.12'", '1.2.12'], ['1.2/**/.12', '1.2.12'],
+  ])(
+    'repairs the distinct old version %s and recognizes the current quoted repair', async (version, found) => {
+      original();
+      stamp = version;
+      ensureSuperTokenCss(metrics);
+      await settle();
+      expect(document.getElementById(FIX_ID)).not.toBeNull();
+      completeFix('load', `"${SUPER_TOKEN_JS_VERSION}"`);
+      await settle();
+      expect(metrics.sendMetric).toHaveBeenCalledWith(
+        'super_token_css_mismatch', found, `fixed folder:${folder}`,
+      );
+      expect(metrics.sendMetric).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  test.each([
+    `"${SUPER_TOKEN_JS_VERSION}'`,
+    `"${SUPER_TOKEN_JS_VERSION}"extra`,
+    `"${SUPER_TOKEN_JS_VERSION}0"`,
+    `" ${SUPER_TOKEN_JS_VERSION}"`,
+    `"${SUPER_TOKEN_JS_VERSION.replace(/\.(\d+)$/, '/**/.$1')}"`,
+    SUPER_TOKEN_JS_VERSION.replace('.', '. '),
+  ])('does not recognize the invalid or distinct CSS value %s', async (version) => {
+    original();
+    stamp = version;
+    ensureSuperTokenCss(metrics);
+    await settle();
+    expect(document.getElementById(FIX_ID)).not.toBeNull();
+    completeFix('load', version);
+    await settle();
+    expect(metrics.sendMetric).toHaveBeenCalledWith(
+      'super_token_css_mismatch', expect.any(String), `fix_failed folder:${folder}`,
+    );
+    expect(metrics.sendMetric).toHaveBeenCalledTimes(1);
+  });
+
+  test('an existing correction prevents another check or repair', async () => {
+    original();
+    const fix = document.createElement('link');
+    fix.id = FIX_ID;
+    document.head.appendChild(fix);
+    stamp = '1.2.11';
+    ensureSuperTokenCss(metrics);
+    await settle();
+    expect(document.querySelectorAll(`#${FIX_ID}`)).toHaveLength(1);
     expect(metrics.sendMetric).not.toHaveBeenCalled();
   });
 
@@ -93,6 +152,15 @@ describe.each(['v1', 'v2.1'])('Super Token CSS cache safeguard in %s', (folder) 
     old.dispatchEvent(new Event('load'));
     await settle();
     expect(document.getElementById(FIX_ID)).toBeNull();
+    expect(metrics.sendMetric).not.toHaveBeenCalled();
+  });
+
+  test('returns before a pending original stylesheet load', async () => {
+    const old = original(folder, false);
+    expect(ensureSuperTokenCss(metrics)).toBeUndefined();
+    expect(document.getElementById(FIX_ID)).toBeNull();
+    old.dispatchEvent(new Event('load'));
+    await settle();
     expect(metrics.sendMetric).not.toHaveBeenCalled();
   });
 

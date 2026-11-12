@@ -188,6 +188,103 @@ class Notices
         return is_admin() && $this->url->validatePage('mercadopago-settings');
     }
 
+    public static function getNoticeScreen(Url $url): string
+    {
+        foreach (['index' => 'dashboard', 'plugins' => 'plugins'] as $path => $screen) {
+            if ($url->validateUrl($path)) {
+                return $screen;
+            }
+        }
+
+        foreach (['wc-admin' => 'wc_home', 'wc-settings' => 'wc_settings', 'mercadopago-settings' => 'mp_settings'] as $page => $screen) {
+            if ($url->validatePage($page)) {
+                return $screen;
+            }
+        }
+
+        return '';
+    }
+
+    public static function isSiteAdminContext(): bool
+    {
+        return is_admin() && !is_network_admin() && !is_user_admin();
+    }
+
+    public function shouldShowNativeOnboardingNotice(): bool
+    {
+        return self::isSiteAdminContext()
+            && class_exists('WC_Payment_Gateway')
+            && self::getNativeNoticeScreen($this->url) !== ''
+            && $this->currentUser->currentUserCan('manage_woocommerce')
+            && (
+                $this->sellerConfig->getCredentialsPublicKeyProd() === ''
+                || $this->sellerConfig->getCredentialsAccessTokenProd() === ''
+            );
+    }
+
+    public static function getNativeNoticeScreen(Url $url): string
+    {
+        $script = $url->getCurrentAdminScript();
+        $screens = ['index.php' => 'dashboard', 'plugins.php' => 'plugins'];
+        if (isset($screens[$script])) {
+            return $screens[$script];
+        }
+        if ($script !== 'admin.php') {
+            return '';
+        }
+
+        foreach (['wc-admin' => 'wc_home', 'wc-settings' => 'wc_settings', 'mercadopago-settings' => 'mp_settings'] as $page => $screen) {
+            if ($url->validatePage($page)) {
+                return $screen;
+            }
+        }
+
+        return '';
+    }
+
+    public function registerOnboardingNotice(): bool
+    {
+        if (!self::isSiteAdminContext()) {
+            return false;
+        }
+
+        $screen = self::getNativeNoticeScreen($this->url) ?: self::getNoticeScreen($this->url);
+        if ($screen === '') {
+            return false;
+        }
+
+        $enabled = $this->shouldShowNativeOnboardingNotice();
+        $this->scripts->registerNativeNoticesAdminScript([
+            'enabled'  => $enabled,
+            'ajax_url' => $enabled ? admin_url('admin-ajax.php') : '',
+            'nonce'    => $enabled ? $this->nonce->generateNonce('mp_native_onboarding_notice_metrics') : '',
+            'screen'   => $screen,
+        ]);
+
+        add_action('admin_notices', [$this, 'renderNoticesRegion'], 10, 0);
+
+        return true;
+    }
+
+    public function renderNoticesRegion(): void
+    {
+        if (
+            !self::isSiteAdminContext()
+            || (self::getNativeNoticeScreen($this->url) === '' && self::getNoticeScreen($this->url) === '')
+        ) {
+            return;
+        }
+
+        Template::render('admin/notices/notices-region', [
+            'showNativeNotice' => $this->shouldShowNativeOnboardingNotice(),
+            'title'           => $this->translations->notices['native_onboarding_title'],
+            'message'         => $this->translations->notices['native_onboarding_message'],
+            'buttonText'      => $this->translations->notices['native_onboarding_button'],
+            'buttonLink'      => $this->links['admin_settings_page'],
+            'thumbnail'       => $this->url->getImageAsset('icons/icon-mp'),
+        ]);
+    }
+
     /**
      * Set a notice info
      *
@@ -401,24 +498,5 @@ class Notices
                 }
             }
         }
-    }
-
-    /**
-     * Show instructional notice
-     *
-     * @return void
-     */
-    public function instructionalNotice(): void
-    {
-        add_action(
-            'admin_notices',
-            function () {
-                $minilogo = $this->url->getImageAsset('icons/icon-feedback-info');
-                $title = $this->translations->notices['action_feedback_title'];
-                $subtitle = $this->translations->notices['action_feedback_subtitle'];
-
-                include dirname(__FILE__) . '/../../templates/admin/notices/action-feedback-notice.php';
-            }
-        );
     }
 }

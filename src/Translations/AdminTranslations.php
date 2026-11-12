@@ -228,8 +228,9 @@ class AdminTranslations
             'saved_cards_subtitle'      => __('When you enable this function, your customers pay faster using their Mercado Pago accounts.</br>The approval rate of these payments in your store can be 25% higher compared to other payment methods.', 'woocommerce-mercadopago'),
             'saved_cards_button'        => __('Activate', 'woocommerce-mercadopago'),
             'missing_translation'       => __("Our plugin does not support the language you've chosen, so we've switched it to the English default. If you prefer, you can also select Spanish or Portuguese (Brazilian).", 'woocommerce-mercadopago'),
-            'action_feedback_title'     => __('You activated Mercado Pago’s plug-in', 'woocommerce-mercadopago'),
-            'action_feedback_subtitle'  => __('Follow the instructions below to integrate your store with Mercado Pago and start to sell.', 'woocommerce-mercadopago'),
+            'native_onboarding_title'   => __('Complete your Mercado Pago setup', 'woocommerce-mercadopago'),
+            'native_onboarding_message' => __('Link your account to start receiving payments in your store.', 'woocommerce-mercadopago'),
+            'native_onboarding_button'  => __('Link my account', 'woocommerce-mercadopago'),
         ];
     }
 

@@ -33,6 +33,15 @@ function formatCurrency(value, currency) {
   return formattedValue.split('.').join('.');
 }
 
+function formatCartAmount(value, currency, currencyRatio = 1) {
+  const formattedAmount = formatCurrency(value, currency);
+  const ratio = parseFloat(currencyRatio);
+
+  return ratio > 0
+    ? String(parseFloat(formattedAmount) * ratio)
+    : formattedAmount;
+}
+
 async function waitForHandler(getHandler, metric) {
   const WAIT_HANDLER_INTERVAL = 100;
   const MAX_WAIT_HANDLER = 15000;
@@ -86,12 +95,7 @@ async function handleCartTotalChange(value, currency, currencyRatio = 1) {
       mpCustomCheckoutHandler.cardForm.form.unmount();
     }
 
-    let updatedAmount = formatCurrency(value, currency);
-
-    const ratio = parseFloat(currencyRatio);
-    if (ratio > 0) {
-      updatedAmount = String(parseFloat(updatedAmount) * ratio);
-    }
+    const updatedAmount = formatCartAmount(value, currency, currencyRatio);
 
     // Sequential on purpose: initCardForm() boots the Mercado Pago JS SDK, which
     // loadSuperToken() currently depends on. They are not parallelizable until that
@@ -124,4 +128,9 @@ async function handleCartTotalChange(value, currency, currencyRatio = 1) {
   }
 }
 
-export { addDiscountAndCommission, handleCartTotalChange, removeDiscountAndCommission };
+export {
+  addDiscountAndCommission,
+  formatCartAmount,
+  handleCartTotalChange,
+  removeDiscountAndCommission,
+};

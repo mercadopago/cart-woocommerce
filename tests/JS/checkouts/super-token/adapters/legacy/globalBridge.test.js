@@ -1,10 +1,12 @@
 const {
+  FAST_PAYMENTS_BRIDGE_READY_EVENT,
   publish,
   publishErrorCodes,
   publishFinalizers,
   publishSelectors,
   publishReset,
   publishOrderAndDecorate,
+  publishFastPaymentsEligibility,
   publishCheckoutValidationResolver,
   publishWooCommerceValidationErrors,
 } = require('@super-token/adapters/legacy/globalBridge');
@@ -22,9 +24,13 @@ function buildInstances() {
 const superTokenKeys = () =>
   Object.keys(window).filter((key) => key.startsWith('mpSuperToken')).sort();
 
+const fastPaymentsKeys = () =>
+  Object.keys(window).filter((key) => key.startsWith('mpFastPayments')).sort();
+
 describe('super-token/legacy/globalBridge publish', () => {
   beforeEach(() => {
     superTokenKeys().forEach((key) => { delete window[key]; });
+    fastPaymentsKeys().forEach((key) => { delete window[key]; });
   });
 
   it('Given the composed instances, When publish runs, Then each is exposed under its legacy window.mpSuperToken* name', () => {
@@ -91,6 +97,38 @@ describe('super-token/legacy/globalBridge publish', () => {
     publishOrderAndDecorate({ orderAndDecorate });
 
     expect(window.mpSuperTokenOrderAndDecorate).toBe(orderAndDecorate);
+  });
+
+  it('publishes the shared e-mail gate and Smart Pix projection without exposing saved methods', () => {
+    const isValidBuyerEmail = jest.fn();
+    const getSmartTransferPaymentMethods = jest.fn();
+    const bridgeReadyListener = jest.fn();
+    document.addEventListener(FAST_PAYMENTS_BRIDGE_READY_EVENT, bridgeReadyListener, { once: true });
+
+    publishFastPaymentsEligibility({ isValidBuyerEmail, getSmartTransferPaymentMethods });
+
+    expect(window.mpFastPaymentsIsValidBuyerEmail).toBe(isValidBuyerEmail);
+    expect(window.mpFastPaymentsGetSmartTransferPaymentMethods).toBe(getSmartTransferPaymentMethods);
+    expect(bridgeReadyListener).toHaveBeenCalledTimes(1);
+  });
+
+  it('signals bridge readiness again after the asynchronous session is published', () => {
+    const listener = jest.fn();
+    document.addEventListener(FAST_PAYMENTS_BRIDGE_READY_EVENT, listener);
+    try {
+      publishFastPaymentsEligibility({
+        isValidBuyerEmail: () => true,
+        getSmartTransferPaymentMethods: async () => [],
+      });
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(window.mpSuperTokenAuthenticator).toBeUndefined();
+      const instances = buildInstances();
+      publish(instances);
+      expect(listener).toHaveBeenCalledTimes(2);
+      expect(window.mpSuperTokenAuthenticator).toBe(instances.authenticator);
+    } finally {
+      document.removeEventListener(FAST_PAYMENTS_BRIDGE_READY_EVENT, listener);
+    }
   });
 
   it('Given the ported resolver, When publishCheckoutValidationResolver runs, Then it is exposed under window.mpResolveCheckoutValidation', () => {

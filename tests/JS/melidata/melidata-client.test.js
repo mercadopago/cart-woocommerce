@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
 const CLIENT_PATH = '../../../assets/js/melidata/melidata-client.js';
 const CLIENT_ID = 'melidata_woocommerce_client';
 const CLIENT_URL = 'https://http2.mlstatic.com/storage/v1/plugins/melidata/woocommerce.min.js';
@@ -299,5 +302,58 @@ describe('MeliData client loader', () => {
       expect(getScript()).toBeNull();
       await rejected;
     });
+  });
+});
+
+describe('Melidata client loader (isolated Smart Pix mock)', () => {
+  test('loads the server-provided client URL for an isolated Smart Pix mock', () => {
+    const params = {
+      client_url: 'https://store.test/woocommerce.smart-pix-mock.min.js',
+      location: '/checkout',
+      payment_method: '',
+      platform_version: '10.0.0',
+      plugin_version: '8.9.3',
+      site_id: 'MLB',
+      type: 'buyer',
+    };
+    let loadHandler;
+    let appendedScript;
+    const sandbox = {
+      clearInterval: jest.fn(),
+      console,
+      document: {
+        body: {
+          appendChild: jest.fn((script) => {
+            appendedScript = script;
+          }),
+        },
+        createElement: jest.fn(() => ({
+          setAttribute(name, value) {
+            this[name] = value;
+          },
+        })),
+        querySelector: jest.fn(() => null),
+      },
+      mercadopago_melidata_params: params,
+      navigator: { sendBeacon: jest.fn() },
+      Promise,
+      setInterval: jest.fn(),
+      setTimeout: jest.fn(),
+      window: {
+        addEventListener: jest.fn((eventName, listener) => {
+          if (eventName === 'load') loadHandler = listener;
+        }),
+        location: { pathname: '/checkout', search: '' },
+      },
+    };
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../../assets/js/melidata/melidata-client.js'),
+      'utf8',
+    );
+
+    vm.runInNewContext(source, sandbox);
+    loadHandler();
+
+    expect(appendedScript.src).toBe(params.client_url);
   });
 });

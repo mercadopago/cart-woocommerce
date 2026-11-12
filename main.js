@@ -4,6 +4,7 @@ const path = require('path');
 const minify = require('minify');
 const wpPot = require('wp-pot');
 const { sync: globSync } = require('glob');
+const { INTEGRITY_IGNORED_ASSETS } = require('./scripts/public/verify-integrity');
 
 /**
  * Minify JS and CSS files
@@ -39,7 +40,7 @@ function minifyFiles (extension) {
 }
 
 /** Canonical experience and JS/CSS telemetry stamp; not a runtime selector. */
-const SUPER_TOKEN_LOADER_VERSION = { 'v2.1': '1.2.12' };
+const SUPER_TOKEN_LOADER_VERSION = { 'v2.1': '1.2.13' };
 
 /**
  * Compile one Super Token SCSS entry into a compressed CSS file (both under
@@ -53,8 +54,9 @@ function compileScss (entryName, outputName, loaderVersion = null) {
   }
 
   const compressed = require('sass').compile(entry, { style: 'compressed' }).css;
+  // A string token keeps multi-dot versions stable across browser CSSOM serializers.
   const versionStamp = loaderVersion
-    ? `:root{--mp-super-token-loader-version:${loaderVersion}}`
+    ? `:root{--mp-super-token-loader-version:${JSON.stringify(loaderVersion)}}`
     : '';
   const outputFilePath = path.resolve(`${stDir}/${outputName}`);
   fs.writeFileSync(outputFilePath, `${versionStamp}${compressed}`);
@@ -269,8 +271,12 @@ async function setupSuperToken() {
 function generateIntegrityManifest () {
   const crypto = require('crypto');
 
-  // Every minified plugin asset is covered, including the canonical Super Token CSS.
-  const criticalFiles = globSync('assets/**/*.min.{js,css}');
+  // Every served minified asset is covered, including the canonical Super Token CSS. Local
+  // Smart Pix review assets are git-ignored and never shipped, so generator and verifier share
+  // the same literal allowlist and cannot disagree about them.
+  const criticalFiles = globSync('assets/**/*.min.{js,css}', {
+    ignore: INTEGRITY_IGNORED_ASSETS,
+  });
 
   const manifest = {};
 

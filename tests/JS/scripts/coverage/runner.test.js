@@ -24,6 +24,7 @@ test('real JS CLI uses a symlink snapshot without vendor, writes outside it, and
       expect(result.status).toBe(0);
     };
     git(['init', '--quiet']);
+    git(['config', '--local', 'commit.gpgsign', 'false']);
     git(['add', 'package.json']);
     git(['-c', 'core.hooksPath=/dev/null', '-c', 'user.name=Coverage fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '--quiet', '-m', 'fixture']);
     const originalIndex = fs.readFileSync(path.join(fixture, '.git/index'));

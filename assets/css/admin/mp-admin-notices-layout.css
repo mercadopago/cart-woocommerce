@@ -1,0 +1,227 @@
+#mp-admin-notices-region {
+  box-sizing: border-box;
+  position: fixed;
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 420px;
+  max-width: calc(100vw - 216px);
+  max-height: calc(100vh - var(--mp-admin-notices-top, 0px) - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-family: "Proxima Nova", -apple-system, "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+}
+
+#mp-admin-notices-region *,
+#mp-admin-notices-region *::before,
+#mp-admin-notices-region *::after {
+  box-sizing: border-box;
+}
+
+#mp-jaiminho-notices-slot {
+  display: none;
+  min-width: 0;
+}
+
+#mp-jaiminho-notices-slot.mp-has-remote-notices {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Only the shared region positions cards. React still owns both remote wrappers. */
+#mp-admin-notices-region #mp-jaiminho-notices-slot .mp-woocommerce-notices-container,
+#mp-admin-notices-region #mp-jaiminho-notices-slot .mp-woocommerce-notices-content {
+  display: contents;
+  position: static;
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  max-width: none;
+  top: auto;
+  left: auto;
+  right: auto;
+  z-index: auto;
+}
+
+#mp-admin-notices-region #mp-jaiminho-notices-slot .andes-message {
+  margin: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+#mp-admin-notices-region #mp-jaiminho-notices-slot .andes-message__content {
+  width: auto;
+  min-width: 0;
+  flex: 1;
+}
+
+#mp-native-notices-slot[hidden] {
+  display: none;
+}
+
+.mp-native-onboarding-notice {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  padding: 16px;
+  border: 0;
+  border-left: 4px solid #ff7733;
+  border-radius: 6px;
+  background: #e5e5e5;
+  color: rgba(0, 0, 0, 0.9);
+  overflow-wrap: anywhere;
+}
+
+#mp-native-onboarding-notice .mp-native-onboarding-notice__close {
+  display: flex;
+  align-self: stretch;
+  flex: 0 0 auto;
+  margin: 0 0 0 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+#mp-native-onboarding-notice .mp-native-onboarding-notice__close svg {
+  flex-shrink: 0;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+#mp-native-onboarding-notice .mp-native-onboarding-notice__close:focus {
+  box-shadow: none;
+}
+
+#mp-native-onboarding-notice .mp-native-onboarding-notice__close:focus-visible {
+  outline: auto;
+}
+
+@media (min-width: 768px) {
+  #mp-native-onboarding-notice .mp-native-onboarding-notice__close:hover svg {
+    color: rgba(0, 0, 0, 0.8);
+  }
+}
+
+#mp-native-onboarding-notice .mp-native-onboarding-notice__close:active svg {
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.mp-native-onboarding-notice__thumbnail {
+  position: relative;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  margin-right: 16px;
+  border: 2px solid #ff7733;
+  border-radius: 50%;
+  background: #ffe600;
+}
+
+.mp-native-onboarding-notice__thumbnail img {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+.mp-native-onboarding-notice__badge {
+  position: absolute;
+  right: -4px;
+  bottom: -1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #ff7733;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mp-native-onboarding-notice__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.mp-native-onboarding-notice__title {
+  margin: 0 0 8px;
+  color: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.mp-native-onboarding-notice__message {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.mp-native-onboarding-notice__link {
+  display: inline-block;
+  max-width: 100%;
+  margin-top: 16px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 4px;
+  background: #3483fa;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.mp-native-onboarding-notice__link:hover,
+.mp-native-onboarding-notice__link:active {
+  background: #2968c8;
+  color: #fff;
+}
+
+.mp-native-onboarding-notice__link:focus-visible {
+  outline: 2px solid #2968c8;
+  outline-offset: 3px;
+  color: #fff;
+}
+
+@media (max-width: 960px) {
+  #mp-admin-notices-region {
+    max-width: calc(100vw - 68px);
+  }
+}
+
+@media (max-width: 782px) {
+  #mp-admin-notices-region {
+    position: static;
+    clear: both;
+    width: auto;
+    max-width: none;
+    max-height: none;
+    margin: 16px 12px;
+    overflow: visible;
+    gap: 12px;
+  }
+
+  #mp-jaiminho-notices-slot.mp-has-remote-notices {
+    gap: 12px;
+  }
+
+  #mp-admin-notices-region.mp-notices-region-empty {
+    margin: 0;
+  }
+
+  .mp-native-onboarding-notice__thumbnail {
+    margin-right: 12px;
+  }
+}

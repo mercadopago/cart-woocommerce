@@ -5,6 +5,9 @@ clover.xml
 /coverage/
 coverage.xml
 
+# Disposable administrative E2E stores, credentials and captured evidence.
+/.task-evidence/
+
 # StrykerJS mutation-testing artifacts (npm run test:mutation) — sandbox + HTML report
 .stryker-tmp/
 /reports/mutation/
@@ -13,7 +16,7 @@ coverage.xml
 /.idea/
 /.vscode/
 /vendor/
-/node_modules/
+/node_modules
 /code_analysis
 
 woocommerce-mercadopago.zip
@@ -50,6 +53,12 @@ phpstan-baseline.neon
 /assets/js/checkouts/super-token/super-token-v2.1.bundle.js
 /assets/css/checkouts/super-token/super-token-v2.bundle.min.css
 /assets/css/checkouts/super-token/super-token-v2.1.bundle.min.css
+
+# Smart Pix real local hand-off assets — built from the scripts repository.
+/assets/js/checkouts/smart-pix/smart-pix.mock.min.js
+/assets/js/checkouts/smart-pix/smart-pix.bundle.min.js
+/assets/css/checkouts/smart-pix/smart-pix.bundle.min.css
+/assets/js/melidata/woocommerce.smart-pix-mock.min.js
 
 # IA Files
 .personal-agents

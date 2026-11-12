@@ -15,7 +15,7 @@ class Datadog extends Singleton
     private const ENDPOINT = '/ppcore/prod/monitor/v1/event/datadog';
     private const REQUEST_TIMEOUT_SECONDS = 3;
 
-    public function sendEvent(string $event_type, $value, $message = null, $paymentMethod = null, $details = []): void
+    public function sendEvent(string $event_type, $value, $message = null, $paymentMethod = null, $details = [], ?string $platformUrl = null, ?string $platformUri = null): void
     {
         try {
             $team = $details['team'] ?? 'smb';
@@ -26,9 +26,13 @@ class Datadog extends Singleton
                 'platform'       => [
                     'name'    => MP_PLATFORM_NAME,
                     'version' => $this->getWoocommerceVersion(),
-                    'url'     => site_url(),
+                    'url'     => $platformUrl ?? site_url(),
                 ],
             ];
+
+            if ($platformUri !== null) {
+                $payload['platform']['uri'] = $platformUri;
+            }
 
             if ($message !== null) {
                 $payload['message'] = $message;

@@ -169,6 +169,20 @@ class DatadogTest extends TestCase
         $this->assertArrayNotHasKey('details', $payload);
     }
 
+    public function testOptionalPageUriDoesNotReplaceTheStoreUrl(): void
+    {
+        $payload = [];
+        WP_Mock::userFunction('wp_json_encode')->andReturnUsing('json_encode');
+        WP_Mock::userFunction('wp_remote_post', ['times' => 1])->andReturnUsing(function ($url, $arguments) use (&$payload) {
+            $payload = json_decode($arguments['body'], true);
+            return [];
+        });
+        Datadog::getInstance()->sendEvent('smart_pix_server_error', '1', 'MESSAGE', 'smart_transfer', [], null, 'https://test-store.com/checkout/');
+
+        $this->assertSame('https://test-store.com', $payload['platform']['url']);
+        $this->assertSame('https://test-store.com/checkout/', $payload['platform']['uri']);
+    }
+
     public function testSendEventOmitsDetailsWhenEmpty(): void
     {
         $capturedArgs = null;
@@ -222,6 +236,41 @@ class DatadogTest extends TestCase
 
         $payload = json_decode($capturedArgs->value['body'], true);
         $this->assertSame('', $payload['platform']['version']);
+        $this->assertArrayNotHasKey('uri', $payload['platform']);
+    }
+
+    public function testSendEventSerializesTheNoticeCoreContractWithoutChangingTheTransport(): void
+    {
+        $capturedArgs = $this->captureRequest();
+
+        Datadog::getInstance()->sendEvent(
+            'mp_woo_onboarding_notice_error',
+            '1',
+            null,
+            null,
+            ['team' => 'big', 'device' => 'mobile', 'site_id' => 'MLB', 'reason' => 'cta_missing'],
+            'https://store.example.test/wordpress',
+            '/wordpress/wp-admin/admin.php?page=mercadopago-settings'
+        );
+
+        $payload = json_decode($capturedArgs->value['body'], true);
+        $this->assertSame('https://store.example.test/wordpress', $payload['platform']['url']);
+        $this->assertSame('/wordpress/wp-admin/admin.php?page=mercadopago-settings', $payload['platform']['uri']);
+        $this->assertSame('1', $payload['value']);
+        $this->assertSame(['team' => 'big', 'device' => 'mobile', 'site_id' => 'MLB', 'reason' => 'cta_missing'], $payload['details']);
+        $this->assertSame(false, $capturedArgs->value['blocking']);
+        $this->assertSame(3, $capturedArgs->value['timeout']);
+    }
+
+    public function testExplicitStoreUrlKeepsUriAbsentForExistingCallers(): void
+    {
+        $capturedArgs = $this->captureRequest();
+
+        Datadog::getInstance()->sendEvent('diagnostic_event', 'value', null, null, [], 'https://store.example.test/wordpress');
+
+        $payload = json_decode($capturedArgs->value['body'], true);
+        $this->assertSame('https://store.example.test/wordpress', $payload['platform']['url']);
+        $this->assertArrayNotHasKey('uri', $payload['platform']);
     }
 
     /**

@@ -1,17 +1,15 @@
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { spawnSync } = require('child_process');
 const { createHash } = require('crypto');
 const ROOT = path.resolve(__dirname, '../../../..');
 const phpTest = process.env.COVERAGE_PHP || process.env.COVERAGE_PHP_DOCKER_IMAGE ? test : test.skip;
 
-// A clean snapshot can route collector output outside the root and lack coverage/.
-beforeAll(() => fs.mkdirSync(path.join(ROOT, 'coverage'), { recursive: true }));
-
 phpTest('real PHP collector works without node_modules and rejects failed/empty suites without stale success', () => {
   // Immutable fixtures avoid host/VM filesystem cache races when Docker is the PHP runtime.
-  const fixture = fs.mkdtempSync(path.join(ROOT, 'coverage/php-tooling-'));
-  const empty = fs.mkdtempSync(path.join(ROOT, 'coverage/php-empty-'));
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'php-tooling-'));
+  const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'php-empty-'));
   const policy = require('../../../../coverage-policy.json');
   try {
     for (const root of [fixture, empty]) {
@@ -56,7 +54,7 @@ phpTest('real PHP collector works without node_modules and rejects failed/empty 
 }, 120000);
 
 phpTest.each(['incomplete', 'risky'])('real PHP collector rejects %s partitions while allowing intentional skips', rejectedOutcome => {
-  const fixture = fs.mkdtempSync(path.join(ROOT, 'coverage/php-outcomes-'));
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'php-outcomes-'));
   const policy = require('../../../../coverage-policy.json');
   const observations = [];
   const transcripts = [];
@@ -124,7 +122,7 @@ const dockerTest = process.env.COVERAGE_PHP_DOCKER_IMAGE ? test : test.skip;
 dockerTest('managed PHP timeout removes only its own container after the exec client is killed', async () => {
   const { DockerPhp } = require('../../../../scripts/coverage/docker-php');
   const { run } = require('../../../../scripts/coverage/process');
-  const fixture = fs.mkdtempSync(path.join(ROOT, 'coverage/php-deadline-'));
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'php-deadline-'));
   fs.mkdirSync(path.join(fixture, 'vendor'));
   const execute = async (command, args, cwd, env = {}) => {
     const result = await run(command, args, { cwd, env, timeout: args.includes('php') ? 200 : 10000 });

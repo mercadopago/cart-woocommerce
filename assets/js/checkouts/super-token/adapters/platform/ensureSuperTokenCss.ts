@@ -38,8 +38,15 @@ function waitForStylesheet(link: HTMLLinkElement, append: boolean): Promise<Load
 
 function cssVersion(): string {
   try {
-    return getComputedStyle(document.documentElement)
+    const value = getComputedStyle(document.documentElement)
       .getPropertyValue('--mp-super-token-loader-version').trim();
+    const quote = value.charAt(0);
+    if ((quote === '"' || quote === "'") && value.charAt(value.length - 1) === quote) {
+      // Comments inside a CSS string are literal content, not token separators.
+      return value.slice(1, -1);
+    }
+    // WebKit inserts empty comments between the numeric tokens of older, unquoted stamps.
+    return value.replace(/\/\*\*\//g, '');
   } catch {
     return '';
   }

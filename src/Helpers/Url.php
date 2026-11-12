@@ -35,7 +35,7 @@ class Url
     }
 
     /**
-     * Get Mercado Pago SDK JS URL based on MP_SDK_ENV (prod, beta or gama).
+     * Get Mercado Pago SDK JS URL based on MP_SDK_ENV (prod, beta, test5 or gama).
      * Override via wp-config.php: define('MP_SDK_ENV', 'beta');
      *
      * @return string
@@ -59,6 +59,7 @@ class Url
         $urls = [
             'prod' => 'https://sdk.mercadopago.com/js/v2',
             'beta' => 'https://beta-sdk.mercadopago.com/js/v2',
+            'test5' => 'https://beta-sdk.mercadopago.com/test5/js/v2',
             'gama' => 'https://beta-sdk.mercadopago.com/gama/js/v2',
         ];
 
@@ -109,6 +110,13 @@ class Url
     public function getCurrentPage(): string
     {
         return isset($_GET['page']) ? Form::sanitizedGetData('page') : '';
+    }
+
+    public function getCurrentAdminScript(): string
+    {
+        global $pagenow;
+
+        return is_string($pagenow) ? $pagenow : '';
     }
 
     /**

@@ -50,16 +50,20 @@ class PaymentReconciliation
 
     private Logs $logs;
 
+    private ?\MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderOperations $smartPixOperations;
+
     public function __construct(
         OrderMetadata $orderMetadata,
         OrderStatus $orderStatus,
         Requester $requester,
-        Logs $logs
+        Logs $logs,
+        ?\MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderOperations $smartPixOperations = null
     ) {
         $this->orderMetadata = $orderMetadata;
         $this->orderStatus = $orderStatus;
         $this->requester = $requester;
         $this->logs = $logs;
+        $this->smartPixOperations = $smartPixOperations;
     }
 
     /**
@@ -77,6 +81,18 @@ class PaymentReconciliation
         string $usedGateway
     ): bool {
         try {
+            $order->read_meta_data(true);
+            if ($this->orderMetadata->getPaymentContract($order) === OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1) {
+                if ($this->smartPixOperations === null) {
+                    return false;
+                }
+                $ppOrderId = $this->orderMetadata->getPpOrderId($order);
+                if (!is_string($ppOrderId) || $ppOrderId === '') {
+                    // An unlinked attempt cannot be cancelled remotely; preserve even an uncertain creation.
+                    return false;
+                }
+                return $this->smartPixOperations->canCancel($order, true);
+            }
             $localPaymentIds = $this->orderMetadata->getPaymentIds($order);
             $preferenceIds = $this->orderMetadata->getPreferenceIds($order);
 

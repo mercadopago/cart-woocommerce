@@ -91,6 +91,9 @@ class AbstractNotificationTest extends TestCase
     {
         $data = ['external_reference' => 'WC-84'];
         $order = Mockery::mock(WC_Order::class);
+        // Legacy notifications only skip Smart Pix Orders contracts (Smart Pix epic).
+        $this->notification->orderStatus = Mockery::mock(OrderStatus::class);
+        $this->notification->orderStatus->shouldReceive('isOwnedBySmartPixOrders')->with($order)->andReturn(false);
         $order->shouldReceive('get_id')->once()->andReturn(84);
 
         \WP_Mock::userFunction('get_option')
@@ -114,6 +117,9 @@ class AbstractNotificationTest extends TestCase
     {
         $data = ['external_reference' => 'WC-84'];
         $order = Mockery::mock(WC_Order::class);
+        // Legacy notifications only skip Smart Pix Orders contracts (Smart Pix epic).
+        $this->notification->orderStatus = Mockery::mock(OrderStatus::class);
+        $this->notification->orderStatus->shouldReceive('isOwnedBySmartPixOrders')->with($order)->andReturn(false);
         $order->shouldReceive('get_id')->once()->andReturn(84);
         $response = null;
         $status = null;

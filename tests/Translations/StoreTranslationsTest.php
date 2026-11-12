@@ -79,6 +79,28 @@ class StoreTranslationsTest extends TestCase
         $this->assertSame('es-CO', $translations->customCheckout['locale']);
     }
 
+    public function testSmartPixUsesTheOpenFinanceNameAndDedicatedThankYouMessages(): void
+    {
+        $translations = $this->buildStoreTranslations();
+        $this->assertSame('Pix via Open Finance', $translations->orderStatus['smart_transfer']);
+        $this->assertSame('Your payment was approved', $translations->pixCheckout['smart_pix_status_approved_title']);
+        $this->assertSame('Your payment was cancelled', $translations->pixCheckout['smart_pix_status_cancelled_title']);
+        $this->assertSame('The order was cancelled. Check your orders on the website or contact the store.', $translations->pixCheckout['smart_pix_status_cancelled_description']);
+        $this->assertSame('Insufficient balance', $translations->pixCheckout['smart_pix_status_insufficient_title']);
+        $this->assertSame('Pix limit reached', $translations->pixCheckout['smart_pix_status_limit_title']);
+        $this->assertSame('Make a new purchase', $translations->pixCheckout['smart_pix_status_new_purchase']);
+        $this->assertSame('Your payment is still being processed', $translations->pixCheckout['smart_pix_status_waiting_description']);
+        $this->assertSame("Confirmation may take up to 15 minutes. Check the status in the store's orders.", $translations->pixCheckout['smart_pix_status_long_wait_description']);
+    }
+
+    public function testGivenAnExistingPixWhenResolvingTheCheckoutMessageThenItExplainsThePendingPayment(): void
+    {
+        $this->assertSame(
+            'There is already a pending payment for this order. To change the payment method, contact the store.',
+            $this->buildStoreTranslations()->commonMessages['smart_pix_existing_pix']
+        );
+    }
+
     public function testEnglishCheckoutProBenefitDoesNotRepeatTheCreditsName(): void
     {
         $translations = $this->buildStoreTranslations();

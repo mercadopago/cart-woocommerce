@@ -41,6 +41,8 @@ class PaymentReconciliationTest extends TestCase
         $this->logFile->shouldIgnoreMissing();
         $this->logs->file = $this->logFile;
         $this->order = Mockery::mock(WC_Order::class);
+        $this->order->shouldReceive('read_meta_data')->with(true)->byDefault();
+        $this->orderMetadata->shouldReceive('getPaymentContract')->with($this->order)->andReturn('')->byDefault();
 
         $this->reconciliation = new PaymentReconciliation(
             $this->orderMetadata,
@@ -64,6 +66,115 @@ class PaymentReconciliationTest extends TestCase
         $this->assertFalse(
             $this->reconciliation->canCancelOrder($this->order, 'WC-75', 'woo-mercado-pago-basic')
         );
+    }
+
+    public function testSmartPixExpirationRoutesThroughOrdersWithoutLegacyQueries(): void
+    {
+        $this->orderMetadata->shouldReceive('getPaymentContract')->with($this->order)->andReturn('orders_smart_pix_v1');
+        $this->orderMetadata->shouldReceive('getPpOrderId')->once()->with($this->order)->andReturn('PPORD_TEST_75');
+        $operations = Mockery::mock(\MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderOperations::class);
+        $operations->shouldReceive('canCancel')->once()->with($this->order, true)->andReturn(true);
+        $this->orderMetadata->shouldNotReceive('getPaymentIds');
+        $this->orderMetadata->shouldNotReceive('getPreferenceIds');
+        $this->requester->shouldNotReceive('get');
+        $this->requester->shouldNotReceive('put');
+        $reconciliation = new PaymentReconciliation($this->orderMetadata, $this->orderStatus, $this->requester, $this->logs, $operations);
+        $this->assertTrue($reconciliation->canCancelOrder($this->order, 'LEGACY_REFERENCE', 'woo-mercado-pago-pix'));
+    }
+
+    public function testSmartPixWithoutCompositionFailsClosedWithoutLegacyQueries(): void
+    {
+        $this->orderMetadata->shouldReceive('getPaymentContract')->with($this->order)->andReturn('orders_smart_pix_v1');
+        $this->orderMetadata->shouldNotReceive('getPaymentIds');
+        $this->requester->shouldNotReceive('get');
+        $this->assertFalse($this->reconciliation->canCancelOrder($this->order, 'LEGACY_REFERENCE', 'woo-mercado-pago-pix'));
+    }
+
+    /** @dataProvider unlinkedSmartPixAttemptProvider */
+    public function testSmartPixWithoutPpOrderPreservesAttemptWithoutEnteringCancellation(array $creationMetadata): void
+    {
+        $storedMetadata = $creationMetadata + [
+            '_mp_payment_contract' => OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1,
+            '_mp_idempotency_key' => 'test-smart-pix-attempt',
+        ];
+        $before = $storedMetadata;
+        $order = $this->inMemoryOrder($storedMetadata);
+        $orderMeta = Mockery::mock(OrderMeta::class)->makePartial();
+        $orderMeta->shouldReceive('getEarliest')->once()->with($order, '_mp_payment_contract')
+            ->andReturn(OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1);
+        $order->shouldNotReceive('set_status');
+        $order->shouldNotReceive('update_status');
+        $operations = Mockery::mock(\MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderOperations::class);
+        $operations->shouldNotReceive('canCancel');
+        $this->requester->shouldNotReceive('get');
+        $this->requester->shouldNotReceive('put');
+        $this->orderStatus->shouldNotReceive('getAccessTokenForOrder');
+        $this->logFile->shouldNotReceive('error');
+        $reconciliation = new PaymentReconciliation(
+            new OrderMetadata($orderMeta, $this->logs),
+            $this->orderStatus,
+            $this->requester,
+            $this->logs,
+            $operations
+        );
+
+        $this->assertFalse($reconciliation->canCancelOrder($order, 'WC-75', 'woo-mercado-pago-pix'));
+        $this->assertSame($before, $storedMetadata);
+    }
+
+    public static function unlinkedSmartPixAttemptProvider(): array
+    {
+        $attemptHash = hash('sha256', 'test-smart-pix-attempt');
+        $started = ['_mp_smart_pix_creation_started' => $attemptHash];
+        $answered = $started + ['_mp_smart_pix_creation_response_received' => 'yes'];
+
+        return [
+            'not dispatched' => [[]],
+            'validation failure' => [$answered + ['_mp_smart_pix_creation_failure' => $attemptHash . ':validation']],
+            'authentication failure' => [$answered + ['_mp_smart_pix_creation_failure' => $attemptHash . ':authentication']],
+            'creation result unknown' => [$started],
+            'response alone does not establish creation result' => [$answered],
+            'null PPORD' => [$started + ['_mp_pp_order_id' => null]],
+            'non-string PPORD' => [$started + ['_mp_pp_order_id' => []]],
+            'other provider IDs do not replace PPORD' => [$started + [
+                '_mp_pp_payment_id' => 'PPPAY_TEST_75',
+                '_mp_order_id' => 'ORD_TEST_75',
+                '_mp_transaction_intent_id' => 'TEST_INTENT_75',
+            ]],
+        ];
+    }
+
+    /** @dataProvider legacyGatewayProvider */
+    public function testLegacyGatewayCancellationDoesNotRequirePpOrder(string $gateway): void
+    {
+        $operations = Mockery::mock(\MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderOperations::class);
+        $operations->shouldNotReceive('canCancel');
+        $this->orderMetadata->shouldNotReceive('getPpOrderId');
+        $this->expectIdentifiers(['100'], []);
+        $this->expectAccessToken();
+        $this->requester->shouldReceive('get')->once()
+            ->with('/v1/payments/100', $this->headers())
+            ->andReturn($this->response(200, $this->payment('100', 'WC-75', 'cancelled')));
+        $this->requester->shouldNotReceive('put');
+        $reconciliation = new PaymentReconciliation(
+            $this->orderMetadata,
+            $this->orderStatus,
+            $this->requester,
+            $this->logs,
+            $operations
+        );
+
+        $this->assertTrue($reconciliation->canCancelOrder($this->order, 'WC-75', $gateway));
+    }
+
+    public static function legacyGatewayProvider(): array
+    {
+        return [
+            'conventional Pix' => ['woo-mercado-pago-pix'],
+            'boleto' => ['woo-mercado-pago-ticket'],
+            'card' => ['woo-mercado-pago-custom'],
+            'Checkout Pro' => ['woo-mercado-pago-basic'],
+        ];
     }
 
     public function testApprovedLocalPaymentUpdatesOrderAndPreventsCancellation(): void
@@ -677,6 +788,7 @@ class PaymentReconciliationTest extends TestCase
     private function inMemoryOrder(array &$storedMetadata): WC_Order
     {
         $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('read_meta_data')->with(true);
         $order->shouldReceive('get_meta')
             ->andReturnUsing(static function (string $key, bool $single = true) use (&$storedMetadata) {
                 if (!array_key_exists($key, $storedMetadata)) {

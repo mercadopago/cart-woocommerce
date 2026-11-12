@@ -57,7 +57,7 @@ class WordPressHttpClient implements HttpClientInterface
 
         $response = wp_remote_request($url, $args);
         if (is_wp_error($response)) {
-            throw new TransportException((string) $response->get_error_code());
+            throw new TransportException((string) $response->get_error_code(), (string) $response->get_error_message());
         }
 
         $responseBody = (string) wp_remote_retrieve_body($response);

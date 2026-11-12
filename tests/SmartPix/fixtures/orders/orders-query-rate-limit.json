@@ -1,0 +1,36 @@
+{
+  "contract_version": "smart-pix-internal/v1",
+  "scenario_id": "orders-query-rate-limit",
+  "port": "orders",
+  "operation": "query",
+  "request": {
+    "surface": "server",
+    "country": "MLB",
+    "payment_contract": "orders_smart_pix_v1",
+    "attempt_reference": "attempt_fixture_query_rate_limit_001",
+    "order_reference": "order_fixture_query_rate_limit_001",
+    "amount": null,
+    "refund_amount": null
+  },
+  "response": {
+    "outcome": "failure",
+    "state": "processing",
+    "order_reference": "order_fixture_query_rate_limit_001",
+    "eligibility": null,
+    "authorization": null,
+    "payments": [],
+    "error": {
+      "category": "rate_limit",
+      "code": "SMART_PIX_ORDERS_RATE_LIMIT",
+      "retryable": true
+    }
+  },
+  "expected_effects": {
+    "persist_attempt": false,
+    "link_order_reference": false,
+    "orders_create_calls": 0,
+    "payments_create_calls": 0,
+    "state_transition": "none",
+    "reconciliation": "scheduled"
+  }
+}

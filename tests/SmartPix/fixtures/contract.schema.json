@@ -1,0 +1,1194 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:mercadopago:woocommerce:smart-pix:internal-contract:v1",
+  "title": "Smart Pix internal normalized contract fixture",
+  "description": "Versioned, provider-agnostic contract shared by the Smart Pix SDK and Orders test adapters.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "scenario_id",
+    "port",
+    "operation",
+    "request",
+    "response",
+    "expected_effects"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "smart-pix-internal/v1"
+    },
+    "scenario_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{2,79}$"
+    },
+    "port": {
+      "enum": [
+        "sdk",
+        "orders"
+      ]
+    },
+    "operation": {
+      "enum": [
+        "eligibility",
+        "authorize",
+        "create",
+        "query",
+        "cancel",
+        "refund"
+      ]
+    },
+    "request": {
+      "$ref": "#/definitions/request"
+    },
+    "response": {
+      "$ref": "#/definitions/response"
+    },
+    "expected_effects": {
+      "$ref": "#/definitions/expectedEffects"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "port": {
+            "const": "sdk"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "operation": {
+            "enum": [
+              "eligibility",
+              "authorize"
+            ]
+          },
+          "request": {
+            "type": "object",
+            "properties": {
+              "attempt_reference": {
+                "type": "null"
+              },
+              "order_reference": {
+                "type": "null"
+              },
+              "amount": {
+                "type": "null"
+              },
+              "refund_amount": {
+                "type": "null"
+              }
+            }
+          },
+          "response": {
+            "type": "object",
+            "properties": {
+              "order_reference": {
+                "type": "null"
+              },
+              "payments": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "observed": false
+            }
+          },
+          "expected_effects": {
+            "type": "object",
+            "properties": {
+              "persist_attempt": {
+                "const": false
+              },
+              "link_order_reference": {
+                "const": false
+              },
+              "orders_create_calls": {
+                "const": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "port": {
+            "const": "orders"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "operation": {
+            "enum": [
+              "create",
+              "query",
+              "cancel",
+              "refund"
+            ]
+          },
+          "response": {
+            "type": "object",
+            "properties": {
+              "eligibility": {
+                "type": "null"
+              },
+              "authorization": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation": {
+            "const": "eligibility"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "response": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "enum": [
+                  "empty",
+                  "unavailable",
+                  "eligible",
+                  "error"
+                ]
+              },
+              "eligibility": {
+                "$ref": "#/definitions/eligibility"
+              },
+              "authorization": {
+                "type": "null"
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "outcome": {
+                      "const": "success"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "empty",
+                        "unavailable",
+                        "eligible"
+                      ]
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "state": {
+                      "const": "error"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation": {
+            "const": "authorize"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "response": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "enum": [
+                  "unavailable",
+                  "authorizing",
+                  "authorized",
+                  "error",
+                  "terminal_failure"
+                ]
+              },
+              "eligibility": {
+                "type": "null"
+              },
+              "authorization": {
+                "$ref": "#/definitions/authorization"
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "outcome": {
+                      "const": "success"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "authorizing",
+                        "authorized"
+                      ]
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "unavailable",
+                        "error",
+                        "terminal_failure"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "state": {
+                      "const": "authorized"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "authorization": {
+                      "type": "object",
+                      "properties": {
+                        "completed": {
+                          "const": true
+                        }
+                      }
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "authorization": {
+                      "type": "object",
+                      "properties": {
+                        "completed": {
+                          "const": false
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation": {
+            "const": "create"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "request": {
+            "type": "object",
+            "properties": {
+              "attempt_reference": {
+                "$ref": "#/definitions/opaqueReference"
+              },
+              "order_reference": {
+                "type": "null"
+              },
+              "amount": {
+                "$ref": "#/definitions/amount"
+              },
+              "refund_amount": {
+                "type": "null"
+              }
+            }
+          },
+          "response": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "enum": [
+                  "processing",
+                  "error",
+                  "terminal_failure"
+                ]
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "outcome": {
+                      "const": "success"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "order_reference": {
+                      "$ref": "#/definitions/opaqueReference"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "outcome": {
+                      "const": "success"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "state": {
+                      "const": "processing"
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "processing",
+                        "error",
+                        "terminal_failure"
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "response": {
+                  "type": "object",
+                  "properties": {
+                    "outcome": {
+                      "const": "success"
+                    },
+                    "state": {
+                      "const": "processing"
+                    }
+                  }
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "expected_effects": {
+                  "type": "object",
+                  "properties": {
+                    "persist_attempt": {
+                      "const": true
+                    },
+                    "link_order_reference": {
+                      "const": true
+                    },
+                    "orders_create_calls": {
+                      "const": 1
+                    },
+                    "state_transition": {
+                      "const": "apply_once"
+                    },
+                    "reconciliation": {
+                      "const": "scheduled"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation": {
+            "enum": [
+              "query",
+              "cancel"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "request": {
+            "type": "object",
+            "properties": {
+              "attempt_reference": {
+                "$ref": "#/definitions/opaqueReference"
+              },
+              "order_reference": {
+                "$ref": "#/definitions/opaqueReference"
+              },
+              "amount": {
+                "type": "null"
+              },
+              "refund_amount": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation": {
+            "const": "query"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "response": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "enum": [
+                  "processing",
+                  "terminal_success",
+                  "error",
+                  "terminal_failure"
+                ]
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "outcome": {
+                      "const": "success"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "processing",
+                        "terminal_success"
+                      ]
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "processing",
+                        "error",
+                        "terminal_failure"
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation": {
+            "const": "cancel"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "response": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "enum": [
+                  "processing",
+                  "error",
+                  "terminal_failure"
+                ]
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "outcome": {
+                      "const": "success"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "processing",
+                        "terminal_failure"
+                      ]
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "processing",
+                        "error"
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation": {
+            "const": "refund"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "request": {
+            "type": "object",
+            "properties": {
+              "attempt_reference": {
+                "$ref": "#/definitions/opaqueReference"
+              },
+              "order_reference": {
+                "$ref": "#/definitions/opaqueReference"
+              },
+              "amount": {
+                "type": "null"
+              },
+              "refund_amount": {
+                "$ref": "#/definitions/amount"
+              }
+            }
+          },
+          "response": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "enum": [
+                  "processing",
+                  "terminal_success",
+                  "error",
+                  "terminal_failure"
+                ]
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "outcome": {
+                      "const": "success"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "processing",
+                        "terminal_success"
+                      ]
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "processing",
+                        "error",
+                        "terminal_failure"
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation": {
+            "enum": [
+              "query",
+              "cancel",
+              "refund"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "response": {
+            "type": "object",
+            "properties": {
+              "order_reference": {
+                "$ref": "#/definitions/opaqueReference"
+              }
+            }
+          },
+          "expected_effects": {
+            "type": "object",
+            "properties": {
+              "persist_attempt": {
+                "const": false
+              },
+              "link_order_reference": {
+                "const": false
+              },
+              "orders_create_calls": {
+                "const": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "response": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "const": "success"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "response": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "response": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "$ref": "#/definitions/error"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "response": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "const": "terminal_success"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "response": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "const": "success"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "response": {
+            "type": "object",
+            "required": [
+              "error"
+            ],
+            "properties": {
+              "error": {
+                "type": "object",
+                "required": [
+                  "category"
+                ],
+                "properties": {
+                  "category": {
+                    "const": "rejected"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "port": {
+            "const": "orders"
+          },
+          "response": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "const": "failure"
+              },
+              "state": {
+                "const": "terminal_failure"
+              },
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "pattern": "^SMART_PIX_REJECTED_[A-Z0-9_]{1,64}$"
+                  },
+                  "retryable": {
+                    "const": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "opaqueReference": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+    },
+    "amount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "currency"
+      ],
+      "properties": {
+        "value": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)\\.[0-9]{2}$"
+        },
+        "currency": {
+          "const": "BRL"
+        }
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "surface",
+        "country",
+        "payment_contract",
+        "attempt_reference",
+        "order_reference",
+        "amount",
+        "refund_amount"
+      ],
+      "properties": {
+        "surface": {
+          "enum": [
+            "classic",
+            "blocks",
+            "order_pay",
+            "server"
+          ]
+        },
+        "country": {
+          "const": "MLB"
+        },
+        "payment_contract": {
+          "const": "orders_smart_pix_v1"
+        },
+        "attempt_reference": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/opaqueReference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "order_reference": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/opaqueReference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "amount": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/amount"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "refund_amount": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/amount"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "eligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eligible",
+        "available_options",
+        "selection_required"
+      ],
+      "properties": {
+        "eligible": {
+          "type": "boolean"
+        },
+        "available_options": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "selection_required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "completed"
+      ],
+      "properties": {
+        "completed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "payment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference",
+        "state",
+        "amount"
+      ],
+      "properties": {
+        "reference": {
+          "$ref": "#/definitions/opaqueReference"
+        },
+        "state": {
+          "enum": [
+            "processing",
+            "approved",
+            "rejected",
+            "cancelled",
+            "refunded"
+          ]
+        },
+        "amount": {
+          "$ref": "#/definitions/amount"
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "category",
+        "code",
+        "retryable"
+      ],
+      "properties": {
+        "category": {
+          "enum": [
+            "ineligible",
+            "validation",
+            "authorization_declined",
+            "authorization_expired",
+            "persistence",
+            "timeout",
+            "rate_limit",
+            "unavailable",
+            "invalid_response",
+            "authentication",
+            "linkage_mismatch",
+            "conflict",
+            "rejected",
+            "unknown"
+          ]
+        },
+        "code": {
+          "type": "string",
+          "pattern": "^SMART_PIX_[A-Z0-9_]+$"
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "observed": {
+      "description": "Validated provider status facts kept for server-side records; never a decision input.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "order_status",
+        "order_status_detail",
+        "payment_status",
+        "payment_status_detail",
+        "total_failed",
+        "payment_id",
+        "payment_reference"
+      ],
+      "properties": {
+        "order_status": {
+          "enum": [
+            "action_required",
+            "processing",
+            "processed",
+            "failed"
+          ]
+        },
+        "order_status_detail": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]{1,64}$"
+        },
+        "payment_status": {
+          "enum": [
+            "action_required",
+            "processing",
+            "processed",
+            "failed"
+          ]
+        },
+        "payment_status_detail": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]{1,64}$"
+        },
+        "total_failed": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)\\.[0-9]{2}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "payment_id": {
+          "$ref": "#/definitions/opaqueReference"
+        },
+        "payment_reference": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/opaqueReference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outcome",
+        "state",
+        "order_reference",
+        "eligibility",
+        "authorization",
+        "payments",
+        "error"
+      ],
+      "properties": {
+        "outcome": {
+          "enum": [
+            "success",
+            "failure"
+          ]
+        },
+        "state": {
+          "enum": [
+            "empty",
+            "unavailable",
+            "eligible",
+            "authorizing",
+            "authorized",
+            "processing",
+            "terminal_success",
+            "error",
+            "terminal_failure"
+          ]
+        },
+        "order_reference": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/opaqueReference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eligibility": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/eligibility"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "authorization": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/authorization"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "payments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/payment"
+          }
+        },
+        "error": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/error"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observed": {
+          "$ref": "#/definitions/observed"
+        }
+      }
+    },
+    "expectedEffects": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "persist_attempt",
+        "link_order_reference",
+        "orders_create_calls",
+        "payments_create_calls",
+        "state_transition",
+        "reconciliation"
+      ],
+      "properties": {
+        "persist_attempt": {
+          "type": "boolean"
+        },
+        "link_order_reference": {
+          "type": "boolean"
+        },
+        "orders_create_calls": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "payments_create_calls": {
+          "const": 0
+        },
+        "state_transition": {
+          "enum": [
+            "none",
+            "apply_once"
+          ]
+        },
+        "reconciliation": {
+          "enum": [
+            "none",
+            "scheduled",
+            "terminal"
+          ]
+        }
+      }
+    }
+  }
+}

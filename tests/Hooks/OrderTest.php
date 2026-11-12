@@ -22,6 +22,32 @@ class OrderTest extends TestCase
 {
     use WoocommerceMock;
 
+    public function testPendingCronSelectsSmartTransferOrdersWithoutLegacyPaymentIdsAndRoutesToOrders(): void
+    {
+        WP_Mock::expectActionAdded('mercadopago_sync_pending_status_order_action', [$this->order, 'syncPendingStatusOrders']);
+        $native = Mockery::mock(WC_Order::class);
+        $this->orderMetadataMock->shouldReceive('getPaymentContract')->with($native)->andReturn('orders_smart_pix_v1');
+        $sync = Mockery::mock(\MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderSync::class);
+        $sync->shouldReceive('synchronize')->once()->with($native);
+        $this->setPrivateProperty('smartPixOrderSync', $sync);
+        $this->orderStatusMock->shouldNotReceive('getLastNotification', 'getAllPaymentsData');
+        $metric = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Singleton\Singleton::class);
+        $metric->shouldReceive('sendEvent')->once();
+        $this->setPrivateProperty('datadog', $metric);
+        WP_Mock::userFunction('wc_get_orders', ['times' => 1, 'args' => [Mockery::on(function ($query): bool {
+            $this->assertSame('pending', $query['status']);
+            $sources = $query['meta_query'][2];
+            $this->assertSame('OR', $sources['relation']);
+            $this->assertSame('_Mercado_Pago_Payment_IDs', $sources[0]['key']);
+            $this->assertSame('AND', $sources[1]['relation']);
+            $this->assertSame(['key' => '_mp_payment_contract', 'value' => 'orders_smart_pix_v1', 'compare' => '='], $sources[1][0]);
+            $this->assertSame(['key' => '_mp_pp_order_id', 'value' => '', 'compare' => '!='], $sources[1][1]);
+            return true;
+        })], 'return' => [$native]]);
+        $this->order->registerSyncPendingStatusOrdersAction();
+        $this->order->syncPendingStatusOrders();
+    }
+
     private Order $order;
 
     private OrderStatus $orderStatusMock;
@@ -101,6 +127,61 @@ class OrderTest extends TestCase
         $this->paymentReconciliationMock->shouldNotReceive('canCancelOrder');
 
         $this->assertFalse($this->order->reconcileUnpaidOrderCancellation(false, $order));
+    }
+
+    public function testSmartPixMetaboxUsesOrdersWithoutLegacyPaymentIds(): void
+    {
+        $native = Mockery::mock(WC_Order::class);
+        $sync = Mockery::mock(\MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderSync::class);
+        $this->setPrivateProperty('smartPixOrderSync', $sync);
+        $this->orderMetadataMock->shouldReceive('getPaymentContract')->with($native)
+            ->andReturn(OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1);
+        $this->orderStatusMock->shouldNotReceive('getAllPaymentsData', 'getLastNotification', 'processStatus');
+        $sync->shouldReceive('paymentData')->with($native)->andReturn([[
+            'id' => 'PPPAYSYNTHETIC001', 'payment_type_id' => 'bank_transfer',
+            'status' => 'pending', 'status_detail' => 'pending_waiting_payment',
+        ]]);
+
+        $data = $this->invokeGetMetaboxData($native);
+
+        $this->assertSame('#f73', $data['border_left_color']);
+        $this->assertSame('Sync Pending', $data['sync_button_text']);
+    }
+
+    public function testSmartPixSyncNeverFallsBackToLegacyApis(): void
+    {
+        $native = Mockery::mock(WC_Order::class);
+        $sync = Mockery::mock(\MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderSync::class);
+        $this->setPrivateProperty('smartPixOrderSync', $sync);
+        $this->orderMetadataMock->shouldReceive('getPaymentContract')->with($native)
+            ->andReturn(OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1);
+        $this->orderStatusMock->shouldNotReceive('getAllPaymentsData', 'getLastNotification', 'processStatus');
+        $sync->shouldReceive('synchronize')->with($native)->once()->andThrow(new \RuntimeException('Smart Pix synchronization could not be confirmed.'));
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Smart Pix synchronization could not be confirmed.');
+        $this->order->syncOrderStatus($native);
+    }
+
+    public function testSmartPixOrderTitleUsesTheTranslatedSmartTransferName(): void
+    {
+        $native = Mockery::mock(WC_Order::class);
+        $native->shouldReceive('get_payment_method')->with('edit')->andReturn(\MercadoPago\Woocommerce\Gateways\PixGateway::ID);
+        $this->orderMetadataMock->shouldReceive('getPaymentContract')->with($native)
+            ->andReturn(OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1);
+        $translations = Mockery::mock(\MercadoPago\Woocommerce\Translations\StoreTranslations::class);
+        $translations->orderStatus = ['smart_transfer' => 'Translated Smart Transfer'];
+        $this->setPrivateProperty('storeTranslations', $translations);
+
+        $this->assertSame('Translated Smart Transfer', $this->order->paymentMethodTitle('Pix', $native));
+    }
+
+    public function testConventionalPixKeepsItsConfiguredTitle(): void
+    {
+        $native = Mockery::mock(WC_Order::class);
+        $native->shouldReceive('get_payment_method')->with('edit')->andReturn(\MercadoPago\Woocommerce\Gateways\PixGateway::ID);
+        $this->orderMetadataMock->shouldReceive('getPaymentContract')->with($native)->andReturn('');
+        $this->assertSame('Pix', $this->order->paymentMethodTitle('Pix', $native));
     }
 
     public function testUnpaidCancellationDoesNotChangeNonMercadoPagoOrder(): void
@@ -219,6 +300,7 @@ class OrderTest extends TestCase
     {
         return [
             'approved'     => ['approved',     'accredited',              '#00A650', 'Sync Success'],
+            'partial refund' => ['approved', 'partially_refunded', '#00A650', 'Sync Success'],
             'authorized'   => ['authorized',   'accredited',              '#00A650', 'Sync Success'],
             'pending'      => ['pending',      'pending_waiting_payment', '#f73',    'Sync Pending'],
             'in_process'   => ['in_process',   'pending_review_manual',   '#f73',    'Sync Pending'],

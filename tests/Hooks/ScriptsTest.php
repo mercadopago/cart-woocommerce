@@ -25,6 +25,9 @@ namespace MercadoPago\Woocommerce\Hooks;
 if (!function_exists('MercadoPago\\Woocommerce\\Hooks\\add_action')) {
     function add_action(string $tag, callable $callback, int $priority = 10, int $acceptedArgs = 1): bool
     {
+        if (!empty($GLOBALS['__test_capture_admin_notice_assets']) && $tag === 'admin_enqueue_scripts') {
+            $GLOBALS['__test_admin_notice_asset_callbacks'][] = $callback;
+        }
         if (!empty($GLOBALS['__test_capture_payment_form_assets']) && $tag === 'wp_enqueue_scripts') {
             $GLOBALS['__test_payment_form_asset_callbacks'][] = $callback;
         }
@@ -50,7 +53,10 @@ namespace MercadoPago\Woocommerce\Tests\Hooks;
 use Mockery;
 use PHPUnit\Framework\TestCase;
 use MercadoPago\Woocommerce\Hooks\Scripts;
+use MercadoPago\Woocommerce\Gateways\CustomGateway;
+use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Url;
+use MercadoPago\Woocommerce\Helpers\Strings;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Helpers\PaymentMethods;
@@ -139,6 +145,8 @@ class ScriptsTest extends TestCase
     {
         unset(
             $GLOBALS['mercadopago'],
+            $GLOBALS['__test_capture_admin_notice_assets'],
+            $GLOBALS['__test_admin_notice_asset_callbacks'],
             $GLOBALS['__test_capture_script_actions'],
             $GLOBALS['__test_captured_script_actions'],
             $GLOBALS['__captured_actions'],
@@ -147,8 +155,184 @@ class ScriptsTest extends TestCase
             $GLOBALS['__test_capture_payment_form_assets'],
             $GLOBALS['__test_payment_form_asset_callbacks']
         );
+        unset($_GET['key']);
         Mockery::close();
         parent::tearDown();
+    }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testNativeNoticeAndRemoteAssetsUseSeparateConfigurationAndOrderedDependencies(): void
+    {
+        define('MP_PLUGIN_FILE', dirname(__DIR__, 2) . '/woocommerce-mercadopago.php');
+        $GLOBALS['__test_capture_admin_notice_assets'] = true;
+        $GLOBALS['__test_admin_notice_asset_callbacks'] = [];
+        WP_Mock::expectActionAdded('admin_enqueue_scripts', Mockery::type('Closure'));
+        $this->urlMock->shouldReceive('getCssAsset')->with('admin/mp-admin-notices-layout')->andReturn('/native.css');
+        $this->urlMock->shouldReceive('getJsAsset')->with('admin/mp-admin-notices-layout')->andReturn('/native.js');
+        $this->urlMock->shouldReceive('getJsAsset')->with('notices/notices-client')->andReturn('/remote-loader.js');
+        $cssRevision = substr(hash_file('sha256', dirname(MP_PLUGIN_FILE) . '/assets/css/admin/mp-admin-notices-layout.min.css'), 0, 12);
+        $jsRevision = substr(hash_file('sha256', dirname(MP_PLUGIN_FILE) . '/assets/js/admin/mp-admin-notices-layout.min.js'), 0, 12);
+        $this->urlMock->shouldReceive('setQueryVar')->once()->with('mp_native_rev', $cssRevision, '/native.css')->andReturn('/native.css?mp_native_rev=' . $cssRevision);
+        $this->urlMock->shouldReceive('setQueryVar')->once()->with('mp_native_rev', $jsRevision, '/native.js')->andReturn('/native.js?mp_native_rev=' . $jsRevision);
+        $this->sellerMock->shouldReceive('getCredentialsPublicKey')->andReturn('synthetic-active-mode-public-key');
+        $native = ['enabled' => true, 'ajax_url' => '/wp-admin/admin-ajax.php', 'nonce' => 'synthetic-nonce', 'screen' => 'dashboard'];
+        $scripts = [];
+        $localized = [];
+        WP_Mock::userFunction('wp_register_style')->once()->with('wc_mercadopago_native_notices_css', '/native.css?mp_native_rev=' . $cssRevision, [], '1.0.0');
+        WP_Mock::userFunction('wp_enqueue_style')->once()->with('wc_mercadopago_native_notices_css');
+        WP_Mock::userFunction('wp_enqueue_script')->andReturnUsing(function ($name, $file, $deps, $version, $footer) use (&$scripts) {
+            $scripts[$name] = compact('file', 'deps', 'version', 'footer');
+        });
+        WP_Mock::userFunction('wp_localize_script')->andReturnUsing(function ($name, $global, $params) use (&$localized) {
+            $localized[$name] = compact('global', 'params');
+        });
+
+        $this->scripts->registerNativeNoticesAdminScript($native);
+        $this->scripts->registerNoticesAdminScript();
+        foreach ($GLOBALS['__test_admin_notice_asset_callbacks'] as $callback) {
+            $callback();
+        }
+
+        $this->assertSame([], $scripts['wc_mercadopago_native_notices']['deps']);
+        $this->assertSame('/native.js?mp_native_rev=' . $jsRevision, $scripts['wc_mercadopago_native_notices']['file']);
+        $this->assertSame('/remote-loader.js', $scripts['wc_mercadopago_notices']['file']);
+        $this->assertSame(['wc_mercadopago_native_notices'], $scripts['wc_mercadopago_notices']['deps']);
+        $this->assertSame('wc_mercadopago_native_notices_params', $localized['wc_mercadopago_native_notices']['global']);
+        $this->assertSame($native, $localized['wc_mercadopago_native_notices']['params']);
+        $remote = $localized['wc_mercadopago_notices']['params'];
+        $this->assertSame('#mp-jaiminho-notices-slot', $remote['container']);
+        $this->assertSame('synthetic-active-mode-public-key', $remote['public_key']);
+        $this->assertSame('8.0.0', $remote['platform_version']);
+        $this->assertSame(MP_VERSION, $remote['plugin_version']);
+        $this->assertSame(MP_PLATFORM_ID, $remote['platform_id']);
+        $this->assertSame('https://http2.mlstatic.com/storage/v1/plugins/notices/woocommerce.css', $remote['css_url']);
+        $this->assertArrayNotHasKey('public_key', $localized['wc_mercadopago_native_notices']['params']);
+    }
+
+    public function testLegacyNoticeContainerDoesNotDependOnNativeAssets(): void
+    {
+        $effects = $this->recordWordPressEffects();
+        $this->sellerMock->shouldReceive('getSiteId')->andReturn('MLB');
+        $callback = $this->captureAction(function () {
+            $this->scripts->registerNoticesAdminScript(false);
+        }, 'admin_enqueue_scripts');
+
+        $callback();
+
+        $this->assertSame([
+            ['wc_mercadopago_notices', 'fixture/notices/notices-client.js', [], '1.0.0', true],
+        ], $effects->scripts);
+        $this->assertCount(1, $effects->localized);
+        $this->assertSame('wc_mercadopago_notices', $effects->localized[0][0]);
+        $this->assertSame('#wpbody-content', $effects->localized[0][2]['container']);
+        $this->assertSame('MLB', $effects->localized[0][2]['site_id']);
+    }
+
+    /**
+     * @dataProvider nativeNoticeAssetRevisionProvider
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testNativeNoticeContentRevisionsAreLocalAndFailOpen(string $scenario): void
+    {
+        $root = sys_get_temp_dir() . '/mp-native-assets-' . uniqid('', true);
+        $cssFile = $root . '/assets/css/admin/mp-admin-notices-layout.min.css';
+        $jsFile = $root . '/assets/js/admin/mp-admin-notices-layout.min.js';
+        mkdir(dirname($cssFile), 0700, true);
+        mkdir(dirname($jsFile), 0700, true);
+        define('MP_PLUGIN_FILE', $root . '/woocommerce-mercadopago.php');
+        $css = 'native stylesheet';
+        $js = 'native javascript';
+        file_put_contents($cssFile, $css);
+        file_put_contents($jsFile, $js);
+
+        try {
+            $this->scripts = new Scripts(new Url(new Strings()), $this->sellerMock, $this->paymentMethodsMock, $this->scriptHealthMonitor);
+            $GLOBALS['__test_capture_admin_notice_assets'] = true;
+            WP_Mock::expectActionAdded('admin_enqueue_scripts', Mockery::type('Closure'));
+            WP_Mock::userFunction('plugins_url')->andReturnUsing(static fn($asset) => 'https://store.example/plugin/' . $asset . '?existing=kept');
+            WP_Mock::userFunction('wp_get_environment_type')->andReturn('production');
+            WP_Mock::userFunction('add_query_arg')->andReturnUsing(static fn($key, $value, $url) => $url . '&' . $key . '=' . $value);
+            $registered = [];
+            WP_Mock::userFunction('wp_register_style')->andReturnUsing(static function ($name, $file, $deps, $version) use (&$registered): void {
+                $registered[$name] = compact('file', 'version');
+            });
+            WP_Mock::userFunction('wp_enqueue_style');
+            WP_Mock::userFunction('wp_enqueue_script')->andReturnUsing(static function ($name, $file, $deps, $version) use (&$registered): void {
+                $registered[$name] = compact('file', 'version');
+            });
+            $enqueue = function () use (&$registered): array {
+                $GLOBALS['__test_admin_notice_asset_callbacks'] = [];
+                $this->scripts->registerNativeNoticesAdminScript([]);
+                $this->scripts->registerAdminStyle('other-style', '/other.css?existing=kept');
+                $this->scripts->registerAdminScript('other-script', '/other.js?existing=kept');
+                foreach ($GLOBALS['__test_admin_notice_asset_callbacks'] as $callback) {
+                    $callback();
+                }
+                return $registered;
+            };
+            $before = $enqueue();
+
+            if ($scenario === 'css_changed') {
+                $css .= ' updated';
+                file_put_contents($cssFile, $css);
+            } elseif ($scenario === 'js_changed') {
+                $js .= ' updated';
+                file_put_contents($jsFile, $js);
+            } elseif ($scenario === 'missing') {
+                unlink($cssFile);
+                unlink($jsFile);
+            } elseif ($scenario === 'unreadable') {
+                chmod($cssFile, 0000);
+                chmod($jsFile, 0000);
+                clearstatcache();
+                if (is_readable($cssFile) || is_readable($jsFile)) {
+                    $this->markTestSkipped('This runtime cannot enforce unreadable permissions on its own files.');
+                }
+            } elseif ($scenario === 'not_regular') {
+                unlink($cssFile);
+                unlink($jsFile);
+                mkdir($cssFile);
+                mkdir($jsFile);
+                clearstatcache();
+            }
+
+            $after = $enqueue();
+            foreach (['css' => $css, 'js' => $js] as $type => $content) {
+                $handle = $type === 'css' ? 'wc_mercadopago_native_notices_css' : 'wc_mercadopago_native_notices';
+                $originalUrl = 'https://store.example/plugin/assets/' . $type . '/admin/mp-admin-notices-layout.min.' . $type . '?existing=kept';
+                $this->assertSame($originalUrl . '&mp_native_rev=' . substr(hash('sha256', $type === 'css' ? 'native stylesheet' : 'native javascript'), 0, 12), $before[$handle]['file']);
+                $expectedUrl = in_array($scenario, ['missing', 'unreadable', 'not_regular'], true) ? $originalUrl : $originalUrl . '&mp_native_rev=' . substr(hash('sha256', $content), 0, 12);
+                $this->assertSame($expectedUrl, $after[$handle]['file']);
+                $this->assertSame(MP_VERSION, $after[$handle]['version']);
+                if ($scenario === $type . '_changed') {
+                    $this->assertNotSame($before[$handle]['file'], $after[$handle]['file']);
+                }
+            }
+            $this->assertSame(['file' => '/other.css?existing=kept', 'version' => MP_VERSION], $after['other-style']);
+            $this->assertSame(['file' => '/other.js?existing=kept', 'version' => MP_VERSION], $after['other-script']);
+        } finally {
+            foreach ([$cssFile, $jsFile] as $file) {
+                if (is_dir($file)) {
+                    rmdir($file);
+                } elseif (file_exists($file)) {
+                    chmod($file, 0600);
+                    unlink($file);
+                }
+                rmdir(dirname($file));
+                rmdir(dirname($file, 2));
+            }
+            rmdir($root . '/assets');
+            rmdir($root);
+        }
+    }
+
+    public function nativeNoticeAssetRevisionProvider(): array
+    {
+        return [['unchanged'], ['css_changed'], ['js_changed'], ['missing'], ['unreadable'], ['not_regular']];
     }
 
     /**
@@ -548,6 +732,434 @@ class ScriptsTest extends TestCase
     }
 
     /**
+     * @dataProvider smartPixAssetsProvider
+     */
+    public function testRegisterSmartPixCheckoutAssetsUsesOnlyAllowlistedServerConfiguration(
+        string $environment,
+        string $expectedScriptUrl,
+        string $expectedStyleUrl
+    ): void {
+        $this->expectSmartPixBootstrapAssets();
+        WP_Mock::onHookAdded('wp_enqueue_scripts', 'action')
+            ->with(Mockery::type('callable'), 10, 1)
+            ->perform(function () {
+            });
+        WP_Mock::onFilterAdded('style_loader_tag')
+            ->with([$this->scripts, 'addSmartPixStyleCrossOrigin'], 10, 2)
+            ->perform(function () {
+            });
+
+        $this->scripts->registerSmartPixCheckoutAssets($environment);
+
+        WP_Mock::userFunction('is_view_order_page', ['return' => false]);
+        WP_Mock::userFunction('is_cart', ['return' => false]);
+        WP_Mock::userFunction('is_order_received_page', ['return' => false]);
+        WP_Mock::userFunction('is_checkout_pay_page', ['return' => false]);
+        WP_Mock::userFunction('is_add_payment_method_page', ['return' => false]);
+        WP_Mock::userFunction('is_checkout', ['return' => true]);
+        WP_Mock::userFunction('get_query_var', ['return' => false]);
+        WP_Mock::userFunction('wp_enqueue_style')
+            ->with(Scripts::SMART_PIX_STYLE_NAME, $expectedStyleUrl, [], 'v1')
+            ->once();
+        WP_Mock::userFunction('wp_enqueue_script')
+            ->with(
+                Scripts::SMART_PIX_SCRIPT_NAME,
+                $expectedScriptUrl,
+                ['wc_mercadopago_sdk'],
+                'v1',
+                true
+            )
+            ->once();
+        WP_Mock::userFunction('wp_localize_script')
+            ->with(Scripts::SMART_PIX_SCRIPT_NAME, 'wc_mercadopago_smart_pix_params', [
+                'site_id' => Country::SITE_ID_MLB,
+                'standalone_bridge' => 'enabled',
+                'platform_id' => MP_PLATFORM_ID,
+                'order_pay_context' => null,
+            ])
+            ->once();
+
+        $this->scripts->enqueueSmartPixCheckoutAssets($environment);
+
+        $this->assertContains(
+            Scripts::SMART_PIX_SCRIPT_NAME,
+            $this->getTrackedScriptHandles()
+        );
+    }
+
+    public function testSmartPixUsesTheSharedBridgeWhenCustomGatewayIsEnabled(): void
+    {
+        $this->paymentMethodsMock->shouldReceive('getEnabledPaymentMethods')
+            ->once()
+            ->andReturn([CustomGateway::ID]);
+
+        WP_Mock::userFunction('is_view_order_page', ['return' => false]);
+        WP_Mock::userFunction('is_cart', ['return' => false]);
+        WP_Mock::userFunction('is_order_received_page', ['return' => false]);
+        WP_Mock::userFunction('is_checkout_pay_page', ['return' => false]);
+        WP_Mock::userFunction('is_add_payment_method_page', ['return' => false]);
+        WP_Mock::userFunction('is_checkout', ['return' => true]);
+        WP_Mock::userFunction('get_query_var', ['return' => false]);
+        WP_Mock::userFunction('wp_enqueue_style', ['return' => true]);
+        WP_Mock::userFunction('wp_enqueue_script', ['return' => true]);
+        WP_Mock::userFunction('wp_localize_script')
+            ->with(Scripts::SMART_PIX_SCRIPT_NAME, 'wc_mercadopago_smart_pix_params', [
+                'site_id' => Country::SITE_ID_MLB,
+                'standalone_bridge' => 'disabled',
+                'platform_id' => MP_PLATFORM_ID,
+                'order_pay_context' => null,
+            ])
+            ->once();
+
+        $this->scripts->enqueueSmartPixCheckoutAssets(Scripts::SMART_PIX_ENV_HOMOLOGATION);
+        $this->assertContains(Scripts::SMART_PIX_SCRIPT_NAME, $this->getTrackedScriptHandles());
+    }
+
+    /**
+     * @return array<string, array{string, string, string}>
+     */
+    public static function smartPixAssetsProvider(): array
+    {
+        return [
+            'homologation' => [
+                Scripts::SMART_PIX_ENV_HOMOLOGATION,
+                'https://http2.mlstatic.com/storage/homol/mercadopago/woocommerce/scripts/smart-pix/v1/smart-pix.bundle.min.js',
+                'https://http2.mlstatic.com/storage/homol/mercadopago/woocommerce/scripts/smart-pix/v1/smart-pix.bundle.min.css',
+            ],
+            'production' => [
+                Scripts::SMART_PIX_ENV_PRODUCTION,
+                'https://http2.mlstatic.com/storage/v1/mercadopago/woocommerce/scripts/smart-pix/v1/smart-pix.bundle.min.js',
+                'https://http2.mlstatic.com/storage/v1/mercadopago/woocommerce/scripts/smart-pix/v1/smart-pix.bundle.min.css',
+            ],
+        ];
+    }
+
+    public function testRegisterSmartPixCheckoutAssetsRejectsUnknownEnvironment(): void
+    {
+        $this->scripts->registerSmartPixCheckoutAssets('https://attacker.example/bundle.js');
+        $this->scripts->enqueueSmartPixCheckoutAssets('https://attacker.example/bundle.js');
+
+        $this->assertSame([], $this->getTrackedScriptHandles());
+    }
+
+    /** @dataProvider sharedFastPaymentsProvider */
+    public function testCustomGatewayEnqueuesOneSuperTokenLoaderWithoutPixParameters(
+        bool $customEnabled,
+        bool $pixFirst,
+        string $environment
+    ): void {
+        $registrations = 0;
+        WP_Mock::onHookAdded('wp_enqueue_scripts', 'action')
+            ->with(Mockery::type('callable'), 10, 1)
+            ->perform(function () use (&$registrations) {
+                $registrations++;
+            });
+        $this->scripts->registerFastPaymentsCheckoutAssets($environment);
+        $this->scripts->registerFastPaymentsCheckoutAssets($environment);
+        $this->assertSame(1, $registrations);
+
+        WP_Mock::userFunction('is_view_order_page', ['return' => false]);
+        WP_Mock::userFunction('is_cart', ['return' => false]);
+        WP_Mock::userFunction('is_order_received_page', ['return' => false]);
+        WP_Mock::userFunction('is_checkout_pay_page', ['return' => false]);
+        WP_Mock::userFunction('is_add_payment_method_page', ['return' => false]);
+        WP_Mock::userFunction('is_checkout', ['return' => true]);
+        $this->urlMock->shouldReceive('getJsAsset')->with('checkouts/super-token-loader')->andReturn('loader.js');
+        $this->sellerMock->shouldReceive('getSiteId')->andReturn('MLB');
+        $this->paymentMethodsMock->shouldReceive('getEnabledPaymentMethods')
+            ->andReturn($customEnabled ? [CustomGateway::ID] : []);
+        WP_Mock::userFunction('wp_enqueue_script', [
+            'times' => 1,
+            'args' => [Scripts::FAST_PAYMENTS_SCRIPT_NAME, 'loader.js', ['wc_mercadopago_sdk'], '1.0.0', true],
+        ]);
+        $localizations = [];
+        WP_Mock::userFunction('wp_localize_script', [
+            'times' => 1,
+            'return' => function (string $handle, string $name, array $params) use (&$localizations) {
+                $this->assertSame(Scripts::FAST_PAYMENTS_SCRIPT_NAME, $handle);
+                $localizations[$name] = $params;
+                return true;
+            },
+        ]);
+        $this->scripts->enqueueFastPaymentsCheckoutAssets();
+        $this->assertSame(['wc_mercadopago_supertoken_params'], array_keys($localizations));
+        $this->assertSame(['environment' => $environment], $localizations['wc_mercadopago_supertoken_params']);
+        $this->assertArrayNotHasKey('wc_mercadopago_smart_pix_params', $localizations);
+
+    }
+
+    public static function sharedFastPaymentsProvider(): array
+    {
+        return [
+            [true, false, Scripts::SMART_PIX_ENV_PRODUCTION],
+            [true, true, Scripts::SMART_PIX_ENV_HOMOLOGATION],
+            [false, false, Scripts::SMART_PIX_ENV_PRODUCTION],
+            [false, true, Scripts::SMART_PIX_ENV_HOMOLOGATION],
+        ];
+    }
+
+    public function testSharedFastPaymentsRejectsUnknownEnvironmentBeforeRegistration(): void
+    {
+        $this->scripts->registerFastPaymentsCheckoutAssets('https://attacker.example');
+        $this->scripts->enqueueFastPaymentsCheckoutAssets();
+        $this->assertSame([], $this->getTrackedScriptHandles());
+    }
+
+    public function testFastPaymentsLoaderKeepsTheFirstEnvironmentAndLocalizesItsBundleParams(): void
+    {
+        $callback = $this->captureAction(function () {
+            $this->scripts->registerFastPaymentsCheckoutAssets(Scripts::SMART_PIX_ENV_PRODUCTION, ['site_id' => 'MLB']);
+        });
+        // A second gateway asking for another environment must not switch the loader or its params.
+        $this->scripts->registerFastPaymentsCheckoutAssets(Scripts::SMART_PIX_ENV_HOMOLOGATION, ['site_id' => 'MLA']);
+
+        $this->mockPageContext(['is_checkout' => true]);
+        $this->urlMock->shouldReceive('getJsAsset')->with('checkouts/super-token-loader')->andReturn('loader.js');
+        $effects = $this->recordWordPressEffects();
+
+        $callback();
+
+        $this->assertSame([
+            [Scripts::FAST_PAYMENTS_SCRIPT_NAME, 'loader.js', ['wc_mercadopago_sdk'], '1.0.0', true],
+        ], $effects->scripts);
+        $this->assertSame([
+            [Scripts::FAST_PAYMENTS_SCRIPT_NAME, 'wc_mercadopago_supertoken_params', ['environment' => Scripts::SMART_PIX_ENV_PRODUCTION]],
+            [Scripts::FAST_PAYMENTS_SCRIPT_NAME, Scripts::FAST_PAYMENTS_BUNDLE_PARAMS_OBJECT, ['site_id' => 'MLB']],
+        ], $effects->localized);
+        $this->assertSame([Scripts::FAST_PAYMENTS_SCRIPT_NAME], $this->getTrackedScriptHandles());
+    }
+
+    public function testRegisteredSmartPixCallbackSkipsPagesWithoutPayments(): void
+    {
+        WP_Mock::onFilterAdded('style_loader_tag')
+            ->with([$this->scripts, 'addSmartPixStyleCrossOrigin'], 10, 2)
+            ->perform(function () {
+            });
+        $callback = $this->captureAction(function () {
+            $this->scripts->registerSmartPixCheckoutAssets(Scripts::SMART_PIX_ENV_PRODUCTION);
+        });
+
+        $this->mockPageContext([]);
+        $effects = $this->recordWordPressEffects();
+
+        $callback();
+
+        $this->assertSame([], $effects->scripts);
+        $this->assertSame([], $effects->styles);
+        $this->assertSame([], $this->getTrackedScriptHandles());
+    }
+
+    public function testRegisteredSmartPixLocalCallbackSkipsPagesWithoutPayments(): void
+    {
+        $callback = $this->captureAction(function () {
+            $this->scripts->registerSmartPixLocalCheckoutAssets();
+        });
+
+        $this->mockPageContext([]);
+        $this->urlMock->shouldNotReceive('getCssAsset')->with('checkouts/smart-pix/smart-pix.bundle');
+        $effects = $this->recordWordPressEffects();
+
+        $callback();
+
+        $this->assertSame([], $effects->scripts);
+        $this->assertSame([], $effects->styles);
+        $this->assertSame([], $this->getTrackedScriptHandles());
+    }
+
+    public function testSmartPixLocalAssetsAreAvailableOnlyWhenBothBuiltFilesExist(): void
+    {
+        $pluginRoot = sys_get_temp_dir() . '/mp-smart-pix-local-' . uniqid('', true);
+        $scriptFile = $pluginRoot . '/assets/js/checkouts/smart-pix/smart-pix.bundle.min.js';
+        $styleFile  = $pluginRoot . '/assets/css/checkouts/smart-pix/smart-pix.bundle.min.css';
+        mkdir(dirname($scriptFile), 0777, true);
+        mkdir(dirname($styleFile), 0777, true);
+
+        try {
+            $this->assertFalse($this->scripts->hasSmartPixLocalCheckoutAssets($pluginRoot));
+
+            file_put_contents($scriptFile, '/* built */');
+            $this->assertFalse($this->scripts->hasSmartPixLocalCheckoutAssets($pluginRoot));
+
+            file_put_contents($styleFile, '/* built */');
+            $this->assertTrue($this->scripts->hasSmartPixLocalCheckoutAssets($pluginRoot));
+
+            unlink($scriptFile);
+            $this->assertFalse($this->scripts->hasSmartPixLocalCheckoutAssets($pluginRoot));
+        } finally {
+            @unlink($scriptFile);
+            @unlink($styleFile);
+            @rmdir(dirname($scriptFile));
+            @rmdir(dirname($styleFile));
+            @rmdir($pluginRoot . '/assets/js/checkouts');
+            @rmdir($pluginRoot . '/assets/css/checkouts');
+            @rmdir($pluginRoot . '/assets/js');
+            @rmdir($pluginRoot . '/assets/css');
+            @rmdir($pluginRoot . '/assets');
+            @rmdir($pluginRoot);
+        }
+    }
+
+    public function testSmartPixLocalAssetsDefaultToThePluginDirectory(): void
+    {
+        $pluginRoot = dirname(__DIR__, 2);
+        $expected = is_file($pluginRoot . '/assets/js/checkouts/smart-pix/smart-pix.bundle.min.js')
+            && is_file($pluginRoot . '/assets/css/checkouts/smart-pix/smart-pix.bundle.min.css');
+
+        $this->assertSame($expected, $this->scripts->hasSmartPixLocalCheckoutAssets());
+    }
+
+    public function testSmartPixRealLocalAssetsRequireSdkAndKeepOrderPayContext(): void
+    {
+        $this->expectSmartPixBootstrapAssets();
+        WP_Mock::onHookAdded('wp_enqueue_scripts', 'action')
+            ->with(Mockery::type('callable'), 10, 1)
+            ->perform(function () {
+            });
+        $this->scripts->registerSmartPixLocalCheckoutAssets();
+
+        WP_Mock::userFunction('is_view_order_page', ['return' => false]);
+        WP_Mock::userFunction('is_cart', ['return' => false]);
+        WP_Mock::userFunction('is_order_received_page', ['return' => false]);
+        WP_Mock::userFunction('is_checkout_pay_page', ['return' => false]);
+        WP_Mock::userFunction('is_add_payment_method_page', ['return' => false]);
+        WP_Mock::userFunction('is_checkout', ['return' => true]);
+        WP_Mock::userFunction('get_query_var', ['return' => false]);
+        $this->urlMock->shouldReceive('getCssAsset')
+            ->once()->with('checkouts/smart-pix/smart-pix.bundle')
+            ->andReturn('https://store.test/plugin/smart-pix.bundle.min.css');
+        $this->urlMock->shouldReceive('getJsAsset')
+            ->once()->with('checkouts/smart-pix/smart-pix.bundle')
+            ->andReturn('https://store.test/plugin/smart-pix.bundle.min.js');
+        WP_Mock::userFunction('wp_enqueue_style')
+            ->once()->with(Scripts::SMART_PIX_STYLE_NAME, 'https://store.test/plugin/smart-pix.bundle.min.css', [], '1.0.0');
+        WP_Mock::userFunction('wp_enqueue_script')
+            ->once()->with(Scripts::SMART_PIX_SCRIPT_NAME, 'https://store.test/plugin/smart-pix.bundle.min.js',
+                ['wc_mercadopago_sdk'], '1.0.0', true);
+        WP_Mock::userFunction('wp_localize_script')
+            ->once()->with(Scripts::SMART_PIX_SCRIPT_NAME, 'wc_mercadopago_smart_pix_params', [
+                'site_id' => Country::SITE_ID_MLB,
+                'standalone_bridge' => 'enabled',
+                'platform_id' => MP_PLATFORM_ID,
+                'order_pay_context' => null,
+            ]);
+
+        $this->scripts->enqueueSmartPixLocalCheckoutAssets();
+        $this->assertContains(Scripts::SMART_PIX_SCRIPT_NAME, $this->getTrackedScriptHandles());
+    }
+
+    private function expectSmartPixBootstrapAssets(): void
+    {
+        WP_Mock::userFunction('wp_enqueue_style')
+            ->once()->with('wc_mercadopago_pix_bootstrap', 'fixture/checkouts/mp-pix-bootstrap.css', [], '1.0.0');
+        WP_Mock::userFunction('wp_enqueue_script')
+            ->once()->with('wc_mercadopago_pix_bootstrap', 'fixture/checkouts/pix/mp-pix-bootstrap.js', [], '1.0.0', false);
+    }
+
+    /**
+     * @dataProvider smartPixOrderPayTotalProvider
+     *
+     * @param mixed $total
+     */
+    public function testSmartPixOrderPayContextCarriesOnlyACanonicalPositiveTotal($total, ?array $expectedContext): void
+    {
+        $_GET['key'] = 'wc_order_key';
+        $order = Mockery::mock('WC_Order');
+        $order->shouldReceive('get_order_key')->andReturn('wc_order_key');
+        $order->shouldReceive('get_total')->andReturn($total);
+        $order->shouldReceive('get_billing_email')->andReturn(' buyer@example.com ');
+        $order->shouldReceive('get_id')->andReturn(42);
+
+        WP_Mock::userFunction('is_view_order_page', ['return' => false]);
+        WP_Mock::userFunction('is_cart', ['return' => false]);
+        WP_Mock::userFunction('is_order_received_page', ['return' => false]);
+        WP_Mock::userFunction('is_checkout_pay_page', ['return' => true]);
+        WP_Mock::userFunction('is_add_payment_method_page', ['return' => false]);
+        WP_Mock::userFunction('is_checkout', ['return' => true]);
+        WP_Mock::userFunction('get_query_var', ['return' => '42']);
+        WP_Mock::userFunction('wc_get_order', ['return' => $order]);
+        WP_Mock::userFunction('wp_unslash', ['return' => static fn($value) => $value]);
+        WP_Mock::userFunction('sanitize_text_field', ['return' => static fn($value) => $value]);
+        $this->urlMock->shouldReceive('getCssAsset')->andReturn('https://store.test/smart-pix.bundle.min.css');
+        $this->urlMock->shouldReceive('getJsAsset')->andReturn('https://store.test/smart-pix.bundle.min.js');
+        WP_Mock::userFunction('wp_enqueue_style', ['return' => true]);
+        WP_Mock::userFunction('wp_enqueue_script', ['return' => true]);
+        $localized = null;
+        WP_Mock::userFunction('wp_localize_script', [
+            'times' => 1,
+            'return' => static function (string $handle, string $name, array $params) use (&$localized): bool {
+                $localized = [$handle, $name, $params];
+                return true;
+            },
+        ]);
+
+        $this->scripts->enqueueSmartPixLocalCheckoutAssets();
+
+        $this->assertSame([
+            Scripts::SMART_PIX_SCRIPT_NAME,
+            'wc_mercadopago_smart_pix_params',
+            [
+                'site_id' => Country::SITE_ID_MLB,
+                'standalone_bridge' => 'enabled',
+                'platform_id' => MP_PLATFORM_ID,
+                'order_pay_context' => $expectedContext,
+            ],
+        ], $localized);
+    }
+
+    /**
+     * @return array<string, array{mixed, array|null}>
+     */
+    public static function smartPixOrderPayTotalProvider(): array
+    {
+        $context = static fn(string $amount): array => [
+            'amount' => $amount,
+            'buyerEmail' => 'buyer@example.com',
+            'orderId' => 42,
+        ];
+
+        return [
+            'two decimals' => ['150.00', $context('150.00')],
+            'integer string' => ['150', $context('150.00')],
+            'one decimal float' => [150.5, $context('150.50')],
+            'zero total' => ['0.00', null],
+            'negative total' => ['-1.00', null],
+            'sub-cent total' => ['10.005', null],
+            'malformed total' => ['abc', null],
+        ];
+    }
+
+    public function testSmartPixStylesheetHasNoPinnedContentHash(): void
+    {
+        $tag = '<link rel="stylesheet" href="https://http2.mlstatic.com/bundle.css" />';
+        $result = $this->scripts->addSmartPixStyleCrossOrigin($tag, Scripts::SMART_PIX_STYLE_NAME);
+
+        $this->assertSame(
+            '<link rel="stylesheet" crossorigin="anonymous" href="https://http2.mlstatic.com/bundle.css" />',
+            $result
+        );
+        $this->assertStringNotContainsString('integrity=', $result);
+    }
+
+    public function testSmartPixStylesheetCrossOriginPreservesOtherHandlesAndExistingAttributes(): void
+    {
+        $tag = '<link rel="stylesheet" href="https://merchant.example/theme.css" />';
+        $this->assertSame($tag, $this->scripts->addSmartPixStyleCrossOrigin($tag, 'merchant-theme'));
+        $existing = '<link crossorigin="anonymous" href="https://http2.mlstatic.com/bundle.css" />';
+        $this->assertSame($existing, $this->scripts->addSmartPixStyleCrossOrigin($existing, Scripts::SMART_PIX_STYLE_NAME));
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function getTrackedScriptHandles(): array
+    {
+        $reflection = new \ReflectionProperty(ScriptHealthMonitor::class, 'trackedHandles');
+        $reflection->setAccessible(true);
+
+        return $reflection->getValue($this->scriptHealthMonitor);
+    }
+
+    /**
      * Proves that registerMelidataStoreScript (the path used on /products, /pay_order,
      * /thankyou) declares wc-blocks-registry as a dependency when that script is
      * registered, and omits it otherwise so melidata still loads when the registry is
@@ -704,13 +1316,18 @@ class ScriptsTest extends TestCase
         $this->sellerMock->shouldReceive('getSiteId')->andReturn('');
         WP_Mock::userFunction('get_locale', ['return' => 'pt_BR']);
         $common = ['site_id' => 'MLA', 'plugin_version' => MP_VERSION, 'platform_version' => '8.0.0'];
+        $dependencies = [];
 
         if ($client === 'notices') {
             $method = 'registerNoticesAdminScript';
             $handle = 'wc_mercadopago_notices';
             $file = 'fixture/notices/notices-client.js';
+            $dependencies = ['wc_mercadopago_native_notices'];
             $expected = array_merge($common, [
-                'container' => '#wpbody-content', 'public_key' => 'public-fixture', 'platform_id' => MP_PLATFORM_ID,
+                'container' => '#mp-jaiminho-notices-slot', 'public_key' => 'public-fixture', 'platform_id' => MP_PLATFORM_ID,
+                'css_url' => 'https://http2.mlstatic.com/storage/v1/plugins/notices/woocommerce.css',
+                'js_url' => 'https://http2.mlstatic.com/storage/v1/plugins/notices/woocommerce.js',
+                'metrics_url' => 'https://api.mercadopago.com/v1/plugins/notices/metrics',
             ]);
         } elseif ($client === 'caronte') {
             $method = 'registerCaronteAdminScript';
@@ -724,7 +1341,7 @@ class ScriptsTest extends TestCase
             $method = 'registerMelidataAdminScript';
             $handle = 'mercadopago_melidata';
             $file = 'path/to/melidata-client.js';
-            $expected = array_merge($common, ['type' => 'seller', 'location' => '/settings', 'payment_method' => '']);
+            $expected = array_merge($common, ['type' => 'seller', 'location' => '/settings', 'payment_method' => '', 'client_url' => 'https://http2.mlstatic.com/storage/v1/plugins/melidata/woocommerce.min.js']);
         }
         $callback = $this->captureAction(function () use ($method) {
             $this->scripts->$method();
@@ -733,7 +1350,7 @@ class ScriptsTest extends TestCase
 
         $callback();
 
-        $this->assertSame([[$handle, $file, [], '1.0.0', true]], $effects->scripts);
+        $this->assertSame([[$handle, $file, $dependencies, '1.0.0', true]], $effects->scripts);
         $this->assertCount(1, $effects->localized);
         $this->assertSame([$handle, $handle . '_params'], array_slice($effects->localized[0], 0, 2));
         $this->assertPayload($expected, $effects->localized[0][2]);
@@ -903,5 +1520,90 @@ class ScriptsTest extends TestCase
             $occurrenceIndex,
             json_encode($log)
         ));
+    }
+
+    /** @param mixed $requestKey */
+    private function orderPayContext($requestKey, ?\WC_Order $order, bool $payPage = true): ?array
+    {
+        WP_Mock::userFunction('is_checkout_pay_page', ['return' => $payPage]);
+        WP_Mock::userFunction('get_query_var', ['args' => ['order-pay'], 'return' => '321']);
+        WP_Mock::userFunction('wc_get_order', ['return' => $order]);
+        WP_Mock::userFunction('wp_unslash', ['return_arg' => 0]);
+        WP_Mock::userFunction('sanitize_text_field', ['return_arg' => 0]);
+        if ($requestKey === null) {
+            unset($_GET['key']);
+        } else {
+            $_GET['key'] = $requestKey;
+        }
+        try {
+            $context = (new \ReflectionClass(Scripts::class))->getMethod('getSmartPixOrderPayContext');
+            $context->setAccessible(true);
+            return $context->invoke($this->scripts);
+        } finally {
+            unset($_GET['key']);
+        }
+    }
+
+    private function payableOrder(string $total = '125.50', string $email = 'buyer@example.test', int $id = 321): \WC_Order
+    {
+        $order = Mockery::mock(\WC_Order::class);
+        $order->shouldReceive('get_order_key')->andReturn('wc_order_SERVERKEY');
+        $order->shouldReceive('get_total')->andReturn($total);
+        $order->shouldReceive('get_billing_email')->andReturn($email);
+        $order->shouldReceive('get_id')->andReturn($id);
+        return $order;
+    }
+
+    public function testOrderPayContextExposesTheBuyerOnlyWithTheMatchingOrderKey(): void
+    {
+        $this->assertSame(
+            ['amount' => '125.50', 'buyerEmail' => 'buyer@example.test', 'orderId' => 321],
+            $this->orderPayContext('wc_order_SERVERKEY', $this->payableOrder())
+        );
+    }
+
+    /** @dataProvider refusedOrderPayContextProvider */
+    public function testOrderPayContextIsRefusedOutsideItsProof(string $case): void
+    {
+        $order = $this->payableOrder();
+        $key = 'wc_order_SERVERKEY';
+        $payPage = true;
+        switch ($case) {
+            case 'not the pay page':
+                $payPage = false;
+                break;
+            case 'missing key':
+                $key = null;
+                break;
+            case 'different key':
+                $key = 'wc_order_OTHERKEY';
+                break;
+            case 'array key':
+                $key = ['wc_order_SERVERKEY'];
+                break;
+            case 'unknown order':
+                $order = null;
+                break;
+            case 'invalid buyer e-mail':
+                $order = $this->payableOrder('125.50', 'not-an-email');
+                break;
+            case 'zero total':
+                $order = $this->payableOrder('0.00');
+                break;
+            case 'another order':
+                $order = $this->payableOrder('125.50', 'buyer@example.test', 999);
+                break;
+        }
+
+        $this->assertNull($this->orderPayContext($key, $order, $payPage));
+    }
+
+    public static function refusedOrderPayContextProvider(): array
+    {
+        return array_map(static fn(string $case): array => [$case], [
+            'not the pay page' => 'not the pay page', 'missing key' => 'missing key', 'different key' => 'different key',
+            'array key' => 'array key', 'unknown order' => 'unknown order', 'invalid buyer e-mail' => 'invalid buyer e-mail',
+            'zero total' => 'zero total', 'another order' => 'another order',
+        ]);
     }
 }

@@ -18,6 +18,8 @@
  * class. At the flip the bundle bootstrap constructs it and hands it to the ported trigger handler.
  */
 
+import { isValidBuyerEmail } from '@super-token/core/checkoutSession/BuyerEmail';
+
 /** The `MPDebounce` surface the listener uses to debounce the input handler. */
 export interface EmailInputDebounce {
   inputDebounce(callback: (inputEvent: unknown) => void): (inputEvent: unknown) => void;
@@ -50,14 +52,7 @@ export class SuperTokenEmailListener {
   }
 
   isValid(email: string): boolean {
-    if (!email || email.length > 254) return false;
-
-    const localPart = email.split('@')[0];
-    if (localPart && localPart.length > 64) return false;
-
-    const regex =
-      /^[a-zA-Z0-9_%+-]+(\.[a-zA-Z0-9_%+-]+)*@[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/i;
-    return regex.test(email);
+    return isValidBuyerEmail(email);
   }
 
   getEmail(): string | undefined {

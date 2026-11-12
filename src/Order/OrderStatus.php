@@ -85,6 +85,19 @@ class OrderStatus
     }
 
     /**
+     * Smart Pix Orders effects are owned by the Smart Pix state applicator and its
+     * ownership protocol; legacy status and notification flows must never apply them.
+     *
+     * @param WC_Order $order
+     *
+     * @return bool
+     */
+    public function isOwnedBySmartPixOrders(WC_Order $order): bool
+    {
+        return $this->orderMetadata->getPaymentContract($order) === OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1;
+    }
+
+    /**
      * Process order status
      *
      * @param string $processedStatus
@@ -92,11 +105,16 @@ class OrderStatus
      * @param WC_Order $order
      * @param string $usedGateway
      *
-     * @return void
+     * @return bool true when the status was applied; false when it was not applied
      * @throws Exception
      */
     public function processStatus(string $processedStatus, array $data, WC_Order $order, string $usedGateway): bool
     {
+        if ($this->isOwnedBySmartPixOrders($order)) {
+            $this->logs->file->info('Legacy status flow skipped for a Smart Pix Orders contract', __CLASS__);
+            return false;
+        }
+
         switch ($processedStatus) {
             case 'approved':
                 $this->approvedFlow($data, $order);
@@ -132,13 +150,39 @@ class OrderStatus
     }
 
     /**
-     * Rule of approved payment
-     *
-     * @param array $data
-     * @param WC_Order $order
-     *
-     * @return void
+     * Notes only. Called once by the Smart Pix applicator after a verified owned transition.
      */
+    public function addSmartPixStatusNotes(WC_Order $order, string $status): void
+    {
+        $keys = ['approved' => 'payment_approved', 'failed' => 'rejected', 'cancelled' => 'cancelled'];
+        if (!$this->isOwnedBySmartPixOrders($order) || !isset($keys[$status])) {
+            throw new \InvalidArgumentException('Invalid Smart Pix note context.');
+        }
+        $message = 'Mercado Pago: ' . $this->translations[$keys[$status]];
+        $order->add_order_note($message);
+        if ($status === 'approved') {
+            $order->add_order_note($message, 1);
+        }
+    }
+
+    /** Creation-only buyer guidance; linked attempts cannot create another payment or note. */
+    public function addSmartPixPendingNote(WC_Order $order): void
+    {
+        if (!$this->isOwnedBySmartPixOrders($order) || $order->get_status('edit') !== 'pending'
+            || $order->get_meta('_mp_smart_pix_pending_note', true) !== '') {
+            return;
+        }
+        $id = $order->add_order_note(
+            __('Pix via Open Finance: awaiting payment confirmation. Follow the payment status on the order page.', 'woocommerce-mercadopago'),
+            1
+        );
+        if ($id > 0) {
+            $order->update_meta_data('_mp_smart_pix_pending_note', (string) $id);
+            $order->save_meta_data();
+        }
+    }
+
+    /** @param array $data */
     private function approvedFlow(array $data, WC_Order $order): void
     {
         if (isset($data['status_detail']) && $data['status_detail'] === 'partially_refunded') {
