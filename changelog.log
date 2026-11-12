@@ -2,6 +2,10 @@ CHANGELOG:
 
 == Changelog
 
+= v8.10.2 (12/11/2026) =
+* Fixed
+- Improve request validation for Mercado Pago notices in the WordPress admin
+
 = v8.10.1 (12/11/2026) =
 * Added
 - Pix via Open Finance (Brazil): eligible buyers can pay with a bank account already connected to their Mercado Pago account, without copying a Pix code or scanning a QR code. Available on the Classic, Blocks and Order Pay checkouts. The conventional Pix QR code and copy-and-paste code remain available as an option. While Open Finance loads, the Pix option shows a loading indicator; if it cannot load, the conventional Pix is shown

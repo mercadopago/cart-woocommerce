@@ -3,7 +3,7 @@ const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { normalizeJs, modulesFor, enforce, validateFiles, metric, relativeSource, validateInventory } = require('../../../../scripts/coverage/report');
-const { options, assertNodeRuntime } = require('../../../../scripts/coverage/run');
+const { options, assertNodeRuntime, phpunitCoverageConfig, PHP_COVERAGE_MEMORY_LIMIT } = require('../../../../scripts/coverage/run');
 
 const ROOT = path.resolve(__dirname, '../../../..');
 const jestBin = path.join(ROOT, 'node_modules/jest/bin/jest.js');
@@ -127,3 +127,20 @@ test('real Jest and collector accept the tolerated floor and reject the next bas
   expect(rejected.stderr).toContain('coverage threshold for functions (50.01%) not met');
   expect(() => enforce(result, approved.js, approved)).toThrow('Coverage thresholds failed');
 });
+
+test('the generated PHPUnit coverage config replaces the suite memory limit and keeps the plain config unchanged', () => {
+  const plain = fs.readFileSync(path.join(ROOT, 'phpunit.xml'), 'utf8');
+  expect(plain).toContain('<ini name="memory_limit" value="512M"/>');
+
+  const generated = phpunitCoverageConfig(plain, { root: '/snap & "root"', bootstrap: '/tmp/boot.php', directory: '/tmp/out' });
+
+  expect(PHP_COVERAGE_MEMORY_LIMIT).toBe('2G');
+  expect(generated).toContain('<ini name="memory_limit" value="2G"/>');
+  expect(generated).not.toContain('value="512M"');
+  expect(generated).toContain('bootstrap="/tmp/boot.php"');
+  expect(generated).toContain('>/snap &amp; &quot;root&quot;/tests</directory>');
+  expect(generated).toContain('cacheDirectory="/tmp/out/cache"');
+  expect(generated).not.toMatch(/>src\//);
+  expect(fs.readFileSync(path.join(ROOT, 'phpunit.xml'), 'utf8')).toBe(plain);
+});
+

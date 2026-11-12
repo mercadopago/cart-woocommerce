@@ -26,6 +26,7 @@
   },
   "scripts": {
     "phpcs": "./vendor/bin/phpcs --standard=phpcs.xml src assets templates woocommerce-mercadopago.php",
+    "phpcs:security": "./vendor/bin/phpcs -q --standard=phpcs-security.xml --extensions=php src assets templates build i18n woocommerce-mercadopago.php uninstall.php index.php",
     "phpcbf": "./vendor/bin/phpcbf --standard=phpcs.xml src assets templates woocommerce-mercadopago.php tests",
     "phpstan": "./vendor/bin/phpstan analyse src --memory-limit=1G --generate-baseline=phpstan-baseline.neon",
     "rector": "./vendor/bin/rector process",

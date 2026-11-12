@@ -214,7 +214,7 @@ class OnboardingNoticeMetricsTest extends TestCase
         $this->currentUser->shouldNotReceive('currentUserCan');
         $this->nonce->shouldNotReceive('isValidNonce');
         $this->datadog->shouldNotReceive('sendEvent');
-        WP_Mock::userFunction('sanitize_post')->never();
+        $this->mockWordPressInputBoundary(false);
 
         $this->assertJsonResponse(false, 'Method not allowed', 405);
     }
@@ -229,7 +229,7 @@ class OnboardingNoticeMetricsTest extends TestCase
         $this->currentUser->shouldReceive('currentUserCan')->once()->with('manage_woocommerce')->andReturn(false);
         $this->nonce->shouldNotReceive('isValidNonce');
         $this->datadog->shouldNotReceive('sendEvent');
-        WP_Mock::userFunction('sanitize_post')->never();
+        $this->mockWordPressInputBoundary(false);
 
         $this->assertJsonResponse(false, 'Forbidden', 403);
     }
@@ -253,7 +253,7 @@ class OnboardingNoticeMetricsTest extends TestCase
             unset($_POST[$remove]);
         }
         $this->currentUser->shouldReceive('currentUserCan')->once()->with('manage_woocommerce')->andReturn(true);
-        $this->mockWordPressPostBoundary();
+        $this->mockWordPressInputBoundary();
         $this->nonce->shouldNotReceive('isValidNonce');
         $this->datadog->shouldNotReceive('sendEvent');
 
@@ -339,16 +339,19 @@ class OnboardingNoticeMetricsTest extends TestCase
     private function authorizeInput(bool $validNonce = true): void
     {
         $this->currentUser->shouldReceive('currentUserCan')->once()->with('manage_woocommerce')->andReturn(true);
-        $this->mockWordPressPostBoundary();
+        $this->mockWordPressInputBoundary();
         $this->nonce->shouldReceive('isValidNonce')->once()
             ->with(OnboardingNoticeMetrics::NONCE_ACTION, 'synthetic-notice-nonce')->andReturn($validNonce);
     }
 
-    private function mockWordPressPostBoundary(): void
+    private function mockWordPressInputBoundary(bool $readsPostFields = true): void
     {
         WP_Mock::userFunction('sanitize_post')->never();
         WP_Mock::userFunction('map_deep')->never();
-        $stringCount = count(array_filter($_POST, 'is_string'));
+        $stringCount = is_string($_SERVER['REQUEST_METHOD'] ?? null) ? 1 : 0;
+        if ($readsPostFields) {
+            $stringCount += count(array_filter($_POST, 'is_string'));
+        }
         WP_Mock::userFunction('wp_unslash')->times($stringCount)->andReturnUsing(function (string $value): string {
             return $value;
         });
