@@ -21,6 +21,8 @@ class Country
 
     public const SITE_ID_MLB = 'MLB';
 
+    public const SPONSOR_ID_MLB = 208686191;
+
     public const SITE_ID_MLM = 'MLM';
 
     public const SITE_ID_MLC = 'MLC';
@@ -192,7 +194,7 @@ class Country
         return [
             self::COUNTRY_CODE_MLB => [
                 'site_id'              => self::SITE_ID_MLB,
-                'sponsor_id'           => 208686191,
+                'sponsor_id'           => self::SPONSOR_ID_MLB,
                 'currency'             => 'BRL',
                 'zip_code'             => '01310924',
                 'currency_symbol'      => 'R$',

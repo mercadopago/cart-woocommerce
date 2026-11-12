@@ -50,6 +50,9 @@ describe('ResetFlow', () => {
     expect(session.storeSavedInstallments).toHaveBeenNthCalledWith(1, null);
     expect(session.storeSavedInstallments).toHaveBeenNthCalledWith(2, '3');
     expect(session.storeSelectedPreloadedPaymentMethod).toHaveBeenCalledWith(lastMethod);
+    expect(session.resetCustomCheckout.mock.invocationCallOrder[0]).toBeLessThan(
+      session.storeSelectedPreloadedPaymentMethod.mock.invocationCallOrder[0]
+    );
   });
 
   it('Given a recoverable reset but no previous selection, When executed, Then it preserves nothing', () => {

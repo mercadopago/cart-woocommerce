@@ -13,7 +13,7 @@
 
 import { MPSuperTokenErrorCodes } from '@super-token/core/checkoutSession/ErrorClassification';
 import type {
-  PaymentMethod,
+  AccountPaymentMethod,
   RawSdkAuthenticator,
   RawAccountPaymentMethodsResponse,
 } from '@super-token/types/external-globals';
@@ -37,6 +37,7 @@ export interface AuthenticatorMetrics {
   canUseSuperToken(canUse: boolean): void;
   cannotGetFastPaymentToken(): void;
   errorToGetAccountPaymentMethods(error: unknown): void;
+  smartPixEligibilityFailure?(error: unknown, secrets: readonly string[]): void;
 }
 
 export interface GetAccountPaymentMethodsContext {
@@ -44,22 +45,28 @@ export interface GetAccountPaymentMethodsContext {
   metrics: AuthenticatorMetrics;
   amount: string | null;
   buyerEmail: string;
+  signal?: AbortSignal;
 }
 
 export class GetAccountPaymentMethods {
-  async execute(ctx: GetAccountPaymentMethodsContext): Promise<PaymentMethod[] | null> {
-    const { session, metrics, amount, buyerEmail } = ctx;
+  async execute(ctx: GetAccountPaymentMethodsContext): Promise<AccountPaymentMethod[] | null> {
+    const { session, metrics, amount, buyerEmail, signal } = ctx;
+    let fastPaymentToken: string | null = null;
 
     try {
+      if (signal?.aborted) {
+        return null;
+      }
+
       const authenticator = await session.buildAuthenticator(amount, buyerEmail);
-      if (!session.isCurrentLoad() || !authenticator) {
+      if (signal?.aborted || !session.isCurrentLoad() || !authenticator) {
         return null;
       }
 
       session.storeAuthenticator(authenticator);
 
       const isSimplified = await session.getSimplifiedAuth(authenticator);
-      if (!session.isCurrentLoad()) {
+      if (signal?.aborted || !session.isCurrentLoad()) {
         return null;
       }
       if (!isSimplified) {
@@ -70,8 +77,8 @@ export class GetAccountPaymentMethods {
       session.notifyBehaviorTrackingInit();
       metrics.canUseSuperToken(true);
 
-      const fastPaymentToken = await session.getFastPaymentToken(authenticator);
-      if (!session.isCurrentLoad()) {
+      fastPaymentToken = await session.getFastPaymentToken(authenticator);
+      if (signal?.aborted || !session.isCurrentLoad()) {
         return null;
       }
       if (!fastPaymentToken) {
@@ -82,7 +89,7 @@ export class GetAccountPaymentMethods {
       session.storeFastPaymentToken(fastPaymentToken);
 
       const accountPaymentMethods = await session.fetchAccountPaymentMethods(fastPaymentToken);
-      if (!session.isCurrentLoad()) {
+      if (signal?.aborted || !session.isCurrentLoad()) {
         return null;
       }
       if (!accountPaymentMethods?.data?.length) {
@@ -91,8 +98,14 @@ export class GetAccountPaymentMethods {
 
       return accountPaymentMethods.data;
     } catch (error) {
-      if (session.isCurrentLoad()) {
-        metrics.errorToGetAccountPaymentMethods(error);
+      if (signal?.aborted || !session.isCurrentLoad()) {
+        return null;
+      }
+      metrics.errorToGetAccountPaymentMethods(error);
+      try {
+        metrics.smartPixEligibilityFailure?.(error, [buyerEmail, fastPaymentToken || '']);
+      } catch {
+        // Optional Smart Pix diagnostics cannot affect shared eligibility or the Pix fallback.
       }
       return null;
     }

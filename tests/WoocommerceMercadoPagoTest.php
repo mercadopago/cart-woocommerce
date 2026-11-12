@@ -2,8 +2,16 @@
 
 namespace MercadoPago\Woocommerce\Tests;
 
+use MercadoPago\Woocommerce\Admin\OnboardingNoticeMetrics;
 use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Funnel\Funnel;
+use MercadoPago\Woocommerce\Helpers;
+use MercadoPago\Woocommerce\Helpers\CurrentUser;
+use MercadoPago\Woocommerce\Helpers\Nonce;
+use MercadoPago\Woocommerce\Helpers\Notices;
+use MercadoPago\Woocommerce\Hooks;
+use MercadoPago\Woocommerce\Hooks\Endpoints;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 use Mockery;
 use Mockery\MockInterface;
@@ -40,6 +48,77 @@ class WoocommerceMercadoPagoTest extends TestCase
     private function pluginVersion(): string
     {
         return (string) (new ReflectionClass(WoocommerceMercadoPago::class))->getConstant('PLUGIN_VERSION');
+    }
+
+    public function testInstructionEntryPointRegistersTheNoticeOnlyOnceAfterSuccess(): void
+    {
+        $plugin = $this->newPluginWithoutConstructor();
+        $plugin->sellerConfig = Mockery::mock(Seller::class);
+        $plugin->sellerConfig->shouldNotReceive('getCredentialsPublicKeyProd');
+        $plugin->helpers = Mockery::mock(Helpers::class);
+        $plugin->helpers->notices = Mockery::mock(Notices::class);
+        $plugin->helpers->notices->shouldReceive('registerOnboardingNotice')->once()->andReturn(true);
+
+        $this->assertNull($plugin->verifyCredentialsForInstructionNotice());
+        $this->assertNull($plugin->verifyCredentialsForInstructionNotice());
+    }
+
+    public function testInstructionEntryPointCanRegisterAfterSellerDependenciesBecomeAvailable(): void
+    {
+        $plugin = $this->newPluginWithoutConstructor();
+        $this->assertNull($plugin->verifyCredentialsForInstructionNotice());
+
+        $plugin->sellerConfig = Mockery::mock(Seller::class);
+        $plugin->helpers = Mockery::mock(Helpers::class);
+        $plugin->helpers->notices = Mockery::mock(Notices::class);
+        $plugin->helpers->notices->shouldReceive('registerOnboardingNotice')->once()->andReturn(true);
+
+        $this->assertNull($plugin->verifyCredentialsForInstructionNotice());
+        $this->assertNull($plugin->verifyCredentialsForInstructionNotice());
+    }
+
+    public function testInstructionEntryPointRetriesAfterARejectedRegistration(): void
+    {
+        $plugin = $this->newPluginWithoutConstructor();
+        $plugin->sellerConfig = Mockery::mock(Seller::class);
+        $plugin->helpers = Mockery::mock(Helpers::class);
+        $plugin->helpers->notices = Mockery::mock(Notices::class);
+        $plugin->helpers->notices->shouldReceive('registerOnboardingNotice')->twice()->andReturn(false, true);
+
+        $this->assertNull($plugin->verifyCredentialsForInstructionNotice());
+        $this->assertNull($plugin->verifyCredentialsForInstructionNotice());
+        $this->assertNull($plugin->verifyCredentialsForInstructionNotice());
+    }
+
+    public function testFrontendDoesNotConstructTheAdminMetricsSubsystem(): void
+    {
+        WP_Mock::userFunction('is_admin')->once()->andReturn(false);
+
+        $this->assertNull($this->newPluginWithoutConstructor()->registerOnboardingNoticeMetrics());
+    }
+
+    public function testAdminMetricsBootstrapRegistersOneAuthenticatedHandler(): void
+    {
+        WP_Mock::userFunction('is_admin')->andReturn(true);
+        $plugin = $this->newPluginWithoutConstructor();
+        $plugin->helpers = Mockery::mock(Helpers::class);
+        $plugin->helpers->nonce = Mockery::mock(Nonce::class);
+        $plugin->helpers->currentUser = Mockery::mock(CurrentUser::class);
+        $plugin->hooks = Mockery::mock(Hooks::class);
+        $plugin->hooks->endpoints = Mockery::mock(Endpoints::class);
+        $callback = null;
+        $plugin->hooks->endpoints->shouldReceive('registerAjaxEndpoint')
+            ->once()
+            ->with('mp_native_onboarding_notice_metric', Mockery::type('array'))
+            ->andReturnUsing(static function (string $action, array $handler) use (&$callback): void {
+                $callback = $handler;
+            });
+
+        $plugin->registerOnboardingNoticeMetrics();
+        $plugin->registerOnboardingNoticeMetrics();
+
+        $this->assertInstanceOf(OnboardingNoticeMetrics::class, $callback[0]);
+        $this->assertSame('handleMetric', $callback[1]);
     }
 
     private function mockInstalledVersion(string $installedVersion): void

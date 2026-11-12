@@ -86,6 +86,7 @@ class UrlTest extends TestCase
         return [
             'prod'                       => ['prod', 'https://sdk.mercadopago.com/js/v2'],
             'beta'                       => ['beta', 'https://beta-sdk.mercadopago.com/js/v2'],
+            'test5'                      => ['test5', 'https://beta-sdk.mercadopago.com/test5/js/v2'],
             'gama'                       => ['gama', 'https://beta-sdk.mercadopago.com/gama/js/v2'],
             'beta with spaces and case'  => [' BETA ', 'https://beta-sdk.mercadopago.com/js/v2'],
             'unknown env'                => ['staging', 'https://sdk.mercadopago.com/js/v2'],
@@ -154,6 +155,29 @@ class UrlTest extends TestCase
     }
 
     // ========== Current URL/Page Tests ==========
+
+    public function testCurrentAdminScriptComesFromWordpressContext(): void
+    {
+        $hadPageNow = array_key_exists('pagenow', $GLOBALS);
+        $previousPageNow = $GLOBALS['pagenow'] ?? null;
+
+        try {
+            foreach (['index.php', 'plugins.php', 'admin.php'] as $script) {
+                $GLOBALS['pagenow'] = $script;
+                $this->assertSame($script, $this->url->getCurrentAdminScript());
+            }
+            $GLOBALS['pagenow'] = ['index.php'];
+            $this->assertSame('', $this->url->getCurrentAdminScript());
+            unset($GLOBALS['pagenow']);
+            $this->assertSame('', $this->url->getCurrentAdminScript());
+        } finally {
+            if ($hadPageNow) {
+                $GLOBALS['pagenow'] = $previousPageNow;
+            } else {
+                unset($GLOBALS['pagenow']);
+            }
+        }
+    }
 
     /**
      * Note: Tests for getCurrentPage, getCurrentSection, and getCurrentTab are not included

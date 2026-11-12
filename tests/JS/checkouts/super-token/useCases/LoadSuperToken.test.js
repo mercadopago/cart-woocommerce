@@ -9,6 +9,7 @@ const buildSession = (overrides = {}) => ({
   isFetching: jest.fn(() => false),
   amountHasChanged: jest.fn(() => false),
   emailHasChanged: jest.fn(() => false),
+  clearRememberedSelections: jest.fn(),
   cancelInvalidAmount: jest.fn(),
   resetFlow: jest.fn(),
   isMethodsLoaded: jest.fn(() => false),
@@ -115,6 +116,7 @@ describe('LoadSuperToken', () => {
     await run(session, metrics);
 
     expect(session.resetFlow).toHaveBeenCalledTimes(1);
+    expect(session.clearRememberedSelections).toHaveBeenCalledTimes(1);
     expect(metrics.resetOnAmountChange).toHaveBeenCalledTimes(1);
     expect(session.fetchAndRender).toHaveBeenCalledTimes(1);
   });
@@ -126,6 +128,10 @@ describe('LoadSuperToken', () => {
     await run(session, metrics);
 
     expect(session.resetFlow).toHaveBeenCalledTimes(1);
+    expect(session.clearRememberedSelections).toHaveBeenCalledTimes(1);
+    expect(session.clearRememberedSelections.mock.invocationCallOrder[0]).toBeLessThan(
+      session.resetFlow.mock.invocationCallOrder[0]
+    );
     expect(metrics.resetOnAmountChange).toHaveBeenCalledTimes(1);
     expect(session.fetchAndRender).toHaveBeenCalledTimes(1);
   });
@@ -149,6 +155,7 @@ describe('LoadSuperToken', () => {
     await run(session, metrics);
 
     expect(session.resetFlow).not.toHaveBeenCalled();
+    expect(session.clearRememberedSelections).not.toHaveBeenCalled();
     expect(metrics.resetOnAmountChange).not.toHaveBeenCalled();
   });
 

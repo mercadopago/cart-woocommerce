@@ -17,6 +17,10 @@ view, weighted assignment, build-time pin or retry into the old UI.
   instances once. It preserves the Promise boundary before initialization resilience starts.
 
 Classic, Blocks and Order Pay continue to use the existing bridge and validation gates.
+The same bridge also exposes the deliberately narrow fast-payments boundary
+`mpFastPaymentsIsValidBuyerEmail` and `mpFastPaymentsGetSmartTransferPaymentMethods` (Smart Pix).
+Consumers receive only validation and the `smart_transfer` projection, never the complete saved-method
+response or direct access to the authenticator session.
 Do not remove generation checks, ESC/CVV handling or event-handler dependency injection.
 
 ## Compatibility
@@ -54,7 +58,7 @@ plugin release. Plugins still using local scripts cannot be migrated through CDN
 The transitional CSS retains v2 selectors for independently cached old JS; it does not
 restore a v2 implementation. Browser cache combinations still require visual homologation.
 
-Runtime JS and CSS stamp: `1.2.12`; this is separate from the plugin/package release version.
+Runtime JS and CSS stamp: `1.2.13`; this is separate from the plugin/package release version.
 The new runtime sends Datadog `ab_variant: "not_available"`; `js_version` identifies its
 code. External Melidata collection and old loader events can still reflect old cookies
 or lack a version. Do not reinterpret them as proof of which UI rendered.
@@ -83,6 +87,10 @@ NGINX route. Future A/B winners are promoted to `v1/`; only challengers get new 
 
 The runtime safeguards CDN CSS with `ensureSuperTokenCss`: five seconds for the original
 link, one versioned corrective link in the same folder and five seconds for its result.
+The build emits the stamp as a CSS string (`--mp-super-token-loader-version:"1.2.13"`),
+so WebKit does not serialize a multi-dot numeric token sequence with `/**/` separators.
+The reader removes paired string quotes or those empty separators in legacy unquoted
+values, then compares the complete version. Comments inside a string stay literal.
 The metric value is the found stamp, `empty` or `timeout`; `fixed` requires the new stamp
 after load. Messages include the original folder: `fixed folder:v1` or
 `fix_failed folder:v2.1`, for example. Composition and rendering never await it.

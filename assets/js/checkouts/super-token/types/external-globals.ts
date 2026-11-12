@@ -90,6 +90,22 @@ export type PaymentMethod =
   | AccountMoneyPaymentMethod
   | ConsumerCreditsPaymentMethod;
 
+/**
+ * Smart Pix eligibility travels in the same SDK response as Super Token methods.
+ * This is the public smart_transfer shape exposed by the beta JS SDK. The consent
+ * identifier and token stay inside the Smart Pix adapter until submit-time handling.
+ */
+export interface SmartTransferPaymentMethod {
+  id: string;
+  name: string;
+  thumbnail: string;
+  token: string;
+  type: 'smart_transfer';
+  open_finance_account_id: string;
+}
+
+export type AccountPaymentMethod = PaymentMethod | SmartTransferPaymentMethod;
+
 // ─── MP JS SDK ────────────────────────────────────────────────────────────────
 
 /** Payload of the SDK security-code field `validityChange` event (payment-methods.js:1924-1947). */
@@ -131,7 +147,7 @@ export interface RawSdkCardTokenFields {
  * Grounded in super-token-authenticator.js:165: `accountPaymentMethods.data.length`.
  */
 export interface RawAccountPaymentMethodsResponse {
-  data: PaymentMethod[];
+  data: AccountPaymentMethod[];
 }
 
 /**

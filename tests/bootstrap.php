@@ -16,6 +16,18 @@ WP_Mock::activateStrictMode(); // Each test must declare it's own mock expectati
 WP_Mock::bootstrap();
 Hamcrest\Util::registerGlobalFunctions();
 
+/**
+ * Bind the Smart Pix Orders port to its test-only fixture adapter.
+ */
+function mpCreateSmartPixOrderClientMockForTest(
+    string $scenarioId
+): MercadoPago\Woocommerce\Tests\SmartPix\MockSmartPixOrderClient {
+    return new MercadoPago\Woocommerce\Tests\SmartPix\MockSmartPixOrderClient(
+        __DIR__ . '/SmartPix/fixtures',
+        $scenarioId
+    );
+}
+
 function random(string $locale = "pt_BR")
 {
     static $faker;

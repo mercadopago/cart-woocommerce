@@ -129,6 +129,7 @@ class WordPressHttpClientTest extends TestCase
     {
         $wpError = Mockery::mock();
         $wpError->shouldReceive('get_error_code')->once()->andReturn('http_request_failed');
+        $wpError->shouldReceive('get_error_message')->once()->andReturn('TLS details; token=synthetic-secret');
 
         WP_Mock::userFunction('wp_remote_request')->once()->andReturn($wpError);
         WP_Mock::userFunction('is_wp_error')->once()->with($wpError)->andReturn(true);
@@ -138,6 +139,7 @@ class WordPressHttpClientTest extends TestCase
             $this->fail('Expected transport exception.');
         } catch (TransportException $exception) {
             $this->assertSame('http_request_failed', $exception->getTransportCode());
+            $this->assertSame('TLS details; token=synthetic-secret', $exception->getDiagnosticMessage());
             $this->assertStringNotContainsString('TLS details', $exception->getMessage());
             $this->assertStringNotContainsString('token', $exception->getMessage());
         }

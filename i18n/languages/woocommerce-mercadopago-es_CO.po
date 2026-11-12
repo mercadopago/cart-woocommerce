@@ -4814,3 +4814,15 @@ msgstr "Mercado Crédito"
 msgctxt "credits buyer banner"
 msgid "with Mercado Pago"
 msgstr "con {credits_name}."
+
+#: ../../src/Translations/AdminTranslations.php
+msgid "Complete your Mercado Pago setup"
+msgstr "Completa la configuración de Mercado Pago"
+
+#: ../../src/Translations/AdminTranslations.php
+msgid "Link your account to start receiving payments in your store."
+msgstr "Vincula tu cuenta para empezar a recibir pagos en tu tienda."
+
+#: ../../src/Translations/AdminTranslations.php
+msgid "Link my account"
+msgstr "Vincular cuenta"

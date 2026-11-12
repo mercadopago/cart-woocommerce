@@ -259,11 +259,12 @@ const CheckoutPage = {
   },
 
   additionalInfoHandler(additionalInfoNeeded) {
-    if (additionalInfoNeeded.cardholder_name) {
-      this.setElementDisplay('fcCardholderName', 'block');
-    } else {
-      this.setElementDisplay('fcCardholderName', 'none');
-    }
+    // The cardholder name is always shown and always required, whatever the catalog says.
+    // The Payments gateway rejects every card token created without it, but the BIN catalog
+    // (`additional_info_needed`) omits `cardholder_name` for some issuer ranges (and omitted it
+    // for every BIN on 11/08/2026). Hiding the field here let the SDK tokenize without a name and
+    // the payment failed server-side.
+    this.setElementDisplay('fcCardholderName', 'block');
 
     if (additionalInfoNeeded.issuer) {
       this.setElementDisplay('mpIssuerContainer', 'block');
@@ -609,16 +610,20 @@ const CheckoutPage = {
       }
       if (document.activeElement === input) {
         input.classList.add('mp-focus');
-        cardholderNameHelperInfo.style.display = 'flex';
+        if (cardholderNameHelperInfo) {
+          cardholderNameHelperInfo.style.display = 'flex';
+        }
       }
     } else {
       input.classList.remove('mp-focus');
       if (cardholderNameHelper) {
         cardholderNameHelper.style.display = 'flex';
-        cardholderNameHelperInfo.style.display = 'none';
       }
       if (cardholderNameLabel) {
         cardholderNameLabel.classList.add('mp-label-error');
+      }
+      // Templates without the informative helper must not break the submit path.
+      if (cardholderNameHelperInfo) {
         cardholderNameHelperInfo.style.display = 'none';
       }
       this.toggleErrorBorder(input, document.activeElement === input);
@@ -917,6 +922,21 @@ const CheckoutPage = {
     }
   },
 
+  // True when the element or an ancestor is display:none / visibility:hidden by computed style.
+  // Computed style (not getClientRects) so the check also holds in jsdom and before layout.
+  isHiddenByStyle(element) {
+    const view = element?.ownerDocument?.defaultView || window;
+    let node = element;
+    while (node && node.nodeType === 1 && node !== node.ownerDocument.body) {
+      const style = view.getComputedStyle?.(node);
+      if (style && (style.display === 'none' || style.visibility === 'hidden')) {
+        return true;
+      }
+      node = node.parentElement;
+    }
+    return false;
+  },
+
   runPreSubmitGates(cardForm) {
     if (this.cardNumberHasError()) {
       const reason = typeof cardForm?.getCardValidationReason === 'function'
@@ -932,6 +952,29 @@ const CheckoutPage = {
       cardForm?.removeLoadSpinner();
       this.deferBlockOverlayRemoval(cardForm);
       return { passed: false, gate: 'card', reason };
+    }
+
+    // Cardholder gate: the SDK only validates `cardholderName` when the BIN catalog
+    // lists `cardholder_name`, so an empty field would otherwise reach the API and be rejected by
+    // the Payments gateway after the order was placed. Only an EMPTY name blocks here: format is
+    // the SDK's call (its own rule accepts apostrophes, hyphens and dots that our visual helper
+    // flags), and the gateway error this fixes is the missing name, not its spelling.
+    // Absent input means a checkout without the field (third-party templates): nothing to gate.
+    // An input hidden by theme CSS is not gated either (the buyer could not fix it); the metric
+    // keeps that case visible.
+    const cardholderNameInput = document.querySelector(CheckoutElements.fcCardholderName);
+    if (cardholderNameInput && (cardholderNameInput.value ?? '').trim() === '') {
+      if (this.isHiddenByStyle(cardholderNameInput)) {
+        this.emitGateBlockedMetric('CARDHOLDER', 'mp_custom_cardholder_validation', 'hidden_field');
+      } else {
+        this.verifyCardholderName();
+        this.emitGateBlockedMetric('CARDHOLDER', 'mp_custom_cardholder_validation', 'empty_field');
+        cardholderNameInput.focus?.({ preventScroll: true });
+        cardholderNameInput.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+        cardForm?.removeLoadSpinner();
+        this.deferBlockOverlayRemoval(cardForm);
+        return { passed: false, gate: 'cardholder', reason: 'empty_field' };
+      }
     }
 
     const isZeroDollarInitialCit = typeof cardForm?.isZeroDollarInitialCitContext === 'function'

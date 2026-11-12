@@ -23,6 +23,23 @@ class OrderStatusTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
+    public function testSmartTransferPendingGuidanceIsABuyerNoteAndIsNotRepeated(): void
+    {
+        $native = Mockery::mock(WC_Order::class);
+        $this->orderMetadataMock->shouldReceive('getPaymentContract')->with($native)->andReturn('orders_smart_pix_v1');
+        $native->shouldReceive('get_status')->with('edit')->andReturn('pending');
+        $native->shouldReceive('get_meta')->with('_mp_smart_pix_pending_note', true)->andReturn('', '17');
+        $message = 'Pix via Open Finance: awaiting payment confirmation. Follow the payment status on the order page.';
+        WP_Mock::userFunction('__', ['args' => [$message, 'woocommerce-mercadopago'], 'return' => 'Localized pending guidance']);
+        $native->shouldReceive('add_order_note')->once()->with('Localized pending guidance', 1)->andReturn(17);
+        $native->shouldReceive('update_meta_data')->once()->with('_mp_smart_pix_pending_note', '17');
+        $native->shouldReceive('save_meta_data')->once();
+        $native->shouldNotReceive('payment_complete', 'update_status');
+        $this->orderStatus->addSmartPixPendingNote($native);
+        $this->orderStatus->addSmartPixPendingNote($native);
+        $this->assertTrue(true);
+    }
+
     private OrderStatus $orderStatus;
     private StoreTranslations $storeTranslationsMock;
     private OrderMetadata $orderMetadataMock;
@@ -63,6 +80,8 @@ class OrderStatusTest extends TestCase
         $this->orderMetadataMock->shouldReceive('addAppliedRefundId')->byDefault()->andReturnNull();
         // checkout_type segmentation for refund metrics — default null (legacy order).
         $this->orderMetadataMock->shouldReceive('getCheckoutType')->byDefault()->andReturnNull();
+        // Payment contract — default empty (legacy order, not owned by Smart Pix).
+        $this->orderMetadataMock->shouldReceive('getPaymentContract')->byDefault()->andReturn('');
         $this->sellerMock = Mockery::mock(Seller::class);
         $this->requesterMock = Mockery::mock(Requester::class);
 
@@ -86,6 +105,128 @@ class OrderStatusTest extends TestCase
     public function tearDown(): void
     {
         WP_Mock::tearDown();
+    }
+
+    public function testSmartPixApprovalAddsTheSameInternalAndBuyerNotesWithoutRepeatingPaymentCompletion(): void
+    {
+        $native = Mockery::mock(WC_Order::class);
+        $this->orderMetadataMock->shouldReceive('getPaymentContract')->with($native)
+            ->andReturn(OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1);
+        $notes = [];
+        $native->shouldReceive('add_order_note')->twice()->andReturnUsing(static function (string $message, int $customer = 0) use (&$notes): int {
+            $notes[] = [$message, $customer];
+            return count($notes);
+        });
+        $native->shouldNotReceive('payment_complete', 'update_status', 'save');
+
+        $this->orderStatus->addSmartPixStatusNotes($native, 'approved');
+        $this->assertSame([['Mercado Pago: Payment Approved', 0], ['Mercado Pago: Payment Approved', 1]], $notes);
+    }
+
+    public function testSmartPixNoteWriterRejectsAnUnrelatedPaymentContract(): void
+    {
+        $native = Mockery::mock(WC_Order::class);
+        $native->shouldNotReceive('add_order_note', 'payment_complete', 'update_status');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->orderStatus->addSmartPixStatusNotes($native, 'approved');
+    }
+
+    public function testProcessStatusSkipsLegacyEffectsForSmartPixOrdersContract(): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldNotReceive('payment_complete');
+        $orderMock->shouldNotReceive('update_status');
+        $orderMock->shouldNotReceive('add_order_note');
+        $orderMock->shouldNotReceive('save');
+        $this->orderMetadataMock->shouldReceive('getPaymentContract')
+            ->once()
+            ->with($orderMock)
+            ->andReturn(OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1);
+
+        $applied = $this->orderStatus->processStatus('approved', ['status' => 'approved'], $orderMock, 'WC_WooMercadoPago_Pix_Gateway');
+
+        $this->assertFalse($applied);
+    }
+
+    /**
+     * @dataProvider legacyStatusProvider
+     */
+    public function testProcessStatusSkipsEveryLegacyStatusForSmartPixOrdersContract(string $status): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldNotReceive('payment_complete');
+        $orderMock->shouldNotReceive('update_status');
+        $orderMock->shouldNotReceive('add_order_note');
+        $orderMock->shouldNotReceive('save');
+        WP_Mock::userFunction('wc_create_refund', ['times' => 0]);
+        $this->orderMetadataMock->shouldReceive('getPaymentContract')
+            ->once()
+            ->andReturn(OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1);
+        $this->orderMetadataMock->shouldNotReceive('addAppliedRefundId');
+
+        $applied = $this->orderStatus->processStatus($status, ['status' => $status], $orderMock, 'WC_WooMercadoPago_Pix_Gateway');
+
+        $this->assertFalse($applied);
+    }
+
+    public static function legacyStatusProvider(): array
+    {
+        return [
+            'approved' => ['approved'],
+            'pending' => ['pending'],
+            'in process' => ['in_process'],
+            'rejected' => ['rejected'],
+            'refunded' => ['refunded'],
+            'cancelled' => ['cancelled'],
+            'in mediation' => ['in_mediation'],
+            'charged back' => ['charged_back'],
+            'unknown status' => ['unknown_status'],
+        ];
+    }
+
+    /**
+     * @dataProvider nonSmartPixContractProvider
+     */
+    public function testProcessStatusKeepsLegacyFlowForOrdersWithoutTheSmartPixContract($contract): void
+    {
+        $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldReceive('update_status')->once();
+        $orderMock->shouldReceive('add_order_note')->once();
+        $this->orderMetadataMock->shouldReceive('getPaymentContract')->once()->andReturn($contract);
+
+        $applied = $this->orderStatus->processStatus('in_mediation', [], $orderMock, 'WC_WooMercadoPago_Custom_Gateway');
+
+        $this->assertTrue($applied);
+    }
+
+    public static function nonSmartPixContractProvider(): array
+    {
+        return [
+            'legacy empty contract' => [''],
+            'null contract' => [null],
+            'another contract' => ['payments_v1'],
+            'different version' => ['orders_smart_pix_v2'],
+            'padded value' => [' orders_smart_pix_v1'],
+            'different case' => ['ORDERS_SMART_PIX_V1'],
+        ];
+    }
+
+    public function testSmartPixSkipLogsOnlyAFixedReason(): void
+    {
+        $fileMock = Mockery::mock(File::class);
+        $fileMock->shouldReceive('info')
+            ->once()
+            ->with('Legacy status flow skipped for a Smart Pix Orders contract', OrderStatus::class);
+        $fileMock->shouldNotReceive('error');
+        $fileMock->shouldNotReceive('warning');
+        $this->logsMock->file = $fileMock;
+        $orderMock = Mockery::mock(WC_Order::class);
+        $this->orderMetadataMock->shouldReceive('getPaymentContract')
+            ->andReturn(OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1);
+
+        $applied = $this->orderStatus->processStatus('approved', ['id' => 'SYNTHETIC_PAYMENT', 'payer' => ['email' => 'buyer@example.test']], $orderMock, 'WC_WooMercadoPago_Pix_Gateway');
+
+        $this->assertFalse($applied);
     }
 
     public function testGetOrderStatusMessageReturnsCorrectMessage(): void

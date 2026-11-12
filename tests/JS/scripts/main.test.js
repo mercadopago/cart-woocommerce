@@ -45,7 +45,7 @@ describe('main.js — super-token asset build', () => {
       ]);
       const contents = fs.writeFileSync.mock.calls.map(([, content]) => content);
       expect(contents).toEqual([
-        ':root{--mp-super-token-loader-version:1.2.12}.compiled{color:red}',
+        ':root{--mp-super-token-loader-version:"1.2.13"}.compiled{color:red}',
       ]);
     });
 
@@ -110,15 +110,22 @@ describe('main.js — super-token asset build', () => {
 
   describe('SUPER_TOKEN_LOADER_VERSION (canonical runtime stamp)', () => {
     it('declares only the official v2.1 version', () => {
-      expect(main.SUPER_TOKEN_LOADER_VERSION).toEqual({ 'v2.1': '1.2.12' });
+      expect(main.SUPER_TOKEN_LOADER_VERSION).toEqual({ 'v2.1': '1.2.13' });
     });
   });
 
   describe('generateIntegrityManifest', () => {
-    it('includes every minified asset without legacy CSS exceptions', () => {
+    it('includes every minified asset except the literal local Smart Pix review assets', () => {
       main.generateIntegrityManifest();
 
-      expect(globSync).toHaveBeenCalledWith('assets/**/*.min.{js,css}');
+      expect(globSync).toHaveBeenCalledWith('assets/**/*.min.{js,css}', {
+        ignore: [
+          'assets/js/checkouts/smart-pix/smart-pix.mock.min.js',
+          'assets/js/checkouts/smart-pix/smart-pix.bundle.min.js',
+          'assets/css/checkouts/smart-pix/smart-pix.bundle.min.css',
+          'assets/js/melidata/woocommerce.smart-pix-mock.min.js',
+        ],
+      });
     });
   });
 

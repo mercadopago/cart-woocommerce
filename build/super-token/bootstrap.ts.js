@@ -45,7 +45,7 @@ function sendToCoreMonitor(metricName, payload, transport = 'fetch') {
 }
 ;// ./assets/js/checkouts/super-token/adapters/platform/constants.ts
 /** Canonical Super Token experience and telemetry stamp (PSW-4853). */
-const SUPER_TOKEN_JS_VERSION = '1.2.12';
+const SUPER_TOKEN_JS_VERSION = '1.2.13';
 const V21_VARIANT = 'v2.1';
 
 /** A/B experiment ended (PSW-4853): no assignment is reported, matching Melidata's convention. */
@@ -517,6 +517,34 @@ class CoreMonitorMetricsAdapter_CoreMonitorMetricsAdapter {
   }
   errorToGetAccountPaymentMethods(error) {
     this.errorWith('error_to_get_account_payment_methods', this.CUSTOM_CHECKOUT_STEPS.LOAD_SUPER_TOKEN, error);
+  }
+
+  /** The shared eligibility load also supplies Smart Pix; capture before its error becomes null. */
+  smartPixEligibilityFailure(error, secrets) {
+    const config = window.wc_mercadopago_smart_pix_params;
+    if (config?.site_id !== 'MLB' || config.standalone_bridge !== 'disabled') return;
+    const fields = {};
+    if (error && typeof error === 'object') {
+      for (const key of ['name', 'code', 'errorCode', 'message', 'description', 'status']) {
+        try {
+          const value = error[key];
+          if (typeof value === 'string' || typeof value === 'number') fields[key] = value;
+        } catch {/* SDK getters are optional diagnostics. */}
+      }
+    }
+    let message = this.normalizeErrorMessage(typeof error === 'string' ? error : JSON.stringify(fields));
+    // An empty method list is valid unavailability, not an SDK eligibility exception.
+    if (error === 'EMPTY_ACCOUNT_PAYMENT_METHODS' || fields.message === 'EMPTY_ACCOUNT_PAYMENT_METHODS') return;
+    secrets.forEach(secret => {
+      if (secret) message = message.split(secret).join('[REDACTED]');
+    });
+    const payload = this.buildPayload('1', message.slice(0, 4096));
+    payload.details.event = 'eligibility_failed';
+    const code = String(fields.errorCode || fields.code || '');
+    payload.details.reason = /^[A-Za-z0-9][A-Za-z0-9_./ -]{0,127}$/.test(code) ? code.toLowerCase() : 'sdk_code_unavailable';
+    if (payload.details.sdk_instance_id === 'Unknown') delete payload.details.sdk_instance_id;
+    // no-mse: rule=sensitive-logging reason="Selected redacted SDK diagnostic"
+    sendToCoreMonitor('smart_pix_checkout_error', payload);
   }
   errorToUpdateSecurityCode(error, paymentMethod) {
     const errorMessage = this.normalizeErrorMessage(error);
@@ -1301,16 +1329,21 @@ class GetAccountPaymentMethods {
       session,
       metrics,
       amount,
-      buyerEmail
+      buyerEmail,
+      signal
     } = ctx;
+    let fastPaymentToken = null;
     try {
+      if (signal?.aborted) {
+        return null;
+      }
       const authenticator = await session.buildAuthenticator(amount, buyerEmail);
-      if (!session.isCurrentLoad() || !authenticator) {
+      if (signal?.aborted || !session.isCurrentLoad() || !authenticator) {
         return null;
       }
       session.storeAuthenticator(authenticator);
       const isSimplified = await session.getSimplifiedAuth(authenticator);
-      if (!session.isCurrentLoad()) {
+      if (signal?.aborted || !session.isCurrentLoad()) {
         return null;
       }
       if (!isSimplified) {
@@ -1319,8 +1352,8 @@ class GetAccountPaymentMethods {
       }
       session.notifyBehaviorTrackingInit();
       metrics.canUseSuperToken(true);
-      const fastPaymentToken = await session.getFastPaymentToken(authenticator);
-      if (!session.isCurrentLoad()) {
+      fastPaymentToken = await session.getFastPaymentToken(authenticator);
+      if (signal?.aborted || !session.isCurrentLoad()) {
         return null;
       }
       if (!fastPaymentToken) {
@@ -1329,7 +1362,7 @@ class GetAccountPaymentMethods {
       }
       session.storeFastPaymentToken(fastPaymentToken);
       const accountPaymentMethods = await session.fetchAccountPaymentMethods(fastPaymentToken);
-      if (!session.isCurrentLoad()) {
+      if (signal?.aborted || !session.isCurrentLoad()) {
         return null;
       }
       if (!accountPaymentMethods?.data?.length) {
@@ -1337,11 +1370,76 @@ class GetAccountPaymentMethods {
       }
       return accountPaymentMethods.data;
     } catch (error) {
-      if (session.isCurrentLoad()) {
-        metrics.errorToGetAccountPaymentMethods(error);
+      if (signal?.aborted || !session.isCurrentLoad()) {
+        return null;
+      }
+      metrics.errorToGetAccountPaymentMethods(error);
+      try {
+        metrics.smartPixEligibilityFailure?.(error, [buyerEmail, fastPaymentToken || '']);
+      } catch {
+        // Optional Smart Pix diagnostics cannot affect shared eligibility or the Pix fallback.
       }
       return null;
     }
+  }
+}
+;// ./assets/js/checkouts/super-token/useCases/CoordinateAccountPaymentMethods.ts
+/**
+ * Single-flight and single-result cache for the buyer/amount identity currently
+ * active in checkout. It retains only one entry and never logs or exposes its key.
+ */
+class CoordinateAccountPaymentMethods {
+  cached = null;
+  requestTail = Promise.resolve();
+  activeControllers = new Set();
+  execute(ctx) {
+    const key = JSON.stringify([ctx.amount, ctx.buyerEmail]);
+    if (this.cached?.key === key) {
+      return this.cached.promise.then(methods => {
+        var _methods$slice;
+        return (_methods$slice = methods?.slice()) !== null && _methods$slice !== void 0 ? _methods$slice : null;
+      });
+    }
+
+    // Different checkout identities must not mutate the shared authenticator in
+    // parallel. Queue them while still sharing one promise for equal identities.
+    // An explicit invalidation aborts this generation and replaces requestTail so
+    // a stalled SDK promise cannot retain every later checkout identity.
+    const controller = new AbortController();
+    this.activeControllers.add(controller);
+    let entry;
+    const promise = this.requestTail.catch(() => undefined).then(() => controller.signal.aborted ? null : ctx.fetch(controller.signal)).then(methods => !controller.signal.aborted && Array.isArray(methods) ? methods.slice() : null).then(methods => {
+      if (!methods && this.cached === entry) {
+        this.cached = null;
+      }
+      return methods;
+    }).catch(error => {
+      if (controller.signal.aborted) {
+        return null;
+      }
+      if (this.cached === entry) {
+        this.cached = null;
+      }
+      throw error;
+    }).finally(() => {
+      this.activeControllers.delete(controller);
+    });
+    entry = {
+      key,
+      promise
+    };
+    this.cached = entry;
+    this.requestTail = promise.then(() => undefined, () => undefined);
+    return promise.then(methods => {
+      var _methods$slice2;
+      return (_methods$slice2 = methods?.slice()) !== null && _methods$slice2 !== void 0 ? _methods$slice2 : null;
+    });
+  }
+  invalidate() {
+    this.cached = null;
+    this.activeControllers.forEach(controller => controller.abort());
+    this.activeControllers.clear();
+    this.requestTail = Promise.resolve();
   }
 }
 ;// ./assets/js/checkouts/super-token/useCases/AuthorizePayment.ts
@@ -1591,6 +1689,7 @@ class LoadSuperToken {
       return;
     }
     if (session.amountHasChanged()) {
+      session.clearRememberedSelections();
       session.resetFlow();
       metrics.resetOnAmountChange();
     }
@@ -1651,6 +1750,9 @@ class LegacyLoadOrchestrationSession {
   }
   emailHasChanged() {
     return this.triggerHandler.emailHasChanged();
+  }
+  clearRememberedSelections() {
+    this.triggerHandler.mpSuperTokenPaymentMethods.clearRememberedSelections();
   }
   cancelInvalidAmount() {
     this.triggerHandler.cancelLoad();
@@ -2480,6 +2582,58 @@ class LegacyAuthenticatorSession {
     this.authenticator.storeAuthorizedPseudotoken(pseudotoken);
   }
 }
+;// ./assets/js/checkouts/super-token/core/checkoutSession/AccountPaymentMethodsPartition.ts
+const SUPER_TOKEN_TYPES = new Set(['credit_card', 'debit_card', 'account_money', 'prepaid_card', 'digital_currency']);
+function hasObjectShape(value) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+function hasNonEmptyString(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+function isSmartTransferPaymentMethod(value) {
+  return hasObjectShape(value) && value.type === 'smart_transfer' && hasNonEmptyString(value.id) && hasNonEmptyString(value.name) && typeof value.thumbnail === 'string' && hasNonEmptyString(value.token) && hasNonEmptyString(value.open_finance_account_id);
+}
+function isSuperTokenPaymentMethod(value) {
+  return hasObjectShape(value) && typeof value.type === 'string' && SUPER_TOKEN_TYPES.has(value.type);
+}
+/**
+ * Splits one raw SDK response into isolated consumer views. Unknown or malformed
+ * entries fail closed instead of reaching either renderer.
+ */
+function partitionAccountPaymentMethods(methods) {
+  const superToken = [];
+  const smartTransfer = [];
+  methods.forEach(method => {
+    if (isSmartTransferPaymentMethod(method)) {
+      smartTransfer.push(method);
+      return;
+    }
+    if (isSuperTokenPaymentMethod(method)) {
+      superToken.push(method);
+    }
+  });
+  return {
+    superToken,
+    smartTransfer
+  };
+}
+;// ./assets/js/checkouts/super-token/core/checkoutSession/BuyerEmail.ts
+/**
+ * Shared buyer-identity gate for every fast-payment consumer backed by
+ * `getAccountPaymentMethods`. Keeping it outside the Super Token listener prevents
+ * Smart Pix from drifting to a subtly different eligibility rule.
+ */
+function normalizeBuyerEmail(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+function isValidBuyerEmail(value) {
+  const email = normalizeBuyerEmail(value);
+  if (!email || email.length > 254) return false;
+  const localPart = email.split('@')[0];
+  if (localPart && localPart.length > 64) return false;
+  const regex = /^[a-zA-Z0-9_%+-]+(\.[a-zA-Z0-9_%+-]+)*@[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/i;
+  return regex.test(email);
+}
 ;// ./assets/js/checkouts/super-token/adapters/validation/checkoutValidationResolver.ts
 /**
  * Resolves the server-side checkout pre-validation verdict (wc_ajax_mp_validate_checkout)
@@ -2789,6 +2943,14 @@ function hasWooCommerceValidationErrors(metrics) {
   return hasErrors;
 }
 ;// ./assets/js/checkouts/super-token/adapters/legacy/globalBridge.ts
+const FAST_PAYMENTS_BRIDGE_READY_EVENT = 'mp_fast_payments_bridge_ready';
+function notifyFastPaymentsReady() {
+  const EventConstructor = window.CustomEvent;
+  if (typeof EventConstructor === 'function') {
+    window.document.dispatchEvent(new EventConstructor(FAST_PAYMENTS_BRIDGE_READY_EVENT));
+  }
+}
+
 /**
  * Transitional compatibility bridge (TECH-4).
  *
@@ -2806,6 +2968,10 @@ function publish(instances) {
   window.mpSuperTokenPaymentMethods = instances.paymentMethods;
   window.mpSuperTokenMetrics = instances.metrics;
   window.mpSuperTokenErrorHandler = instances.errorHandler;
+  // The seams are published before async composition. Notify again once their session exists.
+  if (typeof window.mpFastPaymentsGetSmartTransferPaymentMethods === 'function') {
+    notifyFastPaymentsReady();
+  }
 }
 
 /**
@@ -2912,6 +3078,18 @@ function publishRenderSavedMethods(seam) {
  */
 function publishAccountPaymentMethods(seam) {
   window.mpSuperTokenGetAccountPaymentMethods = seam.getAccountPaymentMethods;
+}
+
+/**
+ * Shared eligibility boundary consumed by Smart Pix. Both functions are backed by
+ * the same coordinated SDK request used by Super Token; the Smart Pix consumer
+ * receives only `smart_transfer` entries, never saved-card methods.
+ */
+
+function publishFastPaymentsEligibility(seam) {
+  window.mpFastPaymentsIsValidBuyerEmail = seam.isValidBuyerEmail;
+  window.mpFastPaymentsGetSmartTransferPaymentMethods = seam.getSmartTransferPaymentMethods;
+  notifyFastPaymentsReady();
 }
 
 /**
@@ -3111,6 +3289,9 @@ function publishWooCommerceValidationErrors(seam) {
 
 
 
+
+
+
 // ─── Finalization (Phase 1) ──────────────────────────────────────────────────
 
 // One shared instance: the use case is stateless, so a single copy serves every submit.
@@ -3184,21 +3365,43 @@ function resetOnError(preserveSelection) {
 
 // One shared instance: the use case is stateless orchestration over the injected session.
 const getAccountPaymentMethodsUseCase = new GetAccountPaymentMethods();
+const coordinateAccountPaymentMethodsUseCase = new CoordinateAccountPaymentMethods();
 
 // Hybrid: the legacy authenticator still owns the handle/token state and the SDK primitives,
 // and the legacy controller still owns the account fetch. This wraps both as the load session
 // so the use case drives the *order* and the fail-safe gates while the state stays legacy —
 // the scaffold that shrinks as the primitives are ported into the tree.
-function getAccountPaymentMethods(amount, buyerEmail) {
+function getCoordinatedAccountPaymentMethods(amount, buyerEmail) {
+  const normalizedEmail = normalizeBuyerEmail(buyerEmail);
+  if (!isValidBuyerEmail(normalizedEmail)) {
+    return Promise.resolve(null);
+  }
   const authenticator = window.mpSuperTokenAuthenticator;
+  if (typeof authenticator?.getCoordinatedAccountPaymentMethods === 'function') {
+    return authenticator.getCoordinatedAccountPaymentMethods(amount, normalizedEmail);
+  }
   const paymentMethods = window.mpSuperTokenPaymentMethods;
   const metrics = window.mpSuperTokenMetrics;
-  return getAccountPaymentMethodsUseCase.execute({
-    session: new LegacyAuthenticatorSession(authenticator, paymentMethods),
-    metrics,
+  if (!authenticator || !paymentMethods || !metrics) {
+    return Promise.resolve(null);
+  }
+  return coordinateAccountPaymentMethodsUseCase.execute({
     amount,
-    buyerEmail
+    buyerEmail: normalizedEmail,
+    fetch: signal => getAccountPaymentMethodsUseCase.execute({
+      session: new LegacyAuthenticatorSession(authenticator, paymentMethods),
+      metrics,
+      amount,
+      buyerEmail: normalizedEmail,
+      signal
+    })
   });
+}
+function getAccountPaymentMethods(amount, buyerEmail) {
+  return getCoordinatedAccountPaymentMethods(amount, buyerEmail).then(methods => methods ? partitionAccountPaymentMethods(methods).superToken : null);
+}
+function getSmartTransferPaymentMethods(amount, buyerEmail) {
+  return getCoordinatedAccountPaymentMethods(amount, buyerEmail).then(methods => methods ? partitionAccountPaymentMethods(methods).smartTransfer : null);
 }
 
 // ─── Authorize at submit (Phase 8) ───────────────────────────────────────────
@@ -3285,6 +3488,14 @@ const resetCustomCheckoutUseCase = new ResetCustomCheckout();
 // while the state stays legacy — the scaffold that shrinks as the primitives are ported.
 function resetCustomCheckout(shouldClearCache) {
   const triggerHandler = window.mpSuperTokenTriggerHandler;
+
+  // In the hybrid runtime an older authenticator does not own the shared coordinator.
+  // Clear this composition-level cache with the same reset that invalidates the
+  // legacy authenticator/token state, otherwise an equal amount/e-mail can reuse
+  // methods without rebuilding the handle required at authorization time.
+  if (shouldClearCache) {
+    coordinateAccountPaymentMethodsUseCase.invalidate();
+  }
   resetCustomCheckoutUseCase.execute({
     session: new LegacyResetCustomCheckoutSession(triggerHandler),
     shouldClearCache
@@ -3366,6 +3577,10 @@ function publishLegacyDelegationSeams() {
   });
   publishAccountPaymentMethods({
     getAccountPaymentMethods
+  });
+  publishFastPaymentsEligibility({
+    isValidBuyerEmail: isValidBuyerEmail,
+    getSmartTransferPaymentMethods
   });
   publishAuthorizePayment({
     authorizePayment
@@ -4845,6 +5060,63 @@ function createVariantViewDeps(params, emailListener) {
  * At the flip the composition root wires `createVariantView` as this port.
  */
 
+const PRIVACY_POLICY_URLS = Object.freeze({
+  MLA: 'https://www.mercadopago.com.ar/privacidad',
+  MLB: 'https://www.mercadopago.com.br/privacidade',
+  MLM: 'https://www.mercadopago.com.mx/privacidad',
+  MLC: 'https://www.mercadopago.cl/privacidad',
+  MCO: 'https://www.mercadopago.com.co/privacidad',
+  MPE: 'https://www.mercadopago.com.pe/privacidad',
+  MLU: 'https://www.mercadopago.com.uy/privacidad'
+});
+const PRIVACY_COPY_ENTITIES = Object.freeze({
+  '&nbsp;': '\u00a0',
+  '&amp;': '&',
+  '&quot;': '"',
+  '&#39;': "'",
+  '&lt;': '<',
+  '&gt;': '>'
+});
+function decodePrivacyCopyText(value) {
+  return value.replace(/&nbsp;|&amp;|&quot;|&#39;|&lt;|&gt;/g, entity => {
+    var _PRIVACY_COPY_ENTITIE;
+    return (_PRIVACY_COPY_ENTITIE = PRIVACY_COPY_ENTITIES[entity]) !== null && _PRIVACY_COPY_ENTITIE !== void 0 ? _PRIVACY_COPY_ENTITIE : entity;
+  });
+}
+
+/** Render only the expected translated link, rebuilding it with DOM APIs and a site-owned URL. */
+function renderPrivacyPolicyCopy(span, copy, siteId) {
+  var _PRIVACY_POLICY_URLS$;
+  if (typeof copy !== 'string' || copy === '') {
+    span.textContent = '';
+    return;
+  }
+  const openingLink = /<a\b[^>]*>/i.exec(copy);
+  if (!openingLink) {
+    span.textContent = decodePrivacyCopyText(copy);
+    return;
+  }
+  const contentStart = openingLink.index + openingLink[0].length;
+  const closingLinkStart = copy.indexOf('</a>', contentStart);
+  if (closingLinkStart < 0 || copy.indexOf('<a', contentStart) >= 0 || copy.indexOf('</a>', closingLinkStart + 4) >= 0) {
+    span.textContent = decodePrivacyCopyText(copy);
+    return;
+  }
+  const prefix = copy.slice(0, openingLink.index);
+  const label = copy.slice(contentStart, closingLinkStart);
+  const suffix = copy.slice(closingLinkStart + 4);
+  if (/[<>]/.test(prefix) || /[<>]/.test(label) || /[<>]/.test(suffix)) {
+    span.textContent = decodePrivacyCopyText(copy);
+    return;
+  }
+  const link = document.createElement('a');
+  link.href = (_PRIVACY_POLICY_URLS$ = PRIVACY_POLICY_URLS[siteId.toUpperCase()]) !== null && _PRIVACY_POLICY_URLS$ !== void 0 ? _PRIVACY_POLICY_URLS$ : 'https://www.mercadopago.com/privacy';
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = decodePrivacyCopyText(label);
+  span.append(decodePrivacyCopyText(prefix), link, decodePrivacyCopyText(suffix));
+}
+
 /** The subset of the e-mail listener the controller reads (block header + change listener). */
 
 /** The subset of the metrics adapter the 6a subset emits through. */
@@ -4939,9 +5211,9 @@ class SuperTokenPaymentMethods {
   securityFieldsActiveInstance = null;
   activePaymentMethod = null;
   amount = null;
-  selectedPreloadedPaymentMethod = null; // Should not be resetted
+  selectedPreloadedPaymentMethod = null; // Preserved by generic/error resets
   securityCodeReferences = {};
-  lastPaymentMethodChoosen = null; // Should not be resetted
+  lastPaymentMethodChoosen = null; // Preserved by generic/error resets
   attemptsByErrorCode = {};
   isRendering = false;
   escSelectionGeneration = 0;
@@ -5051,6 +5323,13 @@ class SuperTokenPaymentMethods {
     if (customCheckoutEntireElement) {
       this.variantView?.reset(customCheckoutEntireElement);
     }
+  }
+
+  // Shipping/coupon totals define a new payment context. Unlike an error reset, an amount reset
+  // must not allow any remembered selection to be restored by a later asynchronous render tail.
+  clearRememberedSelections() {
+    this.selectedPreloadedPaymentMethod = null;
+    this.lastPaymentMethodChoosen = null;
   }
   storePaymentMethodsInMemory(accountPaymentMethods) {
     this.paymentMethods = accountPaymentMethods;
@@ -5985,7 +6264,9 @@ class SuperTokenPaymentMethods {
     const footer = document.createElement('footer');
     footer.classList.add(this.SUPER_TOKEN_STYLES.MERCADO_PAGO_PRIVACY_POLICY_FOOTER);
     footer.id = 'mp-super-token-privacy-policy-footer';
-    footer.innerHTML = `<span>${this.MERCADO_PAGO_PRIVACY_POLICY}</span>`;
+    const span = document.createElement('span');
+    renderPrivacyPolicyCopy(span, this.MERCADO_PAGO_PRIVACY_POLICY, this.SITE_ID);
+    footer.append(span);
     customCheckoutEntireElement.insertBefore(footer, customCheckoutEntireElement.firstChild);
   }
   addHorizontalRow() {
@@ -6143,6 +6424,9 @@ class SuperTokenPaymentMethods {
 
 
 
+
+
+
 /** Superset of the metrics the load use case, the submit use case and the primitives emit. */
 
 class SuperTokenAuthenticator {
@@ -6157,6 +6441,7 @@ class SuperTokenAuthenticator {
   fastPaymentToken = null;
   loadGeneration = 0;
   getAccountPaymentMethodsUseCase = new GetAccountPaymentMethods();
+  coordinateAccountPaymentMethodsUseCase = new CoordinateAccountPaymentMethods();
   authorizePaymentUseCase = new AuthorizePayment();
   constructor(mpSdkInstance, paymentMethods, metrics, platformId, siteId) {
     this.mpSdkInstance = mpSdkInstance;
@@ -6169,6 +6454,12 @@ class SuperTokenAuthenticator {
     this.loadGeneration++;
     this.authenticator = null;
     this.fastPaymentToken = null;
+    this.coordinateAccountPaymentMethodsUseCase.invalidate();
+    this.setSuperTokenValidation(false);
+    const authorizedPseudotoken = document.getElementById(this.AUTHORIZED_PSEUDOTOKEN_ELEMENT_ID);
+    if (authorizedPseudotoken) {
+      authorizedPseudotoken.value = '';
+    }
   }
   setSuperTokenValidation(value) {
     const element = document.getElementById(this.SUPER_TOKEN_VALIDATION_ELEMENT_ID);
@@ -6275,14 +6566,32 @@ class SuperTokenAuthenticator {
       element.value = pseudotoken;
     }
   }
-  getAccountPaymentMethods(amount, buyerEmail) {
-    const generation = ++this.loadGeneration;
-    return this.getAccountPaymentMethodsUseCase.execute({
-      session: new LegacyAuthenticatorSession(this, this.paymentMethods, () => generation === this.loadGeneration),
-      metrics: this.metrics,
+  getCoordinatedAccountPaymentMethods(amount, buyerEmail) {
+    const normalizedEmail = normalizeBuyerEmail(buyerEmail);
+    if (!isValidBuyerEmail(normalizedEmail)) {
+      return Promise.resolve(null);
+    }
+    return this.coordinateAccountPaymentMethodsUseCase.execute({
       amount,
-      buyerEmail
+      buyerEmail: normalizedEmail,
+      fetch: signal => {
+        // A reset or a newer fetch supersedes this one even if its SDK call is still pending.
+        const generation = ++this.loadGeneration;
+        return this.getAccountPaymentMethodsUseCase.execute({
+          session: new LegacyAuthenticatorSession(this, this.paymentMethods, () => generation === this.loadGeneration),
+          metrics: this.metrics,
+          amount,
+          buyerEmail: normalizedEmail,
+          signal
+        });
+      }
     });
+  }
+  getAccountPaymentMethods(amount, buyerEmail) {
+    return this.getCoordinatedAccountPaymentMethods(amount, buyerEmail).then(methods => methods ? partitionAccountPaymentMethods(methods).superToken : null);
+  }
+  getSmartTransferPaymentMethods(amount, buyerEmail) {
+    return this.getCoordinatedAccountPaymentMethods(amount, buyerEmail).then(methods => methods ? partitionAccountPaymentMethods(methods).smartTransfer : null);
   }
   authorizePayment(pseudotoken) {
     return this.authorizePaymentUseCase.execute({
@@ -6345,6 +6654,8 @@ class SuperTokenErrorHandler {
  * class. At the flip the bundle bootstrap constructs it and hands it to the ported trigger handler.
  */
 
+
+
 /** The `MPDebounce` surface the listener uses to debounce the input handler. */
 
 /** Minimal jQuery surface the listener uses: read the field value and bind a delegated handler. */
@@ -6358,11 +6669,7 @@ class SuperTokenEmailListener {
     this.jquery = jquery !== null && jquery !== void 0 ? jquery : window.jQuery;
   }
   isValid(email) {
-    if (!email || email.length > 254) return false;
-    const localPart = email.split('@')[0];
-    if (localPart && localPart.length > 64) return false;
-    const regex = /^[a-zA-Z0-9_%+-]+(\.[a-zA-Z0-9_%+-]+)*@[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/i;
-    return regex.test(email);
+    return isValidBuyerEmail(email);
   }
   getEmail() {
     return this.jquery(this.EMAIL_FIELD_SELECTOR).val()?.trim();
@@ -7963,7 +8270,14 @@ function waitForStylesheet(link, append) {
 }
 function cssVersion() {
   try {
-    return getComputedStyle(document.documentElement).getPropertyValue('--mp-super-token-loader-version').trim();
+    const value = getComputedStyle(document.documentElement).getPropertyValue('--mp-super-token-loader-version').trim();
+    const quote = value.charAt(0);
+    if ((quote === '"' || quote === "'") && value.charAt(value.length - 1) === quote) {
+      // Comments inside a CSS string are literal content, not token separators.
+      return value.slice(1, -1);
+    }
+    // WebKit inserts empty comments between the numeric tokens of older, unquoted stamps.
+    return value.replace(/\/\*\*\//g, '');
   } catch {
     return '';
   }

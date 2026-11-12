@@ -8,6 +8,13 @@ if (!defined('ABSPATH')) {
 
 class Form
 {
+    public static function requestMethod(): string
+    {
+        $method = $_SERVER['REQUEST_METHOD'] ?? '';
+
+        return is_string($method) ? strtoupper($method) : '';
+    }
+
     /**
      * Sanitizes $_GET object or otherwise sanitizes an $_GET[$key] object/data
      *
@@ -34,6 +41,22 @@ class Form
         $data = sanitize_post($_POST);
 
         return self::sanitizedData(isset($key) ? $data[$key] : $data);
+    }
+
+    /**
+     * Sanitize form fields without adding WordPress post-object defaults.
+     * Non-string values retain their shape for the caller's schema validation.
+     */
+    public static function sanitizedPostFields(): array
+    {
+        $fields = $_POST;
+        foreach ($fields as $key => $value) {
+            if (is_string($value)) {
+                $fields[$key] = sanitize_text_field(wp_unslash($value));
+            }
+        }
+
+        return $fields;
     }
 
     /**

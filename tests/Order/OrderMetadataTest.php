@@ -6,10 +6,12 @@ use PHPUnit\Framework\TestCase;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use MercadoPago\Woocommerce\Tests\Traits\WoocommerceMock;
 use MercadoPago\Woocommerce\Hooks\OrderMeta;
+use MercadoPago\Woocommerce\Gateways\PixGateway;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
 use MercadoPago\Woocommerce\Order\RefundReconciliationLock;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use Mockery;
+use WC_Meta_Data;
 use WC_Order;
 
 class OrderMetadataTest extends TestCase
@@ -91,6 +93,682 @@ class OrderMetadataTest extends TestCase
     public function testGetCheckoutTypeReturnsNullWhenOrderMissing()
     {
         $this->assertNull($this->orderMetadata->getCheckoutType(null));
+    }
+
+    private function metaEntry(int $id, $value): WC_Meta_Data
+    {
+        $meta        = Mockery::mock(WC_Meta_Data::class);
+        $meta->id    = $id;
+        $meta->value = $value;
+
+        return $meta;
+    }
+
+    public function testPaymentContractAccessors()
+    {
+        $paymentContract = 'orders_smart_pix_v1';
+        $orderMetadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+
+        $this->assertSame($paymentContract, OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1);
+
+        $this->orderMock
+            ->shouldReceive('update_meta_data')
+            ->with('_mp_payment_contract', $paymentContract)
+            ->once();
+        $this->orderMock
+            ->shouldReceive('save')
+            ->once();
+        $this->orderMock
+            ->shouldReceive('get_meta')
+            ->with('_mp_payment_contract', false)
+            ->once()
+            ->andReturn([$this->metaEntry(1, $paymentContract)]);
+
+        $orderMetadata->setPaymentContract($this->orderMock, $paymentContract);
+
+        $this->assertSame($paymentContract, $orderMetadata->getPaymentContract($this->orderMock));
+    }
+
+    public function testPaymentContractRemainsAbsentForLegacyOrders()
+    {
+        $orderMetadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+
+        $this->orderMock
+            ->shouldReceive('get_meta')
+            ->with('_mp_payment_contract', false)
+            ->once()
+            ->andReturn([]);
+
+        $this->assertSame('', $orderMetadata->getPaymentContract($this->orderMock));
+    }
+
+    public function testIdempotencyKeyAccessors()
+    {
+        $idempotencyKey = 'opaque-key';
+        $orderMetadata  = new OrderMetadata(new OrderMeta(), $this->logsMock);
+
+        $this->orderMock
+            ->shouldReceive('update_meta_data')
+            ->with('_mp_idempotency_key', $idempotencyKey)
+            ->once();
+        $this->orderMock
+            ->shouldReceive('save')
+            ->once();
+        $this->orderMock
+            ->shouldReceive('get_meta')
+            ->with('_mp_idempotency_key', false)
+            ->once()
+            ->andReturn([$this->metaEntry(1, $idempotencyKey)]);
+
+        $orderMetadata->setIdempotencyKey($this->orderMock, $idempotencyKey);
+
+        $this->assertSame($idempotencyKey, $orderMetadata->getIdempotencyKey($this->orderMock));
+    }
+
+    /**
+     * Reproduces the duplicate-row conflict a concurrent Smart Pix write can
+     * leave behind (see SmartPixAttemptRepository): two competing rows for
+     * the same key, with the earliest-persisted one (lowest id) returned
+     * SECOND by `get_meta(..., false)`. `getIdempotencyKey()` must resolve
+     * to the earliest row regardless of that order, or the verification
+     * step in `SmartPixAttemptRepository::createOrRead()` could accept a
+     * late writer's own key as "confirmed".
+     */
+    public function testGetIdempotencyKeyResolvesToTheEarliestRowUnderConcurrentDuplicates()
+    {
+        $orderMetadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+
+        $this->orderMock
+            ->shouldReceive('get_meta')
+            ->with('_mp_idempotency_key', false)
+            ->once()
+            ->andReturn([
+                $this->metaEntry(9, 'persisted-later'),
+                $this->metaEntry(3, 'persisted-first'),
+            ]);
+
+        $this->assertSame('persisted-first', $orderMetadata->getIdempotencyKey($this->orderMock));
+    }
+
+    public function testPersistSmartPixAttemptWritesContractAndKeyInOneCrudSave(): void
+    {
+        $idempotencyKey = 'attempt_aaaaaaaaaaaaaaaa';
+        $orderMetadata  = new OrderMetadata(new OrderMeta(), $this->logsMock);
+
+        $this->orderMock
+            ->shouldReceive('update_meta_data')
+            ->with('_mp_payment_contract', OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1)
+            ->once();
+        $this->orderMock
+            ->shouldReceive('update_meta_data')
+            ->with('_mp_idempotency_key', $idempotencyKey)
+            ->once();
+        $this->orderMock
+            ->shouldReceive('save')
+            ->once();
+
+        $this->orderMock->shouldReceive('get_id')->once()->andReturn(321);
+        \WP_Mock::userFunction('get_option', ['args' => ['_mp_store_identificator', 'WC-'], 'return' => 'WC-']);
+        $this->orderMock->shouldReceive('update_meta_data')->with('_mp_smart_pix_attempt_reference', 'WC-321')->once();
+        $orderMetadata->persistSmartPixAttempt($this->orderMock, $idempotencyKey);
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function testPersistSmartPixAttemptUsesTheStoreIdentificatorPrefix(): void
+    {
+        $orderMetadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+        \WP_Mock::userFunction('get_option', ['args' => ['_mp_store_identificator', 'WC-'], 'return' => 'STORE-']);
+        $this->orderMock->shouldReceive('get_id')->once()->andReturn(321);
+        $this->orderMock->shouldReceive('update_meta_data')
+            ->with('_mp_payment_contract', OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1)->once();
+        $this->orderMock->shouldReceive('update_meta_data')->with('_mp_idempotency_key', 'attempt_aaaaaaaaaaaaaaaa')->once();
+        $this->orderMock->shouldReceive('update_meta_data')->with('_mp_smart_pix_attempt_reference', 'STORE-321')->once();
+        $this->orderMock->shouldReceive('save')->once();
+
+        $orderMetadata->persistSmartPixAttempt($this->orderMock, 'attempt_aaaaaaaaaaaaaaaa');
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function testAMissingStoredCorrelationFallsBackToTheStoreIdentificatorPrefix(): void
+    {
+        $metadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+        \WP_Mock::userFunction('get_option', ['args' => ['_mp_store_identificator', 'WC-'], 'return' => 'STORE-']);
+        $this->orderMock->shouldReceive('get_meta')->with('_mp_smart_pix_attempt_reference', true)->once()->andReturn('');
+        $this->orderMock->shouldReceive('get_id')->andReturn(321);
+
+        $this->assertSame('STORE-321', $metadata->getSmartPixAttemptReference($this->orderMock));
+    }
+
+    /** @dataProvider smartPixAttemptReferenceProvider */
+    public function testReadOriginalSmartPixCorrelation($stored, string $expected): void
+    {
+        $metadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+        $this->orderMock->shouldReceive('get_meta')->with('_mp_smart_pix_attempt_reference', true)->once()->andReturn($stored);
+        $this->orderMock->shouldReceive('get_id')->andReturn(321);
+        \WP_Mock::userFunction('get_option', ['args' => ['_mp_store_identificator', 'WC-'], 'return' => 'WC-']);
+        $this->assertSame($expected, $metadata->getSmartPixAttemptReference($this->orderMock));
+    }
+
+    public static function smartPixAttemptReferenceProvider(): array
+    {
+        return [['', 'WC-321'], ['ORIGINAL_PROVIDER_ATTEMPT', 'ORIGINAL_PROVIDER_ATTEMPT'], [null, ''], [[], '']];
+    }
+
+    public function testGivenAPendingOrdersCreationWhenLinkingItThenTheReferenceAndAttemptStartAreWrittenInOneSave(): void
+    {
+        $orderMetadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+        $this->orderMock->shouldReceive('update_meta_data')->with('_mp_pp_order_id', 'ORDER_SYNTHETIC_001')->once();
+        $this->orderMock->shouldReceive('update_meta_data')->with('_mp_pp_order_pending_since', '1760000000')->once();
+        $this->orderMock->shouldReceive('save')->once();
+
+        $orderMetadata->linkSmartPixOrder($this->orderMock, 'ORDER_SYNTHETIC_001', 1760000000);
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function testGivenALinkedAttemptWhenReadingItsStartThenThePersistedTimestampIsReturned(): void
+    {
+        $orderMetadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+        $this->orderMock->shouldReceive('get_meta')->with('_mp_pp_order_pending_since', true)->once()->andReturn('1760000000');
+
+        $this->assertSame('1760000000', $orderMetadata->getPpOrderPendingSince($this->orderMock));
+    }
+
+    public function testGivenAFullSmartPixAttemptWhenEndingItThenItsStartAndTerminalFlagAreDeletedWithIt(): void
+    {
+        $orderMetadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+        $this->orderMock->shouldReceive('meta_exists')->andReturn(true);
+        $deleted = [];
+        $this->orderMock->shouldReceive('delete_meta_data')->andReturnUsing(static function (string $metaKey) use (&$deleted): void {
+            $deleted[] = $metaKey;
+        });
+        $this->orderMock->shouldReceive('save')->once();
+
+        $this->orderMock->shouldReceive('get_meta')->andReturn('');
+        $orderMetadata->endSmartPixAttempt($this->orderMock);
+
+        $this->assertContains('_mp_pp_order_pending_since', $deleted);
+        $this->assertContains('_mp_pp_order_terminal_reported', $deleted);
+        $this->assertContains('_mp_pp_order_thankyou_result_reported', $deleted);
+        $this->assertContains('_mp_pp_order_id', $deleted);
+        $this->assertContains('_mp_pp_payment_id', $deleted);
+        $this->assertContains('_mp_order_id', $deleted);
+        $this->assertContains('Mercado Pago - Order ID', $deleted);
+        $this->assertContains('_mp_transaction_intent_id', $deleted);
+    }
+
+    /** @dataProvider displayedOrderIdProvider */
+    public function testGivenSmartTransferWhenSavingThenCustomFieldUsesProviderOrderIdWithoutAnotherSave(string $displayed): void
+    {
+        $this->orderMock->shouldReceive('get_payment_method')->with('edit')->andReturn(PixGateway::ID);
+        $this->orderMetaMock->shouldReceive('getEarliest')->with($this->orderMock, '_mp_payment_contract')
+            ->andReturn(OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1);
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, '_mp_order_id')->andReturn('ORDSYNTHETIC001');
+        $this->orderMock->shouldReceive('get_meta')->with('Mercado Pago - Order ID', true, 'edit')->andReturn($displayed);
+        if ($displayed === 'ORDSYNTHETIC001') {
+            $this->orderMock->shouldNotReceive('update_meta_data');
+        } else {
+            $this->orderMock->shouldReceive('update_meta_data')->once()->with('Mercado Pago - Order ID', 'ORDSYNTHETIC001');
+        }
+        $this->orderMock->shouldNotReceive('save', 'save_meta_data', 'payment_complete', 'update_status', 'add_order_note');
+        $this->orderMetaMock->shouldNotReceive('update', 'updateMany');
+
+        $this->orderMetadata->prepareSmartPixOrderIdCustomField($this->orderMock);
+        $this->addToAssertionCount(1);
+    }
+
+    public static function displayedOrderIdProvider(): array
+    {
+        return ['existing order without field' => [''], 'unchanged' => ['ORDSYNTHETIC001'], 'edited display copy' => ['DISPLAY_EDITED']];
+    }
+
+    /** @dataProvider missingProviderOrderIdProvider */
+    public function testGivenNoProviderOrderIdWhenSavingThenNoPpordOrOtherIdentifierIsSubstituted($reference): void
+    {
+        $this->orderMock->shouldReceive('get_payment_method')->with('edit')->andReturn(PixGateway::ID);
+        $this->orderMetaMock->shouldReceive('getEarliest')->with($this->orderMock, '_mp_payment_contract')
+            ->andReturn(OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1);
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, '_mp_order_id')->andReturn($reference);
+        $this->orderMock->shouldNotReceive('update_meta_data', 'save', 'payment_complete', 'update_status');
+
+        $this->orderMetadata->prepareSmartPixOrderIdCustomField($this->orderMock);
+        $this->addToAssertionCount(1);
+    }
+
+    public static function missingProviderOrderIdProvider(): array
+    {
+        return [[''], ['  '], [null], [[]], [123]];
+    }
+
+    /** @dataProvider otherCustomFieldGatewayProvider */
+    public function testGivenAnotherPaymentFlowWhenSavingThenItsCustomFieldsAreUnchanged(string $gateway, string $contract): void
+    {
+        $this->orderMock->shouldReceive('get_payment_method')->with('edit')->andReturn($gateway);
+        if ($gateway === PixGateway::ID) {
+            $this->orderMetaMock->shouldReceive('getEarliest')->with($this->orderMock, '_mp_payment_contract')->andReturn($contract);
+        }
+        $this->orderMetaMock->shouldNotReceive('get');
+        $this->orderMock->shouldNotReceive('update_meta_data', 'save');
+
+        $this->orderMetadata->prepareSmartPixOrderIdCustomField($this->orderMock);
+        $this->addToAssertionCount(1);
+    }
+
+    public static function otherCustomFieldGatewayProvider(): array
+    {
+        return [
+            [PixGateway::ID, ''], ['woo-mercado-pago-custom', OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1],
+            ['cod', OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1],
+        ];
+    }
+
+    public function testCreationReferencesAreSavedTogetherAndCanBeReadWithoutPaymentEffects(): void
+    {
+        $stored = [];
+        $this->orderMock->shouldReceive('update_meta_data')->andReturnUsing(static function ($key, $value) use (&$stored): void {
+            $stored[$key] = $value;
+        });
+        $this->orderMock->shouldReceive('get_meta')->andReturnUsing(static function ($key) use (&$stored) {
+            return $stored[$key] ?? '';
+        });
+        $this->orderMock->shouldReceive('save')->once();
+        $this->orderMock->shouldNotReceive('payment_complete', 'update_status');
+        $metadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+        $metadata->linkSmartPixOrder($this->orderMock, 'PPORDSYNTHETIC001', 1760000000, [
+            'order_reference' => 'PPORDSYNTHETIC001', 'payment_reference' => 'PPPAYSYNTHETIC001',
+            'provider_order_reference' => 'ORDSYNTHETIC001', 'transaction_intent_reference' => 'syntheticintent001',
+        ]);
+        $this->assertSame([
+            '_mp_pp_order_id' => 'PPORDSYNTHETIC001', '_mp_pp_order_pending_since' => '1760000000',
+            '_mp_pp_payment_id' => 'PPPAYSYNTHETIC001', '_mp_order_id' => 'ORDSYNTHETIC001',
+            '_mp_transaction_intent_id' => 'syntheticintent001',
+        ], $stored);
+        $this->assertSame('PPPAYSYNTHETIC001', $metadata->getPpPaymentId($this->orderMock));
+        $this->assertSame('ORDSYNTHETIC001', $metadata->getMpOrderId($this->orderMock));
+        $this->assertSame('syntheticintent001', $metadata->getTransactionIntentId($this->orderMock));
+    }
+
+    /** @dataProvider invalidCreationReferencesProvider */
+    public function testInvalidOrUnrelatedReferencesAreRejectedBeforeAnySave(array $changes): void
+    {
+        $this->orderMock->shouldNotReceive('update_meta_data', 'save');
+        $metadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+        $this->expectException(\InvalidArgumentException::class);
+        $metadata->linkSmartPixOrder($this->orderMock, 'PPORDSYNTHETIC001', 1760000000, array_replace([
+            'order_reference' => 'PPORDSYNTHETIC001', 'payment_reference' => 'PPPAYSYNTHETIC001',
+        ], $changes));
+    }
+
+    public static function invalidCreationReferencesProvider(): array
+    {
+        return [
+            'another Order' => [['order_reference' => 'PPORDOTHER001']],
+            'missing payment' => [['payment_reference' => null]],
+            'unknown field' => [['token' => 'SYNTHETIC_PRIVATE_PROOF']],
+            'non-string intent' => [['transaction_intent_reference' => ['syntheticintent001']]],
+            'control character' => [['provider_order_reference' => "ORDSYNTHETIC\n001"]],
+            'oversized identifier' => [['transaction_intent_reference' => str_repeat('x', 129)]],
+        ];
+    }
+
+    public function testBackfillRefusesToOverwriteAnExistingDifferentPaymentReference(): void
+    {
+        $this->orderMetaMock->shouldReceive('getEarliest')->with($this->orderMock, '_mp_payment_contract')
+            ->andReturn(OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1);
+        $this->orderMetaMock->shouldReceive('get')->andReturnUsing(static function ($order, $key) {
+            return [
+                '_mp_payment_contract' => OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1,
+                '_mp_pp_order_id' => 'PPORDSYNTHETIC001', '_mp_pp_payment_id' => 'PPPAYOTHER001',
+            ][$key] ?? '';
+        });
+        $this->orderMetaMock->shouldNotReceive('updateMany');
+        $this->orderMock->shouldNotReceive('update_meta_data', 'save', 'payment_complete', 'update_status');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->orderMetadata->persistSmartPixReferences($this->orderMock, [
+            'order_reference' => 'PPORDSYNTHETIC001', 'payment_reference' => 'PPPAYSYNTHETIC001',
+        ]);
+    }
+
+    /** @dataProvider invalidReferenceContextProvider */
+    public function testBackfillIsRefusedOutsideALinkedSmartPixAttempt(?string $contract, $linked): void
+    {
+        $this->orderMetaMock->shouldReceive('getEarliest')->with($this->orderMock, '_mp_payment_contract')
+            ->andReturn($contract);
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, '_mp_pp_order_id')->andReturn($linked);
+        $this->orderMetaMock->shouldNotReceive('updateMany');
+        $this->orderMock->shouldNotReceive('update_meta_data', 'save', 'payment_complete', 'update_status');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid Smart Pix reference context.');
+
+        $this->orderMetadata->persistSmartPixReferences($this->orderMock, [
+            'order_reference' => 'PPORDSYNTHETIC001', 'payment_reference' => 'PPPAYSYNTHETIC001',
+        ]);
+    }
+
+    public static function invalidReferenceContextProvider(): array
+    {
+        return [
+            'conventional Pix order' => ['', 'PPORDSYNTHETIC001'],
+            'unlinked Smart Pix attempt' => [OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1, ''],
+            'missing link' => [OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1, null],
+        ];
+    }
+
+    public function testBackfillAddsOnlyTheCorrelatedReferencesWithoutResettingTheAttemptClock(): void
+    {
+        $this->orderMetaMock->shouldReceive('getEarliest')->with($this->orderMock, '_mp_payment_contract')
+            ->andReturn(OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1);
+        $this->orderMetaMock->shouldReceive('get')->andReturnUsing(static function ($order, $key) {
+            return $key === '_mp_pp_order_id' ? 'PPORDSYNTHETIC001' : '';
+        });
+        $this->orderMetaMock->shouldReceive('updateMany')->with($this->orderMock, [
+            '_mp_pp_order_id' => 'PPORDSYNTHETIC001', '_mp_pp_payment_id' => 'PPPAYSYNTHETIC001',
+            '_mp_order_id' => 'ORDSYNTHETIC001', '_mp_transaction_intent_id' => 'syntheticintent001',
+        ])->once();
+        $this->orderMock->shouldNotReceive('payment_complete', 'update_status', 'add_order_note');
+        $this->orderMetadata->persistSmartPixReferences($this->orderMock, [
+            'order_reference' => 'PPORDSYNTHETIC001', 'payment_reference' => 'PPPAYSYNTHETIC001',
+            'provider_order_reference' => 'ORDSYNTHETIC001', 'transaction_intent_reference' => 'syntheticintent001',
+        ]);
+        $this->addToAssertionCount(1);
+    }
+
+    public function testGivenAnObservedSmartPixAttemptWhenEndingItThenEveryObservationIsDeletedWithIt(): void
+    {
+        $orderMetadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+        $this->orderMock->shouldReceive('meta_exists')->andReturn(true);
+        $deleted = [];
+        $this->orderMock->shouldReceive('delete_meta_data')->andReturnUsing(static function (string $metaKey) use (&$deleted): void {
+            $deleted[] = $metaKey;
+        });
+        $this->orderMock->shouldReceive('save')->once();
+
+        $this->orderMock->shouldReceive('get_meta')->andReturn('');
+        $orderMetadata->endSmartPixAttempt($this->orderMock);
+
+        foreach (
+            [
+                '_mp_pp_order_status', '_mp_pp_order_status_detail', '_mp_pp_payment_status',
+                '_mp_pp_payment_status_detail', '_mp_pp_order_total_failed', '_mp_pp_payment_id',
+            ] as $metaKey
+        ) {
+            $this->assertContains($metaKey, $deleted);
+        }
+    }
+
+    public function testGivenAPreviousSmartPixAttemptWhenEndingItThenOnlyItsStoredKeysAreDeletedInOneSave(): void
+    {
+        $orderMetadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+        $stored = ['_mp_payment_contract', '_mp_idempotency_key', '_mp_pp_order_id'];
+        $this->orderMock->shouldReceive('meta_exists')->andReturnUsing(
+            static fn(string $metaKey): bool => in_array($metaKey, $stored, true)
+        );
+        foreach ($stored as $metaKey) {
+            $this->orderMock->shouldReceive('delete_meta_data')->with($metaKey)->once();
+        }
+        $this->orderMock->shouldReceive('save')->once();
+
+        $this->orderMock->shouldReceive('get_meta')->andReturn('');
+        $orderMetadata->endSmartPixAttempt($this->orderMock);
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function testGivenNoSmartPixAttemptWhenEndingItThenTheOrderIsNotSaved(): void
+    {
+        $orderMetadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+        $this->orderMock->shouldReceive('meta_exists')->andReturn(false);
+        $this->orderMock->shouldNotReceive('delete_meta_data', 'save');
+
+        $this->orderMock->shouldReceive('get_meta')->andReturn('');
+        $orderMetadata->endSmartPixAttempt($this->orderMock);
+
+        $this->addToAssertionCount(1);
+    }
+
+    /** @param array<string, mixed> $meta Single values, also served as one row to multi-row reads. */
+    private function stubMeta(array $meta): void
+    {
+        $this->orderMock->shouldReceive('get_meta')->andReturnUsing(function ($key, $single = true) use ($meta) {
+            if ($single !== false) {
+                return $meta[$key] ?? '';
+            }
+            return array_key_exists($key, $meta) ? [$this->metaEntry(1, $meta[$key])] : [];
+        });
+    }
+
+    /**
+     * @param array<string, mixed> $meta
+     * @return array<string, mixed> Written meta, by key
+     */
+    private function endAttemptWith(array $meta): array
+    {
+        $written = [];
+        $this->stubMeta($meta);
+        $this->orderMock->shouldReceive('meta_exists')->andReturnUsing(static function ($key) use (&$meta): bool {
+            return array_key_exists($key, $meta);
+        });
+        $this->orderMock->shouldReceive('update_meta_data')->andReturnUsing(static function ($key, $value) use (&$written): void {
+            $written[$key] = $value;
+        });
+        $this->orderMock->shouldReceive('delete_meta_data')->andReturnNull();
+        $this->orderMock->shouldReceive('save')->andReturnNull();
+        $this->orderMock->shouldReceive('get_id')->andReturn(321);
+
+        (new OrderMetadata(new OrderMeta(), $this->logsMock))->endSmartPixAttempt($this->orderMock);
+
+        return $written;
+    }
+
+    public function testGivenAnAdmittedCreateWithoutAnswerWhenEndingTheAttemptThenItStaysTraceable(): void
+    {
+        $written = $this->endAttemptWith([
+            '_mp_payment_contract' => OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1,
+            '_mp_idempotency_key' => 'attempt_aaaaaaaaaaaaaaaa',
+            '_mp_smart_pix_attempt_reference' => 'STORE-321',
+            '_mp_smart_pix_creation_started' => str_repeat('a', 64),
+        ]);
+
+        $this->assertSame([
+            '_mp_smart_pix_superseded_key' => 'attempt_aaaaaaaaaaaaaaaa',
+            '_mp_smart_pix_superseded_reference' => 'STORE-321',
+        ], $written);
+    }
+
+    /** @dataProvider resolvedAttemptProvider */
+    public function testGivenAResolvedAttemptWhenEndingItThenNothingIsPreserved(array $meta): void
+    {
+        $this->assertSame([], $this->endAttemptWith($meta));
+    }
+
+    public static function resolvedAttemptProvider(): array
+    {
+        $base = [
+            '_mp_payment_contract' => OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1,
+            '_mp_idempotency_key' => 'attempt_aaaaaaaaaaaaaaaa',
+            '_mp_smart_pix_attempt_reference' => 'WC-321',
+            '_mp_smart_pix_creation_started' => str_repeat('a', 64),
+        ];
+        return [
+            'linked Order' => [$base + ['_mp_pp_order_id' => 'PPORDSYNTHETIC001']],
+            'known provider failure' => [$base + ['_mp_smart_pix_creation_failure' => str_repeat('a', 64) . ':validation']],
+            'never dispatched' => [array_diff_key($base, ['_mp_smart_pix_creation_started' => true])],
+        ];
+    }
+
+    public function testGivenAnotherGatewayAfterAnUnansweredCreateThenTheActiveAttemptIsSuperseded(): void
+    {
+        $meta = [
+            '_mp_payment_contract' => OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1,
+            '_mp_idempotency_key' => 'attempt_aaaaaaaaaaaaaaaa',
+            '_mp_smart_pix_attempt_reference' => 'WC-321',
+            '_mp_smart_pix_creation_started' => str_repeat('a', 64),
+        ];
+        $this->stubMeta($meta);
+        $this->orderMock->shouldReceive('get_payment_method')->with('edit')->andReturn('woo-mercado-pago-custom');
+
+        $this->assertSame(
+            ['attempt_key' => 'attempt_aaaaaaaaaaaaaaaa', 'attempt_reference' => 'WC-321'],
+            (new OrderMetadata(new OrderMeta(), $this->logsMock))->getSupersededSmartPixAttempt($this->orderMock)
+        );
+    }
+
+    public function testGivenAnUnansweredCreateWhenAnotherMethodPaysThenTheContractEndsAndTheLateOrderStaysReviewable(): void
+    {
+        $meta = [
+            '_mp_payment_contract' => OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1,
+            '_mp_idempotency_key' => 'attempt_aaaaaaaaaaaaaaaa',
+            '_mp_smart_pix_attempt_reference' => 'WC-321',
+            '_mp_smart_pix_creation_started' => str_repeat('a', 64),
+        ];
+        $this->orderMock->shouldReceive('get_meta')->andReturnUsing(function ($key, $single = true) use (&$meta) {
+            if ($single !== false) {
+                return $meta[$key] ?? '';
+            }
+            return array_key_exists($key, $meta) ? [$this->metaEntry(1, $meta[$key])] : [];
+        });
+        $this->orderMock->shouldReceive('meta_exists')->andReturnUsing(static function ($key) use (&$meta): bool {
+            return array_key_exists($key, $meta);
+        });
+        $this->orderMock->shouldReceive('update_meta_data')->andReturnUsing(static function ($key, $value) use (&$meta): void {
+            $meta[$key] = $value;
+        });
+        $this->orderMock->shouldReceive('delete_meta_data')->andReturnUsing(static function ($key) use (&$meta): void {
+            unset($meta[$key]);
+        });
+        $this->orderMock->shouldReceive('save')->andReturnNull();
+        $this->orderMock->shouldReceive('get_id')->andReturn(321);
+        $this->orderMock->shouldReceive('get_payment_method')->with('edit')->andReturn('woo-mercado-pago-custom');
+        $metadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+
+        // AbstractGateway::process_payment ends the attempt before the card payment is processed.
+        $metadata->endSmartPixAttempt($this->orderMock);
+
+        // The card notification is no longer skipped as a Smart Pix contract (OrderStatus::processStatus).
+        $this->assertSame('', $metadata->getPaymentContract($this->orderMock));
+        // A late Smart Pix Order of that attempt is still recognized for manual review.
+        $this->assertSame(
+            ['attempt_key' => 'attempt_aaaaaaaaaaaaaaaa', 'attempt_reference' => 'WC-321'],
+            $metadata->getSupersededSmartPixAttempt($this->orderMock)
+        );
+    }
+
+    public function testGivenAPreservedSupersededAttemptThenItIsReturnedWithoutReadingTheActiveAttempt(): void
+    {
+        $this->stubMeta([
+            '_mp_smart_pix_superseded_key' => 'attempt_aaaaaaaaaaaaaaaa',
+            '_mp_smart_pix_superseded_reference' => 'STORE-321',
+        ]);
+        // The preserved attempt wins even after the buyer switched back to Pix.
+        $this->orderMock->shouldNotReceive('get_payment_method');
+
+        $this->assertSame(
+            ['attempt_key' => 'attempt_aaaaaaaaaaaaaaaa', 'attempt_reference' => 'STORE-321'],
+            (new OrderMetadata(new OrderMeta(), $this->logsMock))->getSupersededSmartPixAttempt($this->orderMock)
+        );
+    }
+
+    public function testGivenTheSameLateOrderTwiceThenItIsRecordedOnce(): void
+    {
+        $settled = '';
+        $this->orderMock->shouldReceive('get_meta')->with('_mp_smart_pix_superseded_settled', true)
+            ->andReturnUsing(static function () use (&$settled) {
+                return $settled;
+            });
+        $this->orderMock->shouldReceive('update_meta_data')->with('_mp_smart_pix_superseded_settled', 'PPORDSYNTHETIC001')
+            ->once()->ordered()->andReturnUsing(static function ($key, $value) use (&$settled): void {
+                $settled = $value;
+            });
+        $this->orderMock->shouldReceive('update_meta_data')
+            ->with('_mp_pp_order_reconcile_state', OrderMetadata::PP_ORDER_RECONCILE_STATE_MANUAL_REVIEW)
+            ->once()->ordered();
+        // One save for both keys: the marker never lands without the manual review.
+        $this->orderMock->shouldReceive('save')->once()->ordered();
+        $metadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+
+        $this->assertFalse($metadata->isSupersededSmartPixSettled($this->orderMock, 'PPORDSYNTHETIC001'));
+        $metadata->settleSupersededSmartPixReview($this->orderMock, 'PPORDSYNTHETIC001');
+        $this->assertTrue($metadata->isSupersededSmartPixSettled($this->orderMock, 'PPORDSYNTHETIC001'));
+    }
+
+    /**
+     * @testWith ["setPpOrderId", "getPpOrderId", "_mp_pp_order_id", "pp-order-123"]
+     *           ["setPpOrderStatus", "getPpOrderStatus", "_mp_pp_order_status", "status-value"]
+     *           ["setPpOrderStatusDetail", "getPpOrderStatusDetail", "_mp_pp_order_status_detail", "status-detail"]
+     *           ["setPpOrderEventFingerprint", "getPpOrderEventFingerprint", "_mp_pp_order_event_fingerprint", "fingerprint-123"]
+     *           ["setPpOrderReconcileState", "getPpOrderReconcileState", "_mp_pp_order_reconcile_state", "scheduled"]
+     *           ["setPpOrderTerminalReported", "getPpOrderTerminalReported", "_mp_pp_order_terminal_reported", "approved"]
+     *           ["setPpOrderThankyouResultReported", "getPpOrderThankyouResultReported", "_mp_pp_order_thankyou_result_reported", "rejected"]
+     */
+    public function testSmartPixMetadataAccessors(string $setter, string $getter, string $metaKey, string $value)
+    {
+        $orderMetadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+
+        $this->orderMock
+            ->shouldReceive('update_meta_data')
+            ->with($metaKey, $value)
+            ->once();
+        $this->orderMock
+            ->shouldReceive('save')
+            ->once();
+        $this->orderMock
+            ->shouldReceive('get_meta')
+            ->with($metaKey, true)
+            ->once()
+            ->andReturn($value);
+
+        $orderMetadata->{$setter}($this->orderMock, $value);
+
+        $this->assertSame($value, $orderMetadata->{$getter}($this->orderMock));
+    }
+
+    public function testGivenAPersistedSmartPixObservationWhenReadingItThenThePaymentFactsAndFailedTotalAreReturned(): void
+    {
+        $orderMetadata = new OrderMetadata(new OrderMeta(), $this->logsMock);
+        $stored        = [];
+
+        $this->orderMock->shouldReceive('update_meta_data')->andReturnUsing(
+            static function (string $metaKey, $value) use (&$stored): void {
+                $stored[$metaKey] = $value;
+            }
+        );
+        $this->orderMock->shouldReceive('save')->once();
+        $this->orderMock->shouldReceive('get_meta')->andReturnUsing(
+            static function (string $metaKey) use (&$stored) {
+                return $stored[$metaKey] ?? '';
+            }
+        );
+
+        $orderMetadata->persistSmartPixObservation($this->orderMock, [
+            'order_status'          => 'processed',
+            'order_status_detail'   => 'accredited',
+            'payment_status'        => 'processed',
+            'payment_status_detail' => 'accredited',
+            'total_failed'          => '0.00',
+            'payment_id'            => 'PPPAYSYNTHETIC001',
+            'payment_reference'     => 'ORDSYNTHETIC001',
+        ]);
+
+        $this->assertSame('processed', $orderMetadata->getPpPaymentStatus($this->orderMock));
+        $this->assertSame('accredited', $orderMetadata->getPpPaymentStatusDetail($this->orderMock));
+        $this->assertSame('0.00', $orderMetadata->getPpOrderTotalFailed($this->orderMock));
+    }
+
+    public function testPpOrderReconcileStateConstantsMatchAllowList()
+    {
+        $this->assertSame('scheduled', OrderMetadata::PP_ORDER_RECONCILE_STATE_SCHEDULED);
+        $this->assertSame('waiting', OrderMetadata::PP_ORDER_RECONCILE_STATE_WAITING);
+        $this->assertSame('terminal', OrderMetadata::PP_ORDER_RECONCILE_STATE_TERMINAL);
+        $this->assertSame('manual_review', OrderMetadata::PP_ORDER_RECONCILE_STATE_MANUAL_REVIEW);
+    }
+
+    public function testPpOrderEventCursorIsNotDeclaredWithoutOfficialContract()
+    {
+        $constants = (new \ReflectionClass(OrderMetadata::class))->getConstants();
+
+        $this->assertNotContains('_mp_pp_order_event_cursor', $constants, true);
     }
 
     public function testGetDiscountData()
@@ -411,6 +1089,19 @@ class OrderMetadataTest extends TestCase
         $this->assertTrue($result);
     }
 
+    public function testHasConventionalPixPaymentWhenAPixQrWasIssuedThroughPayments(): void
+    {
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'pix_on')->andReturn('1');
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, '_Mercado_Pago_Payment_IDs', false)
+            ->andReturn('123456789');
+        $this->orderMetaMock->shouldReceive('get')
+            ->with($this->orderMock, 'PAYMENT_ID: DATE')
+            ->andReturn('');
+
+        $this->assertTrue($this->orderMetadata->hasConventionalPixPayment($this->orderMock));
+    }
+
     public function testGetPaymentBlocks()
     {
         $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'blocks_payment')->andReturn('blocked');
@@ -659,6 +1350,42 @@ class OrderMetadataTest extends TestCase
         $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'mp_sync_order_error_count')->andReturn(3);
         $result = $this->invokePrivateMethod($this->orderMetadata, 'getSyncCronErrorCountValue', [$this->orderMock]);
         $this->assertEquals(3, $result);
+    }
+
+    public function testIncrementSyncCronErrorCountAddsTheFirstErrorAndSavesTheOrder(): void
+    {
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'mp_sync_order_error_count')->andReturn('');
+        $this->orderMetaMock->shouldReceive('add')->once()->with($this->orderMock, 'mp_sync_order_error_count', 1);
+        $this->orderMetaMock->shouldNotReceive('update');
+        $this->orderMock->shouldReceive('save')->once();
+
+        $this->orderMetadata->incrementSyncCronErrorCount($this->orderMock);
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function testIncrementSyncCronErrorCountUpdatesAnExistingCountAndSavesTheOrder(): void
+    {
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'mp_sync_order_error_count')->andReturn(2);
+        $this->orderMetaMock->shouldReceive('update')->once()->with($this->orderMock, 'mp_sync_order_error_count', 3);
+        $this->orderMetaMock->shouldNotReceive('add');
+        $this->orderMock->shouldReceive('save')->once();
+
+        $this->orderMetadata->incrementSyncCronErrorCount($this->orderMock);
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function testGetSyncCronErrorCountReturnsTheStoredCount(): void
+    {
+        $this->orderMetaMock->shouldReceive('get')->with($this->orderMock, 'mp_sync_order_error_count')->andReturn(4);
+
+        $this->assertSame(4, $this->orderMetadata->getSyncCronErrorCount($this->orderMock));
+    }
+
+    public function testFindLatestPaymentReturnsAnEmptyIdWithoutPaymentDetails(): void
+    {
+        $this->assertSame('', $this->invokePrivateMethod($this->orderMetadata, 'findLatestPayment', [[]]));
     }
 
     public function testUpdatePaymentsOrderMetadata()
@@ -1602,7 +2329,10 @@ class OrderMetadataTest extends TestCase
         $this->orderMetaMock->shouldNotReceive('update');
 
         $this->assertTrue($this->orderMetadata->replaceRefundedAmountForPayment(
-            $this->orderMock, '12345', 14.0, []
+            $this->orderMock,
+            '12345',
+            14.0,
+            []
         ));
     }
 
@@ -1614,7 +2344,10 @@ class OrderMetadataTest extends TestCase
         $this->orderMetaMock->shouldNotReceive('update');
 
         $this->assertFalse($this->orderMetadata->replaceRefundedAmountForPayment(
-            $this->orderMock, '12345', 14.0, []
+            $this->orderMock,
+            '12345',
+            14.0,
+            []
         ));
     }
 
@@ -1656,7 +2389,10 @@ class OrderMetadataTest extends TestCase
         $this->orderMetaMock->shouldNotReceive('update');
 
         $this->assertFalse($this->orderMetadata->replaceRefundedAmountForPayment(
-            $this->orderMock, '12345', -1.0, []
+            $this->orderMock,
+            '12345',
+            -1.0,
+            []
         ));
     }
 
@@ -1679,7 +2415,10 @@ class OrderMetadataTest extends TestCase
             });
 
         $this->assertTrue($this->orderMetadata->replaceRefundedAmountForPayment(
-            $this->orderMock, '12345', 10.0, ['date' => '2026-09-30', 'total_amount' => 100]
+            $this->orderMock,
+            '12345',
+            10.0,
+            ['date' => '2026-09-30', 'total_amount' => 100]
         ));
         $this->assertStringContainsString('[Refund 10]', $stored);
     }
@@ -1700,7 +2439,10 @@ class OrderMetadataTest extends TestCase
             });
 
         $this->assertTrue($this->orderMetadata->replaceRefundedAmountForPayment(
-            $this->orderMock, '12345', 10.0, []
+            $this->orderMock,
+            '12345',
+            10.0,
+            []
         ));
         $this->assertSame('[Amount 100]/[Refund 10]', $stored);
     }
@@ -1714,7 +2456,10 @@ class OrderMetadataTest extends TestCase
             ->with('Refund reconciliation write failed: RuntimeException', OrderMetadata::class);
 
         $this->assertFalse($this->orderMetadata->replaceRefundedAmountForPayment(
-            $this->orderMock, '12345', 10.0, []
+            $this->orderMock,
+            '12345',
+            10.0,
+            []
         ));
     }
 

@@ -42,6 +42,7 @@ export interface LegacyLoadOrchestrationTriggerHandler {
     reset(): void;
   };
   mpSuperTokenPaymentMethods: {
+    clearRememberedSelections(): void;
     getStoredPaymentMethods(): PaymentMethod[];
     renderAccountPaymentMethods(paymentMethods: PaymentMethod[], amount: string | null): void;
   };
@@ -80,6 +81,10 @@ export class LegacyLoadOrchestrationSession implements LoadSuperTokenSession {
 
   emailHasChanged(): boolean {
     return this.triggerHandler.emailHasChanged();
+  }
+
+  clearRememberedSelections(): void {
+    this.triggerHandler.mpSuperTokenPaymentMethods.clearRememberedSelections();
   }
 
   cancelInvalidAmount(): void {

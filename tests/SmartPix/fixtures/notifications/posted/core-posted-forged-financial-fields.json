@@ -1,0 +1,17 @@
+{
+  "notification_id": "PPORDSYNTHETICNTF001",
+  "transaction_type": "pp_order",
+  "status": "processed",
+  "status_detail": "accredited",
+  "external_reference": "WC-999",
+  "transaction_amount": 999.99,
+  "total_paid": 999.99,
+  "payments_details": [
+    {
+      "status": "processed",
+      "references": {
+        "order_id": "ORDSYNTHETICFORGED001"
+      }
+    }
+  ]
+}

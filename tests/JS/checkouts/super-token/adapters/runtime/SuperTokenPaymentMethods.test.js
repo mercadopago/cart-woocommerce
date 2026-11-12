@@ -245,6 +245,19 @@ describe('SuperTokenPaymentMethods', () => {
       expect(controller.getActivePaymentMethod()).toBeNull();
       expect(controller.getLastPaymentMethodChoosen()).toBe(card);
     });
+
+    it('Given remembered selections, When the amount-change state is cleared, Then no stale selection can be restored', () => {
+      const { controller } = build();
+      const card = creditCard();
+      controller.storeActivePaymentMethod(card);
+      controller.storeSelectedPreloadedPaymentMethod(card);
+
+      controller.clearRememberedSelections();
+
+      expect(controller.getActivePaymentMethod()).toBe(card);
+      expect(controller.getLastPaymentMethodChoosen()).toBeNull();
+      expect(controller.getSelectedPreloadedPaymentMethod()).toBeNull();
+    });
   });
 
   describe('selectedSupertokenMethodEvent', () => {
@@ -1507,6 +1520,38 @@ describe('SuperTokenPaymentMethods', () => {
         expect(footer.textContent).toBe('Conoce\u00a0cómo cuidamos tu privacidad.');
         expect(link.href).toBe('https://www.mercadopago.cl/privacidad');
         expect(link.target).toBe('_blank');
+      });
+
+      it('Given localized markup with unsafe attributes, When adding the footer, Then it rebuilds only safe link DOM', () => {
+        const root = appendCustomCheckoutRoot();
+        const privacyPolicy = 'Conoce&nbsp;<a href="javascript:alert(1)" onclick="alert(1)">tu privacidad</a>.';
+        const { controller } = build({
+          params: buildParams({ site_id: 'MLC', mercadopago_privacy_policy: privacyPolicy }),
+        });
+
+        controller.addMercadoPagoPrivacyPolicyFooter();
+
+        const footer = root.querySelector('#mp-super-token-privacy-policy-footer');
+        const link = footer.querySelector('a');
+        expect(footer.textContent).toBe('Conoce\u00a0tu privacidad.');
+        expect(link.href).toBe('https://www.mercadopago.cl/privacidad');
+        expect(link.hasAttribute('onclick')).toBe(false);
+        expect(footer.querySelector('script')).toBeNull();
+      });
+
+      it('Given unexpected markup in the localized copy, When adding the footer, Then it remains inert text', () => {
+        const root = appendCustomCheckoutRoot();
+        const privacyPolicy = 'Privacy <img src=x onerror=alert(1)> policy';
+        const { controller } = build({
+          params: buildParams({ site_id: 'MLC', mercadopago_privacy_policy: privacyPolicy }),
+        });
+
+        controller.addMercadoPagoPrivacyPolicyFooter();
+
+        const footer = root.querySelector('#mp-super-token-privacy-policy-footer');
+        expect(footer.querySelector('img')).toBeNull();
+        expect(footer.querySelector('script')).toBeNull();
+        expect(footer.textContent).toContain('<img');
       });
 
       it('Given the checkout root, When adding the footer, Then it is prepended as the first child', () => {

@@ -1,7 +1,7 @@
 /* globals jQuery, MPCheckoutErrorDispatcher, sendMetric, CheckoutPage, MPSuperTokenErrorCodes */
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 import { getSetting } from '@woocommerce/settings';
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { decodeEntities } from '@wordpress/html-entities';
 import { addDiscountAndCommission, handleCartTotalChange, removeDiscountAndCommission } from './helpers/cart-update.helper';
 import { VALIDATION_STORE_KEY } from '@woocommerce/block-data';
@@ -28,9 +28,52 @@ const Label = () => {
 };
 
 const Content = (props) => {
-  const { eventRegistration, emitResponse, onSubmit } = props;
+  const { eventRegistration, emitResponse, onSubmit, checkoutStatus, activePaymentMethod } = props;
   const { onPaymentSetup, onCheckoutSuccess, onCheckoutFail } = eventRegistration;
   const [totalValue, setTotalValue] = useState(null);
+  const contentRef = useRef(null);
+  const pendingCardholderFocus = useRef(null);
+
+  useEffect(() => {
+    if (activePaymentMethod !== paymentMethodName) {
+      pendingCardholderFocus.current = null;
+      return;
+    }
+
+    if (!checkoutStatus?.isIdle || !pendingCardholderFocus.current) {
+      return;
+    }
+
+    const focusOrigin = pendingCardholderFocus.current;
+    pendingCardholderFocus.current = null;
+    const checkoutType = document.querySelector('#mp_checkout_type')?.value;
+    const input = contentRef.current?.querySelector('#form-checkout__cardholderName');
+    const activeElement = input?.ownerDocument.activeElement;
+
+    if (
+      checkoutType === 'super_token'
+      || checkoutType === 'wallet_button'
+      || !input?.isConnected
+      || input.matches(':disabled')
+      || (input.value ?? '').trim() !== ''
+      || typeof CheckoutPage === 'undefined'
+      || typeof CheckoutPage.isHiddenByStyle !== 'function'
+      || CheckoutPage.isHiddenByStyle(input)
+      || (
+        activeElement !== input.ownerDocument.body
+        && activeElement !== input
+        && activeElement !== focusOrigin.activeElement
+        && !activeElement?.matches('.wc-block-components-checkout-place-order-button')
+      )
+    ) {
+      return;
+    }
+
+    // Blocks disables the payment fieldset during setup. Retry only after its
+    // idle commit has enabled the field, rather than racing that commit with a timer.
+    input.focus?.({ preventScroll: true });
+    input.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+  }, [checkoutStatus?.isIdle, activePaymentMethod]);
 
   useEffect(() => {
     addDiscountAndCommission(extensionCartUpdate, paymentMethodName)
@@ -65,6 +108,7 @@ const Content = (props) => {
 
   useEffect(() => {
     const unsubscribe = onPaymentSetup(async () => {
+      pendingCardholderFocus.current = null;
       window.mpSuperTokenPaymentMethods?.hideSuperTokenError();
 
       switch (document.querySelector('#mp_checkout_type')?.value) {
@@ -187,6 +231,15 @@ const Content = (props) => {
           if (typeof CheckoutPage !== 'undefined' && typeof CheckoutPage.runPreSubmitGates === 'function') {
             const gate = CheckoutPage.runPreSubmitGates(window.mpCustomCheckoutHandler?.cardForm);
             if (!gate.passed) {
+              const input = contentRef.current?.querySelector('#form-checkout__cardholderName');
+              if (
+                gate.gate === 'cardholder'
+                && gate.reason === 'empty_field'
+                && input?.matches(':disabled')
+                && input.ownerDocument.activeElement !== input
+              ) {
+                pendingCardholderFocus.current = { activeElement: input.ownerDocument.activeElement };
+              }
               return { type: emitResponse.responseTypes.ERROR };
             }
           }
@@ -253,6 +306,7 @@ const Content = (props) => {
 
   useEffect(() => {
     return () => {
+      pendingCardholderFocus.current = null;
       const paymentMethods = window.mpSuperTokenPaymentMethods;
       if (paymentMethods?.securityFieldsActiveInstance && typeof paymentMethods.unmountActiveSecurityCodeInstance === 'function') {
         paymentMethods.unmountActiveSecurityCodeInstance();
@@ -344,7 +398,7 @@ const Content = (props) => {
     }
   }, []);
 
-  return <div dangerouslySetInnerHTML={{ __html: settings.params.content }} />;
+  return <div ref={contentRef} dangerouslySetInnerHTML={{ __html: settings.params.content }} />;
 };
 
 const mercadopagoPaymentMethod = {

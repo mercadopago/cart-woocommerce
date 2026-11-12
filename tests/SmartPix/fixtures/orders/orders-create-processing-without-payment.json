@@ -1,0 +1,35 @@
+{
+  "contract_version": "smart-pix-internal/v1",
+  "scenario_id": "orders-create-processing-without-payment",
+  "port": "orders",
+  "operation": "create",
+  "request": {
+    "surface": "classic",
+    "country": "MLB",
+    "payment_contract": "orders_smart_pix_v1",
+    "attempt_reference": "attempt_fixture_create_001",
+    "order_reference": null,
+    "amount": {
+      "value": "125.50",
+      "currency": "BRL"
+    },
+    "refund_amount": null
+  },
+  "response": {
+    "outcome": "success",
+    "state": "processing",
+    "order_reference": "order_fixture_001",
+    "eligibility": null,
+    "authorization": null,
+    "payments": [],
+    "error": null
+  },
+  "expected_effects": {
+    "persist_attempt": true,
+    "link_order_reference": true,
+    "orders_create_calls": 1,
+    "payments_create_calls": 0,
+    "state_transition": "apply_once",
+    "reconciliation": "scheduled"
+  }
+}

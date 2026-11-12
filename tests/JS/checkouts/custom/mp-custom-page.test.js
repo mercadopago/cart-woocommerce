@@ -940,6 +940,287 @@ describe('CheckoutPage', () => {
     });
   });
 
+  describe('additionalInfoHandler() — the cardholder name never depends on the BIN catalog (UPPP-1430)', () => {
+    function loadPageWithFields() {
+      const page = loadFile(MP_CUSTOM_PAGE_PATH, 'CheckoutPage', {
+        wc_mercadopago_custom_checkout_params: { site_id: 'MLM', input_helper_message: {} },
+        wc_mercadopago_custom_page_params: {},
+        CheckoutElements: {
+          fcCardholderName: '#form-checkout__cardholderName',
+          mpIssuerContainer: '#mp-checkout-custom-issuers-container',
+          mpDocumentContainer: '#mp-doc-div',
+        },
+      });
+
+      document.body.innerHTML = `
+        <input id="form-checkout__cardholderName" style="display: none" />
+        <div id="mp-checkout-custom-issuers-container" style="display: block"></div>
+        <div id="mp-doc-div" style="display: block"></div>
+      `;
+
+      return page;
+    }
+
+    afterEach(() => {
+      document.body.innerHTML = '';
+    });
+
+    test('Given the catalog omits cardholder_name for the BIN, When handled, Then the cardholder field is shown anyway', () => {
+      const page = loadPageWithFields();
+
+      page.additionalInfoHandler(page.loadAdditionalInfo([]));
+
+      expect(document.getElementById('form-checkout__cardholderName').style.display).toBe('block');
+    });
+
+    test('Given the catalog lists cardholder_name for the BIN, When handled, Then the cardholder field is shown', () => {
+      const page = loadPageWithFields();
+
+      page.additionalInfoHandler(page.loadAdditionalInfo(['cardholder_name']));
+
+      expect(document.getElementById('form-checkout__cardholderName').style.display).toBe('block');
+    });
+
+    test('Given the catalog omits issuer and document, When handled, Then only those fields are hidden', () => {
+      const page = loadPageWithFields();
+
+      page.additionalInfoHandler(page.loadAdditionalInfo([]));
+
+      expect(document.getElementById('mp-checkout-custom-issuers-container').style.display).toBe('none');
+      expect(document.getElementById('mp-doc-div').style.display).toBe('none');
+      expect(document.getElementById('form-checkout__cardholderName').style.display).toBe('block');
+    });
+
+    test('Given the catalog lists issuer and document, When handled, Then those fields are shown', () => {
+      const page = loadPageWithFields();
+
+      page.additionalInfoHandler(page.loadAdditionalInfo([
+        'issuer_id', 'cardholder_identification_type', 'cardholder_identification_number',
+      ]));
+
+      expect(document.getElementById('mp-checkout-custom-issuers-container').style.display).toBe('block');
+      expect(document.getElementById('mp-doc-div').style.display).toBe('block');
+    });
+  });
+
+  describe('runPreSubmitGates() — cardholder gate between card and installments, empty name only (UPPP-1430)', () => {
+    let sendMetric;
+    let cardForm;
+
+    function loadPageForCardholderGate() {
+      return loadFile(MP_CUSTOM_PAGE_PATH, 'CheckoutPage', {
+        wc_mercadopago_custom_checkout_params: { site_id: 'MLM', input_helper_message: {} },
+        wc_mercadopago_custom_page_params: {},
+        CheckoutElements: {
+          customContent: '#mp-custom-content',
+          cardInstallments: '#cardInstallments',
+          mpInstallmentsCard: '#mp-installments-card',
+          mpInstallmentsContainer: '#mp-installments-container',
+          fcCardNumberContainer: '#form-checkout__cardNumber-container',
+          fcCardholderName: '#form-checkout__cardholderName',
+          mpCardHolderNameHelper: '#mp-card-holder-div #mp-card-holder-name-helper',
+          mpCardHolderNameHelperInfo: '#mp-card-holder-div #mp-card-holder-name-helper-info',
+          mpCardholderNameInputLabel: '#mp-card-holder-div .mp-input-label',
+          fcIdentificationNumber: '#form-checkout__identificationNumber',
+          fcIdentificationNumberContainer: '#form-checkout__identificationNumber-container',
+          mpDocumentContainer: '#mp-doc-div',
+          mpDocumentInputLabel: '#mp-doc-label',
+          mpDocumentComponent: '#mp-custom-content input-document',
+          fcIdentificationNumberInput: '#mp-custom-content input.mp-document',
+        },
+        sendMetric,
+      });
+    }
+
+    // withCardholderField=false reproduces a checkout whose template has no cardholder input.
+    function setupDom({ withCardholderField = true, cardholderName = '', cardError = false } = {}) {
+      const cardholderMarkup = withCardholderField ? `
+        <div id="mp-card-holder-div">
+          <div class="mp-input-label"></div>
+          <input id="form-checkout__cardholderName" aria-invalid="false"
+                 aria-describedby="mp-card-holder-name-helper-info mp-card-holder-name-example" />
+          <div id="mp-card-holder-name-helper-info"></div>
+          <div id="mp-card-holder-name-helper" style="display: none"></div>
+          <span id="mp-card-holder-name-example"></span>
+        </div>` : '';
+
+      document.body.innerHTML = `
+        <div id="mp-custom-content">
+          <div id="mp-doc-label" class="mp-input-label"></div>
+          <div id="mp-doc-div" style="display: none">
+            <input-document>
+              <div id="form-checkout__identificationNumber-container">
+                <input class="mp-document" type="text" />
+                <input type="hidden" id="form-checkout__identificationNumber" />
+              </div>
+            </input-document>
+          </div>
+        </div>
+        <div id="form-checkout__cardNumber-container" class="${cardError ? 'mp-error' : ''}"></div>
+        ${cardholderMarkup}
+        <div id="mp-installments-card" style="display: block">
+          <div id="mp-installments-container"><div class="sdk-installments-ui"></div></div>
+          <div class="mp-checkout-custom-installments-select-container">
+            <label class="mp-input-label"></label>
+            <select id="form-checkout__installments">
+              <option value="">placeholder</option>
+              <option value="3">3</option>
+            </select>
+            <div id="mp-installments-error" style="display: none"></div>
+            <div id="mp-installments-tax-info" style="display: none"></div>
+          </div>
+        </div>
+        <input type="hidden" id="cardInstallments" value="3" />
+      `;
+      document.getElementById('form-checkout__installments').value = '3';
+      if (withCardholderField) {
+        document.getElementById('form-checkout__cardholderName').value = cardholderName;
+      }
+    }
+
+    beforeEach(() => {
+      sendMetric = jest.fn();
+      cardForm = {
+        getCardValidationReason: jest.fn(() => 'invalid_bin'),
+        getCardValidationDetail: jest.fn(() => ''),
+        isZeroDollarInitialCitContext: jest.fn(() => false),
+        scrollToCardForm: jest.fn(),
+        removeLoadSpinner: jest.fn(),
+        removeBlockOverlay: jest.fn(),
+      };
+      Element.prototype.scrollIntoView = jest.fn();
+    });
+
+    afterEach(() => {
+      document.body.innerHTML = '';
+    });
+
+    test('Given the cardholder name is empty, When called, Then blocks on the cardholder gate, marks the field and emits the metric', async () => {
+      const page = loadPageForCardholderGate();
+      setupDom({ cardholderName: '' });
+
+      const result = page.runPreSubmitGates(cardForm);
+
+      expect(result).toEqual({ passed: false, gate: 'cardholder', reason: 'empty_field' });
+      expect(sendMetric).toHaveBeenCalledWith(
+        'MP_CUSTOM_CHECKOUT_CARDHOLDER_VALIDATION_BLOCKED',
+        'empty_field',
+        'mp_custom_cardholder_validation'
+      );
+      const input = document.getElementById('form-checkout__cardholderName');
+      expect(input.classList.contains('mp-error') || input.classList.contains('mp-error-2px')).toBe(true);
+      expect(input.getAttribute('aria-invalid')).toBe('true');
+      expect(document.getElementById('mp-card-holder-name-helper').style.display).toBe('flex');
+      expect(cardForm.removeLoadSpinner).toHaveBeenCalled();
+      await Promise.resolve();
+      expect(cardForm.removeBlockOverlay).toHaveBeenCalled();
+    });
+
+    test('Given a cardholder name with an apostrophe or a hyphen, When called, Then the gate does not block on format (the SDK owns that rule)', () => {
+      const page = loadPageForCardholderGate();
+      setupDom({ cardholderName: "Maria Sant'Anna-Souza" });
+
+      const result = page.runPreSubmitGates(cardForm);
+
+      expect(result).toEqual({ passed: true });
+      expect(sendMetric).not.toHaveBeenCalled();
+    });
+
+    test('Given the cardholder input is hidden by the theme, When empty, Then the gate is skipped and a hidden_field metric is emitted', () => {
+      const page = loadPageForCardholderGate();
+      setupDom({ cardholderName: '' });
+      document.getElementById('mp-card-holder-div').style.display = 'none';
+
+      const result = page.runPreSubmitGates(cardForm);
+
+      expect(result).toEqual({ passed: true });
+      expect(sendMetric).toHaveBeenCalledWith(
+        'MP_CUSTOM_CHECKOUT_CARDHOLDER_VALIDATION_BLOCKED',
+        'hidden_field',
+        'mp_custom_cardholder_validation'
+      );
+    });
+
+    test('Given the cardholder name is empty, When called, Then the focus moves to the field', () => {
+      const page = loadPageForCardholderGate();
+      setupDom({ cardholderName: '' });
+      const input = document.getElementById('form-checkout__cardholderName');
+      const focus = jest.spyOn(input, 'focus');
+
+      page.runPreSubmitGates(cardForm);
+
+      expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    });
+
+    test('Given a template without the informative helper, When the name is empty, Then the gate blocks without throwing', () => {
+      const page = loadPageForCardholderGate();
+      setupDom({ cardholderName: '' });
+      document.getElementById('mp-card-holder-name-helper-info').remove();
+
+      expect(() => page.runPreSubmitGates(cardForm)).not.toThrow();
+      expect(page.runPreSubmitGates(cardForm)).toEqual({ passed: false, gate: 'cardholder', reason: 'empty_field' });
+    });
+
+    test('Given a valid cardholder name, When called, Then the cardholder gate passes and the flow continues', () => {
+      const page = loadPageForCardholderGate();
+      setupDom({ cardholderName: 'María Peña' });
+
+      const result = page.runPreSubmitGates(cardForm);
+
+      expect(result).toEqual({ passed: true });
+      expect(sendMetric).not.toHaveBeenCalled();
+    });
+
+    test('Given the card number has an error and the cardholder is empty, When called, Then the card gate blocks first', () => {
+      const page = loadPageForCardholderGate();
+      setupDom({ cardholderName: '', cardError: true });
+
+      const result = page.runPreSubmitGates(cardForm);
+
+      expect(result.gate).toBe('card');
+      expect(sendMetric).not.toHaveBeenCalledWith(
+        'MP_CUSTOM_CHECKOUT_CARDHOLDER_VALIDATION_BLOCKED',
+        expect.anything(),
+        expect.anything()
+      );
+    });
+
+    test('Given a cardholder name made only of spaces, When called, Then it counts as empty and blocks', () => {
+      const page = loadPageForCardholderGate();
+      setupDom({ cardholderName: '   ' });
+
+      const result = page.runPreSubmitGates(cardForm);
+
+      expect(result).toEqual({ passed: false, gate: 'cardholder', reason: 'empty_field' });
+    });
+
+    test.each([
+      ['a single letter', 'A'],
+      ['two letters', 'Li'],
+      ['digits only', '12345'],
+      ['symbols the plugin helper flags', 'Jos@ P#rez'],
+      ['letters outside Latin-1', 'Łukasz Żółć'],
+      ['a 300 character name', 'A'.repeat(300)],
+    ])('Given %s, When called, Then the gate lets it through (length and charset belong to the SDK and the token API)', (_label, cardholderName) => {
+      const page = loadPageForCardholderGate();
+      setupDom({ cardholderName });
+
+      const result = page.runPreSubmitGates(cardForm);
+
+      expect(result).toEqual({ passed: true });
+      expect(sendMetric).not.toHaveBeenCalled();
+    });
+
+    test('Given a checkout without the cardholder input, When called, Then the cardholder gate is skipped', () => {
+      const page = loadPageForCardholderGate();
+      setupDom({ withCardholderField: false });
+
+      const result = page.runPreSubmitGates(cardForm);
+
+      expect(result).toEqual({ passed: true });
+    });
+  });
+
   describe('clearDocumentLabelErrorOnInput() — clears the document label error as the buyer types', () => {
     function loadPageForDoc() {
       return loadFile(MP_CUSTOM_PAGE_PATH, 'CheckoutPage', {

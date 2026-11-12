@@ -23,7 +23,7 @@ export interface PaymentSdkPort {
     buyerEmail: string,
     options: { platformId: string; version: number },
   ): Promise<SdkAuthenticator>;
-  getAccountPaymentMethods(superToken: string): Promise<{ data: import('@super-token/types/external-globals').PaymentMethod[] }>;
+  getAccountPaymentMethods(superToken: string): Promise<{ data: import('@super-token/types/external-globals').AccountPaymentMethod[] }>;
   getAccountPaymentMethod(superToken: string, paymentMethodToken: string): Promise<{ data: import('@super-token/types/external-globals').PaymentMethod }>;
   getCardId(superToken: string, paymentMethodToken: string): Promise<{ card_id: string }>;
   updatePseudotoken(superToken: string, paymentMethodToken: string, cardTokenId: string): Promise<void>;

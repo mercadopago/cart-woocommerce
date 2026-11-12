@@ -67,6 +67,11 @@ class Nonce
         return wp_nonce_field($id, $fieldName);
     }
 
+    public function isValidNonce(string $id, string $nonce): bool
+    {
+        return in_array(wp_verify_nonce($nonce, $id), [1, 2], true);
+    }
+
     /**
      * Validate wp_nonce
      *

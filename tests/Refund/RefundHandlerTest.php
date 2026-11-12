@@ -74,6 +74,7 @@ class RefundHandlerTest extends TestCase
 
         $this->requester = Mockery::mock(Requester::class);
         $this->order = Mockery::mock('WC_Order');
+        $this->order->shouldReceive('read_meta_data')->with(true)->byDefault();
 
         // Add default expectation for _currency_ratio metadata
         $this->order->shouldReceive('get_meta')
@@ -94,6 +95,7 @@ class RefundHandlerTest extends TestCase
             ->byDefault();
         $this->mercadopagoMock = MercadoPagoMock::getWoocommerceMercadoPagoMock();
         $this->sellerConfig = $this->mercadopagoMock->sellerConfig;
+        $this->mercadopagoMock->orderMetadata->shouldReceive('getPaymentContract')->with($this->order)->andReturn('')->byDefault();
 
         $this->refundHandler = new RefundHandler($this->requester, $this->order, $this->mercadopagoMock);
     }
@@ -146,6 +148,31 @@ class RefundHandlerTest extends TestCase
         $datadogProperty = $reflection->getProperty('datadog');
         $datadogProperty->setAccessible(true);
         $datadogProperty->setValue($this->refundHandler, $datadogMock);
+    }
+
+    public function testSmartPixRefundRoutesBeforeLegacyIdsAndCurrencyRatio(): void
+    {
+        $this->mercadopagoMock->orderMetadata->shouldReceive('getPaymentContract')->with($this->order)
+            ->andReturn('orders_smart_pix_v1');
+        $operations = Mockery::mock(\MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderOperations::class);
+        $this->mercadopagoMock->smartPixOperations = $operations;
+        $operations->shouldReceive('refund')->once()->with($this->order, 25.5)->andReturn(['status' => 'approved', 'data' => []]);
+        $this->order->shouldNotReceive('get_meta')->with('_Mercado_Pago_Payment_IDs');
+        $this->requester->shouldNotReceive('post');
+        $this->assertSame(['status' => 'approved', 'data' => []], $this->refundHandler->processRefund(25.5));
+    }
+
+    public function testSmartPixFailureNeverFallsBackToLegacyPayments(): void
+    {
+        $this->mercadopagoMock->orderMetadata->shouldReceive('getPaymentContract')->with($this->order)
+            ->andReturn('orders_smart_pix_v1');
+        $operations = Mockery::mock(\MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderOperations::class);
+        $this->mercadopagoMock->smartPixOperations = $operations;
+        $operations->shouldReceive('refund')->once()->andThrow(new \RuntimeException('unknown_error'));
+        $this->requester->shouldNotReceive('post');
+        $this->mockDatadogError('0', 'unknown_error', 'woo_refund_error');
+        $this->expectException(\RuntimeException::class);
+        $this->refundHandler->processRefund(25.5);
     }
 
     /**

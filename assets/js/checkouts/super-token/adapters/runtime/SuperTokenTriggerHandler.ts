@@ -66,6 +66,7 @@ export interface TriggerHandlerEmailListener {
 /** The subset of the payment-methods controller the trigger handler forwards to the sessions. */
 export interface TriggerHandlerPaymentMethods {
   SUPER_TOKEN_STYLES: { PAYMENT_METHOD_LIST: string };
+  clearRememberedSelections(): void;
   reset(): void;
   renderAccountPaymentMethods(paymentMethods: PaymentMethod[], amount: string | null): Promise<void> | void;
   getStoredPaymentMethods(): PaymentMethod[];

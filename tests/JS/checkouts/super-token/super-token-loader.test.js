@@ -11,11 +11,20 @@ const BUNDLE_BASE_URL = 'https://http2.mlstatic.com/storage/v1/mercadopago/wooco
 const MONITOR_URL = 'https://api.mercadopago.com/ppcore/prod/monitor/v1/event/datadog/big';
 
 function runLoaderScript(options = {}) {
-  const { scriptsParams, sendBeacon, disableBeacon, disableFetch, location } = options;
+  const {
+    scriptsParams,
+    bundleParams,
+    sendBeacon,
+    disableBeacon,
+    disableFetch,
+    location,
+    fetchImplementation,
+    windowProps = {},
+  } = options;
   const fileContent = fs.readFileSync(superTokenLoaderPath, 'utf8');
 
   const beaconSpy = sendBeacon || jest.fn();
-  const fetchSpy = jest.fn();
+  const fetchSpy = fetchImplementation || jest.fn();
 
   const context = {
     window: {
@@ -24,6 +33,7 @@ function runLoaderScript(options = {}) {
         origin: 'https://example.com',
         pathname: '/checkout',
       },
+      ...windowProps,
     },
     document: global.document,
     navigator: disableBeacon ? {} : { sendBeacon: beaconSpy },
@@ -40,6 +50,9 @@ function runLoaderScript(options = {}) {
   }
   if (scriptsParams !== undefined) {
     context.wc_mercadopago_woocommerce_scripts_params = scriptsParams;
+  }
+  if (bundleParams !== undefined) {
+    context.wc_mercadopago_supertoken_params = bundleParams;
   }
 
   new vm.Script(fileContent, { filename: superTokenLoaderPath }).runInNewContext(context);
@@ -64,6 +77,17 @@ describe('super-token-loader', () => {
   });
 
   describe('asset injection', () => {
+    test.each([
+      ['homologation', 'homol'],
+      ['production', 'v1'],
+      ['https://attacker.example', 'v1'],
+    ])('uses only the fixed namespace for environment %s', (environment, namespace) => {
+      runLoaderScript({ bundleParams: { environment } });
+      expect(document.getElementById(JS_ID).src).toBe(
+        `https://http2.mlstatic.com/storage/${namespace}/mercadopago/woocommerce/scripts/v1/super-token.bundle.min.js`,
+      );
+    });
+
     test('Given the loader runs, When it loads the bundle, Then CSS and JS point to the canonical v1 production folder', () => {
       runLoaderScript();
 
@@ -135,6 +159,25 @@ describe('super-token-loader', () => {
         platform: { name: 'woocommerce', uri: 'storefront', version: '9.0.0', url: 'https://example.com/checkout' },
         details: { site_id: 'MLA', environment: 'prod', cust_id: '123' },
       });
+    });
+
+    test('Given the loader runs in homologation, When an asset metric is sent, Then the metric identifies homologation', () => {
+      const { beaconSpy } = runLoaderScript({ bundleParams: { environment: 'homologation' } });
+
+      document.getElementById(JS_ID).onload();
+
+      const payload = getMetricPayload(beaconSpy, 'load_super_token_bundle_js');
+      expect(payload.details.environment).toBe('homol');
+    });
+
+    test('Given the bundle loads in homologation, When metrics are sent, Then all go to the monitor with the homologation environment', () => {
+      const { beaconSpy } = runLoaderScript({ bundleParams: { environment: 'homologation' } });
+
+      document.getElementById(JS_ID).onload();
+      document.getElementById(CSS_ID).onload();
+
+      expect(getMetricPayload(beaconSpy, 'load_super_token_bundle_js').details.environment).toBe('homol');
+      expect(beaconSpy.mock.calls.every(([url]) => url.startsWith(MONITOR_URL))).toBe(true);
     });
 
     test('Given the CSS asset loads, When onload fires and params are missing, Then a success metric is sent with safe fallbacks', () => {

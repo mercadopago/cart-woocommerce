@@ -1,0 +1,41 @@
+{
+  "contract_version": "smart-pix-internal/v1",
+  "scenario_id": "notification-query-terminal-success",
+  "port": "orders",
+  "operation": "query",
+  "request": {
+    "surface": "server",
+    "country": "MLB",
+    "payment_contract": "orders_smart_pix_v1",
+    "attempt_reference": "WC-321",
+    "order_reference": "PPORDSYNTHETICNTF001",
+    "amount": null,
+    "refund_amount": null
+  },
+  "response": {
+    "outcome": "success",
+    "state": "terminal_success",
+    "order_reference": "PPORDSYNTHETICNTF001",
+    "eligibility": null,
+    "authorization": null,
+    "payments": [
+      {
+        "reference": "PAYSYNTHETICNTF001",
+        "state": "approved",
+        "amount": {
+          "value": "125.50",
+          "currency": "BRL"
+        }
+      }
+    ],
+    "error": null
+  },
+  "expected_effects": {
+    "persist_attempt": false,
+    "link_order_reference": false,
+    "orders_create_calls": 0,
+    "payments_create_calls": 0,
+    "state_transition": "apply_once",
+    "reconciliation": "terminal"
+  }
+}

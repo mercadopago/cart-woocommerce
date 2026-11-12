@@ -44,6 +44,83 @@ class FormTest extends TestCase
             ->andReturn($input);
     }
 
+    /**
+     * @dataProvider requestMethodInputs
+     */
+    public function testRequestMethodReadsTheServerMethodAndHandlesMissingOrInvalidValues($method, string $expected): void
+    {
+        $originalServer = $_SERVER;
+        try {
+            if ($method === null) {
+                unset($_SERVER['REQUEST_METHOD']);
+            } else {
+                $_SERVER['REQUEST_METHOD'] = $method;
+            }
+
+            $this->assertSame($expected, Form::requestMethod());
+        } finally {
+            $_SERVER = $originalServer;
+        }
+    }
+
+    public static function requestMethodInputs(): array
+    {
+        return [
+            'POST' => ['POST', 'POST'],
+            'GET' => ['GET', 'GET'],
+            'lowercase' => ['post', 'POST'],
+            'missing' => [null, ''],
+            'array is invalid' => [['POST'], ''],
+        ];
+    }
+
+    public function testPostFieldsSanitizesStringsWithoutAddingPostObjectFieldsOrMutatingInput(): void
+    {
+        $_POST = ['notice' => '<b>synthetic</b>', 'unknown_field' => 'preserved-key'];
+        WP_Mock::userFunction('sanitize_post')->never();
+        WP_Mock::userFunction('map_deep')->never();
+        WP_Mock::userFunction('wp_unslash')->once()->with('<b>synthetic</b>')->andReturn('<b>unescaped</b>');
+        WP_Mock::userFunction('sanitize_text_field')->once()->with('<b>unescaped</b>')->andReturn('unescaped');
+        WP_Mock::userFunction('wp_unslash')->once()->with('preserved-key')->andReturn('preserved-key');
+        WP_Mock::userFunction('sanitize_text_field')->once()->with('preserved-key')->andReturn('preserved-key');
+
+        $this->assertSame(['notice' => 'unescaped', 'unknown_field' => 'preserved-key'], Form::sanitizedPostFields());
+        $this->assertSame(['notice' => '<b>synthetic</b>', 'unknown_field' => 'preserved-key'], $_POST);
+    }
+
+    /**
+     * @dataProvider invalidPostFieldShapes
+     */
+    public function testPostFieldsPreservesNonStringShapesForStrictSchemaRejection($value): void
+    {
+        $_POST = ['event' => $value];
+        WP_Mock::userFunction('sanitize_post')->never();
+        WP_Mock::userFunction('map_deep')->never();
+        WP_Mock::userFunction('wp_unslash')->never();
+        WP_Mock::userFunction('sanitize_text_field')->never();
+
+        $this->assertSame(['event' => $value], Form::sanitizedPostFields());
+    }
+
+    public static function invalidPostFieldShapes(): array
+    {
+        return [
+            'nested' => [['view']],
+            'integer' => [1],
+            'boolean' => [false],
+            'null' => [null],
+        ];
+    }
+
+    public function testEmptyPostFieldsRemainEmptyWithoutPostObjectDefaults(): void
+    {
+        WP_Mock::userFunction('sanitize_post')->never();
+        WP_Mock::userFunction('wp_unslash')->never();
+        WP_Mock::userFunction('sanitize_text_field')->never();
+
+        $this->assertSame([], Form::sanitizedPostFields());
+    }
+
     public function testPostSelectsKeyFromWordPressSanitizedPost(): void
     {
         $_POST = ['amount' => 'raw-value', 'other' => 'unrelated'];

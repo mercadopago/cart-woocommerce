@@ -58,6 +58,65 @@ import type {
  */
 export type RenderSavedMethods = (container: HTMLElement, paymentMethods: PaymentMethod[]) => void;
 
+const PRIVACY_POLICY_URLS: Record<string, string> = Object.freeze({
+  MLA: 'https://www.mercadopago.com.ar/privacidad',
+  MLB: 'https://www.mercadopago.com.br/privacidade',
+  MLM: 'https://www.mercadopago.com.mx/privacidad',
+  MLC: 'https://www.mercadopago.cl/privacidad',
+  MCO: 'https://www.mercadopago.com.co/privacidad',
+  MPE: 'https://www.mercadopago.com.pe/privacidad',
+  MLU: 'https://www.mercadopago.com.uy/privacidad',
+});
+const PRIVACY_COPY_ENTITIES: Record<string, string> = Object.freeze({
+  '&nbsp;': '\u00a0',
+  '&amp;': '&',
+  '&quot;': '"',
+  '&#39;': "'",
+  '&lt;': '<',
+  '&gt;': '>',
+});
+
+function decodePrivacyCopyText(value: string): string {
+  return value.replace(/&nbsp;|&amp;|&quot;|&#39;|&lt;|&gt;/g, (entity) => PRIVACY_COPY_ENTITIES[entity] ?? entity);
+}
+
+/** Render only the expected translated link, rebuilding it with DOM APIs and a site-owned URL. */
+function renderPrivacyPolicyCopy(span: HTMLSpanElement, copy: string | null | undefined, siteId: string): void {
+  if (typeof copy !== 'string' || copy === '') {
+    span.textContent = '';
+    return;
+  }
+
+  const openingLink = /<a\b[^>]*>/i.exec(copy);
+  if (!openingLink) {
+    span.textContent = decodePrivacyCopyText(copy);
+    return;
+  }
+
+  const contentStart = openingLink.index + openingLink[0].length;
+  const closingLinkStart = copy.indexOf('</a>', contentStart);
+  if (closingLinkStart < 0 || copy.indexOf('<a', contentStart) >= 0
+    || copy.indexOf('</a>', closingLinkStart + 4) >= 0) {
+    span.textContent = decodePrivacyCopyText(copy);
+    return;
+  }
+
+  const prefix = copy.slice(0, openingLink.index);
+  const label = copy.slice(contentStart, closingLinkStart);
+  const suffix = copy.slice(closingLinkStart + 4);
+  if (/[<>]/.test(prefix) || /[<>]/.test(label) || /[<>]/.test(suffix)) {
+    span.textContent = decodePrivacyCopyText(copy);
+    return;
+  }
+
+  const link = document.createElement('a');
+  link.href = PRIVACY_POLICY_URLS[siteId.toUpperCase()] ?? 'https://www.mercadopago.com/privacy';
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = decodePrivacyCopyText(label);
+  span.append(decodePrivacyCopyText(prefix), link, decodePrivacyCopyText(suffix));
+}
+
 /** The subset of the e-mail listener the controller reads (block header + change listener). */
 export interface PaymentMethodsEmailListener {
   isValid(email: string): boolean;
@@ -315,9 +374,9 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
   securityFieldsActiveInstance: RawSdkSecurityCodeField | null = null;
   activePaymentMethod: PaymentMethod | null = null;
   amount: string | null = null;
-  selectedPreloadedPaymentMethod: PaymentMethod | null = null; // Should not be resetted
+  selectedPreloadedPaymentMethod: PaymentMethod | null = null; // Preserved by generic/error resets
   securityCodeReferences: Record<string, boolean> = {};
-  lastPaymentMethodChoosen: PaymentMethod | null = null; // Should not be resetted
+  lastPaymentMethodChoosen: PaymentMethod | null = null; // Preserved by generic/error resets
   attemptsByErrorCode: Record<string, number> = {};
   isRendering = false;
   escSelectionGeneration = 0;
@@ -434,6 +493,13 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
     if (customCheckoutEntireElement) {
       this.variantView?.reset(customCheckoutEntireElement);
     }
+  }
+
+  // Shipping/coupon totals define a new payment context. Unlike an error reset, an amount reset
+  // must not allow any remembered selection to be restored by a later asynchronous render tail.
+  clearRememberedSelections(): void {
+    this.selectedPreloadedPaymentMethod = null;
+    this.lastPaymentMethodChoosen = null;
   }
 
   storePaymentMethodsInMemory(accountPaymentMethods: PaymentMethod[]): void {
@@ -1776,7 +1842,9 @@ export class SuperTokenPaymentMethods implements LegacyPaymentMethodsController 
     const footer = document.createElement('footer');
     footer.classList.add(this.SUPER_TOKEN_STYLES.MERCADO_PAGO_PRIVACY_POLICY_FOOTER);
     footer.id = 'mp-super-token-privacy-policy-footer';
-    footer.innerHTML = `<span>${this.MERCADO_PAGO_PRIVACY_POLICY}</span>`;
+    const span = document.createElement('span');
+    renderPrivacyPolicyCopy(span, this.MERCADO_PAGO_PRIVACY_POLICY, this.SITE_ID);
+    footer.append(span);
 
     customCheckoutEntireElement.insertBefore(footer, customCheckoutEntireElement.firstChild);
   }

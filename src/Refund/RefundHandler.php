@@ -63,6 +63,15 @@ class RefundHandler
                 throw new Exception(RefundException::TYPE_NO_PERMISSION);
             }
 
+            $this->order->read_meta_data(true);
+            if (
+                $this->mercadopago->orderMetadata->getPaymentContract($this->order)
+                === \MercadoPago\Woocommerce\Order\OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1
+            ) {
+                // Route before legacy payment identifiers, ratios, payloads and diagnostic logging.
+                return $this->mercadopago->smartPixOperations->refund($this->order, $amount);
+            }
+
             $currencyRatio = 1.0;
             $currencyRatioMeta = $this->order->get_meta($this->mercadopago->orderMetadata::CURRENCY_RATIO);
             if (!empty($currencyRatioMeta)) {

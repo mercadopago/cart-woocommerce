@@ -19,6 +19,19 @@ const crypto = require('crypto');
 const DEFAULT_MANIFEST = 'integrity-manifest.json';
 
 const MIN_ASSET_RE = /\.min\.(js|css)$/;
+/**
+ * Gitignored Smart Pix personal-review assets: generated only for the isolated local store and
+ * never distributed (bin/create-release-zip.sh removes the same paths, see release-assets.js).
+ * Kept literal and inline so this verifier stays self-contained in the public source snapshot;
+ * broad patterns could hide future orphaned assets.
+ */
+const INTEGRITY_IGNORED_ASSETS = Object.freeze([
+  'assets/js/checkouts/smart-pix/smart-pix.mock.min.js',
+  'assets/js/checkouts/smart-pix/smart-pix.bundle.min.js',
+  'assets/css/checkouts/smart-pix/smart-pix.bundle.min.css',
+  'assets/js/melidata/woocommerce.smart-pix-mock.min.js',
+]);
+const ignoredAssets = new Set(INTEGRITY_IGNORED_ASSETS);
 
 /**
  * Lista os assets .min.{js,css} presentes sob <root>/assets (recursivo).
@@ -100,6 +113,7 @@ function verifyIntegrity (options = {}) {
   // integrity-manifest.json não teria hash para ser validado nem em runtime.
   const manifestKeys = new Set(Object.keys(manifest));
   const orphans = collectMinAssets(root)
+    .filter((relativePath) => !ignoredAssets.has(relativePath))
     .filter((relativePath) => !manifestKeys.has(relativePath));
 
   return {
@@ -180,4 +194,4 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { verifyIntegrity, parseArgs, main };
+module.exports = { verifyIntegrity, parseArgs, main, INTEGRITY_IGNORED_ASSETS };

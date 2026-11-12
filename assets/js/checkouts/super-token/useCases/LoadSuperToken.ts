@@ -27,6 +27,7 @@ export interface LoadSuperTokenSession {
   isFetching(): boolean;
   amountHasChanged(): boolean;
   emailHasChanged(): boolean;
+  clearRememberedSelections(): void;
   cancelInvalidAmount(): void;
   resetFlow(): void;
   isMethodsLoaded(): boolean;
@@ -79,6 +80,7 @@ export class LoadSuperToken {
     }
 
     if (session.amountHasChanged()) {
+      session.clearRememberedSelections();
       session.resetFlow();
       metrics.resetOnAmountChange();
     }

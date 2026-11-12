@@ -28,6 +28,9 @@ class PixBlock extends AbstractBlock
      */
     public function getScriptParams(): array
     {
-        return $this->gateway->getPaymentFieldsParams();
+        return array_merge(
+            $this->gateway->getPaymentFieldsParams(),
+            ['currencyRatio' => $this->getCurrencyRatio($this->name)]
+        );
     }
 }

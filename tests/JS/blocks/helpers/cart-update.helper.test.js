@@ -23,7 +23,7 @@ function loadCartUpdateHelper(context) {
 
   const wrapped =
     source +
-    '\n({ addDiscountAndCommission, handleCartTotalChange, removeDiscountAndCommission });';
+    '\n({ addDiscountAndCommission, formatCartAmount, handleCartTotalChange, removeDiscountAndCommission });';
 
   const script = new vm.Script(wrapped, { filename: CART_UPDATE_HELPER_PATH });
 
@@ -84,6 +84,19 @@ describe('cart-update.helper', () => {
   function load() {
     helper = loadCartUpdateHelper({ window: windowMock, sendMetric });
   }
+
+  // -------------------------------------------------------------------------
+  // formatCartAmount
+  // -------------------------------------------------------------------------
+  describe('formatCartAmount', () => {
+    it('GIVEN a Blocks minor-unit total WHEN formatted THEN returns the SDK amount with the currency ratio', () => {
+      load();
+
+      expect(helper.formatCartAmount(1000, BRL, 1)).toBe('10');
+      expect(helper.formatCartAmount(1000, BRL, 2)).toBe('20');
+      expect(helper.formatCartAmount(1001, BRL, 0)).toBe('10.01');
+    });
+  });
 
   // -------------------------------------------------------------------------
   // addDiscountAndCommission

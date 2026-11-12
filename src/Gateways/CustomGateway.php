@@ -14,6 +14,8 @@ use MercadoPago\Woocommerce\Api\Core\Exceptions\ApiException;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\SubscriptionsHelper;
 use MercadoPago\Woocommerce\Helpers\WebhookUrl;
+use MercadoPago\Woocommerce\Hooks\Scripts;
+use MercadoPago\Woocommerce\SmartPix\Adapters\Telemetry\SmartPixEnvironment;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -1690,12 +1692,14 @@ window.mpSdkInstance = null;",
      */
     private function registerSuperTokenBundleScripts(): void
     {
-        $this->mercadopago->hooks->scripts->registerPaymentFormScript(
-            self::SUPER_TOKEN_BUNDLE_HANDLE,
-            $this->mercadopago->helpers->url->getJsAsset('checkouts/super-token-loader'),
-            $this->getSuperTokenLocalizeData(),
-            [],
-            'wc_mercadopago_supertoken_bundle_params'
+        // Same loader handle for both concerns: the server-selected CDN environment (Smart Pix)
+        // and the canonical Super Token runtime data, only where the payment form renders.
+        // Same resolver as PixGateway: WooCommerce test mode keeps the production bundle; only the
+        // explicit server-side MP_SMART_PIX_ENV override selects homologation.
+        $this->mercadopago->hooks->scripts->registerFastPaymentsCheckoutAssets(
+            SmartPixEnvironment::resolve($this->mercadopago->storeConfig) === SmartPixEnvironment::HOMOLOGATION
+                ? Scripts::SMART_PIX_ENV_HOMOLOGATION : Scripts::SMART_PIX_ENV_PRODUCTION,
+            $this->getSuperTokenLocalizeData()
         );
     }
 

@@ -158,7 +158,9 @@ class AbstractGatewayTest extends TestCase
             }
         ]);
 
-        $this->gateway->expects()->proccessPaymentInternal($order)->andReturn($result = []);
+        // A payment with another method ends an earlier Smart Pix attempt before it is processed.
+        $this->gateway->mercadopago->orderMetadata->expects()->endSmartPixAttempt($order)->once()->globally()->ordered();
+        $this->gateway->expects()->proccessPaymentInternal($order)->once()->globally()->ordered()->andReturn($result = []);
 
         $this->assertSame($result, $this->gateway->process_payment(1));
     }

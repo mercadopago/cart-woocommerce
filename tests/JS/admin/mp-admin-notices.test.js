@@ -4,14 +4,13 @@ const { element } = require('./fixtures/settings-markup');
 describe.each(['source', 'minified'])('Admin notices — real delegated handlers (%s)', assetVariant => {
   const createAdminRuntime = (markup, globals) => createRuntime(markup, globals, assetVariant);
   let runtime;
-  let clearInfo;
 
   beforeEach(() => {
     jest.useFakeTimers();
-    runtime = createAdminRuntime(element("div", { id: "message-feedback-info" }, "Saved"), {
+    runtime = createAdminRuntime('', {
       woocommerce_mercadopago_admin_notice_js_params: { nonce: 'synthetic-notice-nonce' },
     });
-    clearInfo = runtime.load('mp-admin-notices.js', 'clearInfo');
+    runtime.load('mp-admin-notices.js');
     runtime.dispatchReady();
   });
 
@@ -31,13 +30,5 @@ describe.each(['source', 'minified'])('Admin notices — real delegated handlers
   it('does not dismiss anything when an unrelated element is clicked', () => {
     document.body.click();
     expect(runtime.requests).toHaveLength(0);
-  });
-
-  it('retains feedback for ten seconds then removes the real element', () => {
-    clearInfo();
-    jest.advanceTimersByTime(9999);
-    expect(document.getElementById('message-feedback-info')).not.toBeNull();
-    jest.advanceTimersByTime(1);
-    expect(document.getElementById('message-feedback-info')).toBeNull();
   });
 });

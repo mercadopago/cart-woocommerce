@@ -4,6 +4,7 @@ namespace MercadoPago\Woocommerce\Tests\Gateways;
 
 use MercadoPago\Woocommerce\Api\Http\HttpResponse as Response;
 use MercadoPago\Woocommerce\Gateways\CustomGateway;
+use MercadoPago\Woocommerce\Hooks\Scripts;
 use MercadoPago\Woocommerce\Helpers\AutomaticPaymentsClient;
 use MercadoPago\Woocommerce\Helpers\SubscriptionsHelper;
 use MercadoPago\Woocommerce\Tests\Traits\GatewayMock;
@@ -686,16 +687,13 @@ class CustomGatewayCitHandlerTest extends TestCase
         WP_Mock::userFunction('wp_get_current_user')->andReturn((object) ['ID' => 1, 'user_email' => 'buyer@example.test']);
         WP_Mock::userFunction('wp_kses_post')->andReturnArg(0);
 
-        $this->gateway->mercadopago->helpers->url
-            ->shouldReceive('getJsAsset')
-            ->with('checkouts/super-token-loader')
-            ->andReturn('https://cdn.example/super-token-loader.js');
-
+        $this->gateway->mercadopago->storeConfig->shouldReceive('isTestMode')->andReturn(false);
         $this->gateway->mercadopago->hooks->scripts
-            ->shouldReceive('registerPaymentFormScript')
+            ->shouldReceive('registerFastPaymentsCheckoutAssets')
             ->once()
-            ->with('wc_mercadopago_supertoken', 'https://cdn.example/super-token-loader.js',
-                Mockery::type('array'), [], 'wc_mercadopago_supertoken_bundle_params');
+            ->with(Scripts::SMART_PIX_ENV_PRODUCTION, Mockery::on(static function ($params): bool {
+                return is_array($params) && ($params['site_id'] ?? null) === 'MLA';
+            }));
 
         $this->callProtected($this->gateway, 'registerSuperTokenBundleFiles');
 

@@ -4814,3 +4814,59 @@ msgstr "Mercado Crédito"
 msgctxt "credits buyer banner"
 msgid "with Mercado Pago"
 msgstr "con {credits_name}."
+
+#: ../../src/Translations/AdminTranslations.php
+msgid "Complete your Mercado Pago setup"
+msgstr "Completa la configuración de Mercado Pago"
+
+#: ../../src/Translations/AdminTranslations.php
+msgid "Link your account to start receiving payments in your store."
+msgstr "Vincula tu cuenta para empezar a recibir pagos en tu tienda."
+
+#: ../../src/Translations/AdminTranslations.php
+msgid "Link my account"
+msgstr "Vincular cuenta"
+
+#: ../../src/Translations/StoreTranslations.php:549
+msgid "Smart Transfer"
+msgstr "Smart Transfer"
+
+#: src/Order/OrderStatus.php src/SmartPix/SmartPixRefundReconciler.php
+msgid "Smart Transfer: awaiting payment confirmation. Follow the payment status on the order page."
+msgstr "Smart Transfer: esperando la confirmación del pago. Sigue el estado del pago en la página del pedido."
+
+#: src/Order/OrderStatus.php src/SmartPix/SmartPixRefundReconciler.php
+msgid "Mercado Pago: payment refunded."
+msgstr "Mercado Pago: pago devuelto."
+
+#: src/Translations/StoreTranslations.php
+msgid "There is already a pending payment for this order. To change the payment method, contact the store."
+msgstr "Ya existe un pago pendiente para este pedido. Para cambiar el medio de pago, contactá a la tienda."
+
+#: src/SmartPix/SmartPixLegacyPaymentNotice.php
+msgid "Mercado Pago: payment %s was approved on an order with a Smart Pix payment. The order status was not changed; check whether a refund is needed."
+msgstr "Mercado Pago: el pago %s se aprobó en un pedido con un pago Smart Pix. El estado del pedido no cambió; verificá si es necesario hacer una devolución."
+
+#: src/SmartPix/SmartPixNotificationLinkage.php
+msgid "Mercado Pago: a Smart Pix payment (Order %s) was approved after this order was paid with another method. Review it in the Mercado Pago panel and refund it if it is a duplicate."
+msgstr "Mercado Pago: un pago Smart Pix (Order %s) se aprobó después de que este pedido se pagó con otro medio. Revisalo en el panel de Mercado Pago y devolvelo si está duplicado."
+
+#: src/SmartPix/SmartPixNotificationLinkage.php
+msgid "Mercado Pago: a Smart Pix payment (Order %s) was approved after another payment method was selected for this order. Review it in the Mercado Pago panel before changing the order."
+msgstr "Mercado Pago: un pago Smart Pix (Order %s) se aprobó después de que se eligió otro medio de pago para este pedido. Revisalo en el panel de Mercado Pago antes de modificar el pedido."
+
+#: src/SmartPix/SmartPixOrderOperations.php
+msgid "Smart Pix cancellation could not be confirmed. The order status was preserved."
+msgstr "No se pudo confirmar la cancelación de Smart Pix. Se mantuvo el estado del pedido."
+
+#: src/SmartPix/SmartPixOrderOperations.php
+msgid "Mercado Pago: the merchant cancelled this order locally. The Smart Pix creation had no confirmed Order, so no cancellation was sent to Mercado Pago."
+msgstr "Mercado Pago: la tienda canceló este pedido localmente. La creación de Smart Pix no tenía una Order confirmada, por eso no se envió ninguna cancelación a Mercado Pago."
+
+#: src/SmartPix/SmartPixReconciliation.php
+msgid "Mercado Pago: the Smart Pix payment status could not be reconciled automatically. Review the order and its payment in the Mercado Pago panel."
+msgstr "Mercado Pago: no se pudo conciliar automáticamente el estado del pago Smart Pix. Revisá el pedido y su pago en el panel de Mercado Pago."
+
+#: src/SmartPix/SmartPixRefundReconciler.php
+msgid "Mercado Pago: partial refund of %s."
+msgstr "Mercado Pago: devolución parcial de %s."

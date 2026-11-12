@@ -14,6 +14,7 @@
 import type { AuthenticatorSession } from '@super-token/useCases/GetAccountPaymentMethods';
 import type { AuthorizeSession } from '@super-token/useCases/AuthorizePayment';
 import type {
+  AccountPaymentMethod,
   RawSdkAuthenticator,
   RawAccountPaymentMethodsResponse,
 } from '@super-token/types/external-globals';
@@ -35,6 +36,10 @@ export interface LegacyAuthenticator {
   storeFastPaymentToken(token: string): void;
   getStoredAuthenticator(): RawSdkAuthenticator | null;
   storeAuthorizedPseudotoken(pseudotoken: string): void;
+  getCoordinatedAccountPaymentMethods?(
+    amount: string | null,
+    buyerEmail: string,
+  ): Promise<AccountPaymentMethod[] | null>;
 }
 
 /** The one method of the legacy controller the load flow needs — the account fetch. */

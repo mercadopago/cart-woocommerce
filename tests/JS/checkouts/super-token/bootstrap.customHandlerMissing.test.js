@@ -28,6 +28,7 @@ jest.mock('@super-token/adapters/legacy/globalBridge', () => ({
   publishReset: noop,
   publishOrderAndDecorate: noop,
   publishAccountPaymentMethods: noop,
+  publishFastPaymentsEligibility: noop,
   publishAuthorizePayment: noop,
   publishFetchAndRender: noop,
   publishLoad: noop,

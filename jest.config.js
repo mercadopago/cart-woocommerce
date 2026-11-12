@@ -8,6 +8,7 @@ module.exports = {
   coverageThreshold: jestThresholds(coveragePolicy),
   // Ambiente de teste (jsdom simula o navegador)
   testEnvironment: 'jsdom',
+  modulePathIgnorePatterns: ['<rootDir>/.task-evidence/'],
 
   // Todas as suites usam a experiencia unica do Super Token.
   testMatch: ['**/tests/JS/**/*.test.js'],

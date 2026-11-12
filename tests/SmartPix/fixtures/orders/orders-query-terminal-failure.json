@@ -1,0 +1,54 @@
+{
+  "contract_version": "smart-pix-internal/v1",
+  "scenario_id": "orders-query-terminal-failure",
+  "port": "orders",
+  "operation": "query",
+  "request": {
+    "surface": "server",
+    "country": "MLB",
+    "payment_contract": "orders_smart_pix_v1",
+    "attempt_reference": "attempt_fixture_query_failure_001",
+    "order_reference": "order_fixture_query_failure_001",
+    "amount": null,
+    "refund_amount": null
+  },
+  "response": {
+    "outcome": "failure",
+    "state": "terminal_failure",
+    "order_reference": "order_fixture_query_failure_001",
+    "eligibility": null,
+    "authorization": null,
+    "payments": [
+      {
+        "reference": "payment_fixture_query_failure_001",
+        "state": "rejected",
+        "amount": {
+          "value": "125.50",
+          "currency": "BRL"
+        }
+      }
+    ],
+    "error": {
+      "category": "rejected",
+      "code": "SMART_PIX_REJECTED_HIGH_RISK",
+      "retryable": false
+    },
+    "observed": {
+      "order_status": "failed",
+      "order_status_detail": "high_risk",
+      "payment_status": "failed",
+      "payment_status_detail": "high_risk",
+      "total_failed": "125.50",
+      "payment_id": "payment_fixture_query_failure_001",
+      "payment_reference": "ORDFIXTUREQUERYFAILURE001"
+    }
+  },
+  "expected_effects": {
+    "persist_attempt": false,
+    "link_order_reference": false,
+    "orders_create_calls": 0,
+    "payments_create_calls": 0,
+    "state_transition": "apply_once",
+    "reconciliation": "terminal"
+  }
+}

@@ -31,6 +31,46 @@ describe('CoreMonitorMetricsAdapter', () => {
   afterEach(() => {
     jest.restoreAllMocks();
     delete window.melidata;
+    delete window.wc_mercadopago_smart_pix_params;
+  });
+
+  it('reports the shared SDK eligibility error for Smart Pix with selected fields and secrets redacted', () => {
+    window.wc_mercadopago_smart_pix_params = { site_id: 'MLB', standalone_bridge: 'disabled' };
+    const adapter = buildAdapter();
+    adapter.smartPixEligibilityFailure({ code: 'SDK_GET_ACCOUNT_FAILED', message: 'Original SDK failure private-token buyer@example.test',
+      payer: { name: 'PRIVATE_BUYER' }, request: { secret: 'PRIVATE_REQUEST' } }, ['private-token', 'buyer@example.test']);
+    const { url, body } = lastFetch();
+    expect(url).toBe(`${CORE_MONITOR_URL}/smart_pix_checkout_error`);
+    expect(body.value).toBe('1');
+    expect(body.details).toMatchObject({ event: 'eligibility_failed', reason: 'sdk_get_account_failed', sdk_instance_id: 'SDK_1' });
+    expect(body.message).toContain('Original SDK failure');
+    for (const secret of ['private-token', 'buyer@example.test', 'PRIVATE_BUYER', 'PRIVATE_REQUEST']) expect(body.message).not.toContain(secret);
+  });
+
+  it('redacts other e-mails, bearer credentials and JWTs echoed by the SDK in the Smart Pix diagnostic', () => {
+    window.wc_mercadopago_smart_pix_params = { site_id: 'MLB', standalone_bridge: 'disabled' };
+    // Assembled at runtime so the fixtures are not literal credentials in the source.
+    const jwt = ['eyJhbGciOiJub25lIn0', 'eyJzdWIiOiJ0ZXN0In0', 'c2lnbmF0dXJl'].join('.');
+    const bearer = ['Bearer', 'opaque-test-value'].join(' ');
+    const adapter = buildAdapter();
+
+    adapter.smartPixEligibilityFailure({
+      code: 'SDK_UNAUTHORIZED',
+      message: `Rejected other.buyer@example.test with ${bearer} and token ${jwt}`,
+    }, ['buyer@example.test']);
+
+    const { body } = lastFetch();
+    expect(body.details).toMatchObject({ event: 'eligibility_failed', reason: 'sdk_unauthorized' });
+    expect(body.message).toContain('Rejected [REDACTED_EMAIL] with Bearer [REDACTED] and token [REDACTED_JWT]');
+    for (const secret of ['other.buyer@example.test', 'opaque-test-value', jwt]) expect(body.message).not.toContain(secret);
+  });
+
+  it('does not treat an empty shared account list or disabled Smart Pix as eligibility failure', () => {
+    const adapter = buildAdapter();
+    adapter.smartPixEligibilityFailure(new Error('Original SDK failure'), []);
+    window.wc_mercadopago_smart_pix_params = { site_id: 'MLB', standalone_bridge: 'disabled' };
+    adapter.smartPixEligibilityFailure(new Error('EMPTY_ACCOUNT_PAYMENT_METHODS'), []);
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
   it('Given a success metric, When it is sent, Then it POSTs to the Core Monitor URL with the preserved payload shape', () => {

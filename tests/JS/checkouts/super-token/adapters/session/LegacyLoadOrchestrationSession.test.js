@@ -21,6 +21,7 @@ const buildTriggerHandler = (overrides = {}) => ({
     reset: jest.fn(),
   },
   mpSuperTokenPaymentMethods: {
+    clearRememberedSelections: jest.fn(),
     getStoredPaymentMethods: jest.fn(() => STORED),
     renderAccountPaymentMethods: jest.fn(),
   },
@@ -82,6 +83,15 @@ describe('LegacyLoadOrchestrationSession', () => {
 
     session.resetFlow();
     expect(triggerHandler.resetFlow).toHaveBeenCalledTimes(1);
+  });
+
+  it('Given an amount change, When remembered selections are cleared, Then it forwards to the payment-method controller', () => {
+    const triggerHandler = buildTriggerHandler();
+    const session = new LegacyLoadOrchestrationSession(triggerHandler);
+
+    session.clearRememberedSelections();
+
+    expect(triggerHandler.mpSuperTokenPaymentMethods.clearRememberedSelections).toHaveBeenCalledTimes(1);
   });
 
   it('Given an invalid amount, When cancelled, Then it cancels the load and clears the authenticator', () => {

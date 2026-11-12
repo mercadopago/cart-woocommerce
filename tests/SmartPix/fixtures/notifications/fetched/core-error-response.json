@@ -1,0 +1,4 @@
+{
+  "message": "Synthetic Core failure detail that must never be echoed.",
+  "error": "synthetic_core_error"
+}

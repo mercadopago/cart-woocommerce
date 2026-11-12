@@ -14,6 +14,12 @@ use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
+use MercadoPago\Woocommerce\SmartPix\Adapters\Notification\SmartPixCoreNotificationHandler;
+use MercadoPago\Woocommerce\SmartPix\Composition\SmartPixCoreNotificationHandlerFactory;
+use MercadoPago\Woocommerce\SmartPix\Adapters\Notification\SmartPixCoreNotificationIdentifiers;
+use MercadoPago\Woocommerce\SmartPix\Adapters\Notification\SmartPixNotificationBody;
+use MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixNotificationReceiver;
+use Throwable;
 use WC_Order;
 
 if (!defined('ABSPATH')) {
@@ -23,6 +29,8 @@ if (!defined('ABSPATH')) {
 class CoreNotification extends AbstractNotification
 {
     private NotificationsClient $notificationsClient;
+
+    private ?SmartPixCoreNotificationHandler $smartPixHandler;
 
     private const REFUND_ORIGIN_PANEL = 'painel_woocommerce';
     private const REFUND_METRIC_SUCCESS_MP = 'mp_refund_success';
@@ -36,11 +44,13 @@ class CoreNotification extends AbstractNotification
         OrderStatus $orderStatus,
         Seller $seller,
         Store $store,
-        NotificationsClient $notificationsClient
+        NotificationsClient $notificationsClient,
+        ?SmartPixCoreNotificationHandler $smartPixHandler = null
     ) {
         parent::__construct($gateway, $logs, $orderStatus, $seller, $store);
 
         $this->notificationsClient = $notificationsClient;
+        $this->smartPixHandler     = $smartPixHandler;
     }
 
     /**
@@ -50,7 +60,15 @@ class CoreNotification extends AbstractNotification
      */
     public function getNotificationId()
     {
-        $body = json_decode($this->getInput());
+        return $this->notificationIdFrom($this->getInput());
+    }
+
+    /**
+     * @return mixed
+     */
+    private function notificationIdFrom(string $raw)
+    {
+        $body = json_decode($raw);
 
         // For both Core and Bifrost. Core sends a complete object, but Bifrost sends only a string with the notification id
         if (is_object($body)) {
@@ -61,13 +79,27 @@ class CoreNotification extends AbstractNotification
     }
 
     /**
-     * Get input from php://input
+     * Get input from php://input, or at most $maxBytes of it when a limit is given
      *
      * @codeCoverageIgnore
      */
-    protected function getInput(): string
+    protected function getInput(?int $maxBytes = null): string
     {
-        return file_get_contents('php://input');
+        if ($maxBytes === null) {
+            return file_get_contents('php://input');
+        }
+
+        $stream = fopen('php://input', 'rb');
+        if ($stream === false) {
+            return '';
+        }
+        try {
+            $raw = stream_get_contents($stream, $maxBytes);
+        } finally {
+            fclose($stream);
+        }
+
+        return $raw === false ? '' : $raw;
     }
 
     /**
@@ -101,7 +133,28 @@ class CoreNotification extends AbstractNotification
     {
         parent::handleReceivedNotification($data);
 
-        $notification_id = $this->getNotificationId();
+        // Read one byte past the Smart Pix limit first, so an oversized Smart Pix body is refused without
+        // loading it whole. Legacy bodies keep their unbounded read and decode.
+        $raw = $this->getInput(SmartPixNotificationBody::DEFAULT_MAX_BYTES + 1);
+        $oversized = strlen($raw) > SmartPixNotificationBody::DEFAULT_MAX_BYTES;
+        if ($oversized && $this->namesSmartPixNotification($raw)) {
+            $this->rejectOversizedSmartPixNotification();
+            return;
+        }
+        if ($oversized) {
+            $raw = $this->getInput();
+        }
+
+        $notification_id = $this->notificationIdFrom($raw);
+
+        if (SmartPixCoreNotificationIdentifiers::isNotificationId($notification_id)) {
+            if ($oversized) {
+                $this->rejectOversizedSmartPixNotification();
+                return;
+            }
+            $this->handleSmartPixNotification($notification_id);
+            return;
+        }
 
         if (!$this->validateNotificationId($notification_id)) {
             $message = 'Invalid notification id';
@@ -119,6 +172,47 @@ class CoreNotification extends AbstractNotification
             $this->logs->file->error($e->getMessage(), __CLASS__, $data);
             $this->setResponse(500, $e->getMessage());
         }
+    }
+
+    /**
+     * Smart Pix Core P&P notifications are applied only by the Smart Pix pipeline. Nothing
+     * from the request or the fetched notification is logged, and responses are fixed.
+     */
+    private function handleSmartPixNotification(string $notificationId): void
+    {
+        try {
+            $handler = $this->smartPixHandler ?? SmartPixCoreNotificationHandlerFactory::fromPlugin();
+            $result  = $handler->handle($notificationId, $this->getRequestContext());
+        } catch (Throwable $e) {
+            $this->logs->file->error('Smart Pix notification could not be handled', __CLASS__);
+            $result = ['status' => 500, 'message' => SmartPixNotificationReceiver::MESSAGE_FAILED];
+        }
+
+        $this->setResponse($result['status'], $result['message']);
+    }
+
+    /**
+     * Cheap check on the first bytes, before any decode, for a posted body naming a Smart Pix id
+     * as a raw JSON string or as its notification_id. A miss falls back to the decoded check.
+     */
+    private function namesSmartPixNotification(string $raw): bool
+    {
+        $prefix = substr($raw, 0, SmartPixNotificationBody::DEFAULT_MAX_BYTES);
+        return preg_match('/^\s*"PPORD|"notification_id"\s*:\s*"PPORD/', $prefix) === 1;
+    }
+
+    /** A Smart Pix body above the limit is never fetched; the size is known even without the handler. */
+    private function rejectOversizedSmartPixNotification(): void
+    {
+        try {
+            $handler = $this->smartPixHandler ?? SmartPixCoreNotificationHandlerFactory::fromPlugin();
+            $result  = $handler->rejectOversized();
+        } catch (Throwable $e) {
+            $this->logs->file->error('Smart Pix notification could not be handled', __CLASS__);
+            $result = ['status' => 413, 'message' => SmartPixNotificationReceiver::MESSAGE_TOO_LARGE];
+        }
+
+        $this->setResponse($result['status'], $result['message']);
     }
 
     public function handleSuccessfulRequestInternal($data, $order): void

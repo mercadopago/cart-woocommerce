@@ -181,12 +181,15 @@ class MercadoPagoMock
 
         // Order metadata mocks
         $mock->orderMetadata = Mockery::mock(OrderMetadata::class);
+        $mock->smartPixNativeEffects = new \MercadoPago\Woocommerce\SmartPix\Adapters\WooCommerce\SmartPixNativeEffects();
         $mock->orderMetadata->orderBilling = Mockery::mock(OrderBilling::class);
         // Refund dedup — default no-op so refund flows don't require explicit
         // expectations in every test; individual tests may override these.
         $mock->orderMetadata->shouldReceive('getAppliedRefundIds')->byDefault()->andReturn([]);
         $mock->orderMetadata->shouldReceive('addAppliedRefundId')->byDefault()->andReturnNull();
         $mock->orderMetadata->shouldReceive('addRefundedAmountToPayment')->byDefault()->andReturnNull();
+        // Non-Pix payments end an earlier Smart Pix attempt; a no-op for orders without one.
+        $mock->orderMetadata->shouldReceive('endSmartPixAttempt')->byDefault()->andReturnNull();
 
         // Super Token processor (real service, mirrors Dependencies wiring)
         $mock->superTokenPaymentProcessor = new SuperTokenPaymentProcessor(

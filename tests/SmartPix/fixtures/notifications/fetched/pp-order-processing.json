@@ -1,0 +1,26 @@
+{
+  "notification_id": "PPORDSYNTHETICNTF001",
+  "site_id": "MLB",
+  "status": "processing",
+  "status_detail": "in_process",
+  "transaction_type": "pp_order",
+  "external_reference": "WC-321",
+  "transaction_amount": 125.5,
+  "total_paid": 0,
+  "payments_details": [
+    {
+      "id": "PPPAYSYNTHETICNTF001",
+      "payment_method_id": "smart_transfer",
+      "payment_type_id": "smart_transfer",
+      "status": "processing",
+      "refunds": [],
+      "references": {
+        "order_id": "ORDSYNTHETICNTF001",
+        "order_transaction_id": "PAYSYNTHETICNTF001",
+        "source": "mp_order"
+      }
+    }
+  ],
+  "refunds_notifying": null,
+  "force_renotify": false
+}
