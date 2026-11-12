@@ -97,6 +97,20 @@ async function collectJs(opts, variant, policy) {
   return result;
 }
 
+// PHPUnit applies phpunit.xml <ini> values at runtime, after the -d flag, so the plain suite limit
+// (512M) used to replace the collector limit. With path coverage, the parent of process-isolated tests
+// unserializes large child results and ran out of memory. Only the generated config changes.
+const PHP_COVERAGE_MEMORY_LIMIT = '2G';
+
+function phpunitCoverageConfig(xml, { root, bootstrap, directory }) {
+  const escape = (value) => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+  const escapedRoot = escape(root);
+  return xml.replace('bootstrap="tests/bootstrap.php"', `bootstrap="${escape(bootstrap)}"`)
+    .replace(/>src\//g, `>${escapedRoot}/src/`).replace('>tests</directory>', `>${escapedRoot}/tests</directory>`)
+    .replace('cacheDirectory=".phpunit.cache/code-coverage"', `cacheDirectory="${directory}/cache"`)
+    .replace(/<ini name="memory_limit" value="[^"]*"\s*\/>/, `<ini name="memory_limit" value="${PHP_COVERAGE_MEMORY_LIMIT}"/>`);
+}
+
 async function collectPhp(opts, policy, php) {
   const directory = path.join(opts['output-dir'], 'php');
   cleanArtifacts(directory);
@@ -116,13 +130,8 @@ async function collectPhp(opts, policy, php) {
     if (dockerPhp) await dockerPhp.retrieve(path.join(directory, 'bootstrap-declarations.php'));
   }
   const config = path.join(directory, 'phpunit.xml');
-  let xml = fs.readFileSync(path.join(HARNESS, 'phpunit.xml'), 'utf8');
-  const escapedRoot = opts.root.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
   const bootstrap = selected.profile === 'woo' ? wrapper : path.join(opts.root, 'tests/bootstrap.php');
-  xml = xml.replace('bootstrap="tests/bootstrap.php"', `bootstrap="${bootstrap.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"`)
-    .replace(/>src\//g, `>${escapedRoot}/src/`).replace('>tests</directory>', `>${escapedRoot}/tests</directory>`)
-    .replace('cacheDirectory=".phpunit.cache/code-coverage"', `cacheDirectory="${directory}/cache"`);
-  fs.writeFileSync(config, xml);
+  fs.writeFileSync(config, phpunitCoverageConfig(fs.readFileSync(path.join(HARNESS, 'phpunit.xml'), 'utf8'), { root: opts.root, bootstrap, directory }));
   const exported = path.join(directory, 'raw.json');
   const inventory = path.join(directory, 'tests.xml');
   await run(php, [path.join(opts.root, 'vendor/bin/phpunit'), '--configuration', config, '--list-tests-xml', inventory], opts.root);
@@ -136,7 +145,7 @@ async function collectPhp(opts, policy, php) {
     const raw = path.join(directory, `partition-${index}.php`);
     const filter = '/^(?:' + testIds.map(id => id.replace(/[\\^$.*+?()[\]{}|/]/g, '\\$&')).join('|') + ')$/';
     const junit = path.join(directory, `partition-${index}.xml`);
-    await run(php, ['-d', 'memory_limit=768M', path.join(opts.root, 'vendor/bin/phpunit'), '--configuration', config, '--filter', filter, '--fail-on-incomplete', '--fail-on-risky', '--path-coverage', '--coverage-php', raw, '--log-junit', junit], opts.root, { XDEBUG_MODE: 'coverage' }, path.join(directory, `partition-${index}.log`));
+    await run(php, ['-d', `memory_limit=${PHP_COVERAGE_MEMORY_LIMIT}`, path.join(opts.root, 'vendor/bin/phpunit'), '--configuration', config, '--filter', filter, '--fail-on-incomplete', '--fail-on-risky', '--path-coverage', '--coverage-php', raw, '--log-junit', junit], opts.root, { XDEBUG_MODE: 'coverage' }, path.join(directory, `partition-${index}.log`));
     artifacts.push(raw);
     junitFiles.push(junit);
   }
@@ -210,4 +219,4 @@ if (require.main === module) {
     try { if (dockerPhp) await dockerPhp.close(); } catch (error) { process.stderr.write(`PHP runtime cleanup failed: ${error.message}\n`); process.exitCode = 1; }
   });
 }
-module.exports = { options, main, assertNodeRuntime };
+module.exports = { options, main, assertNodeRuntime, phpunitCoverageConfig, PHP_COVERAGE_MEMORY_LIMIT };

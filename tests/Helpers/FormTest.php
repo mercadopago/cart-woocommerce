@@ -45,9 +45,40 @@ class FormTest extends TestCase
     }
 
     /**
-     * @dataProvider requestMethodInputs
+     * @dataProvider requestMethodStringInputs
      */
-    public function testRequestMethodReadsTheServerMethodAndHandlesMissingOrInvalidValues($method, string $expected): void
+    public function testRequestMethodUnslashesAndSanitizesTheServerMethod(
+        string $method,
+        string $sanitized,
+        string $expected
+    ): void {
+        $originalServer = $_SERVER;
+        try {
+            $_SERVER['REQUEST_METHOD'] = $method;
+            WP_Mock::userFunction('wp_unslash')->once()->with($method)->andReturn($method);
+            WP_Mock::userFunction('sanitize_text_field')->once()->with($method)->andReturn($sanitized);
+
+            $this->assertSame($expected, Form::requestMethod());
+        } finally {
+            $_SERVER = $originalServer;
+        }
+    }
+
+    public static function requestMethodStringInputs(): array
+    {
+        return [
+            'POST' => ['POST', 'POST', 'POST'],
+            'GET' => ['GET', 'GET', 'GET'],
+            'lowercase' => ['post', 'post', 'POST'],
+            'markup is sanitized' => ['<b>post</b>', 'post', 'POST'],
+            'empty' => ['', '', ''],
+        ];
+    }
+
+    /**
+     * @dataProvider requestMethodInvalidInputs
+     */
+    public function testRequestMethodReturnsEmptyWithoutReadingMissingOrInvalidValues($method): void
     {
         $originalServer = $_SERVER;
         try {
@@ -56,21 +87,21 @@ class FormTest extends TestCase
             } else {
                 $_SERVER['REQUEST_METHOD'] = $method;
             }
+            WP_Mock::userFunction('wp_unslash')->never();
+            WP_Mock::userFunction('sanitize_text_field')->never();
 
-            $this->assertSame($expected, Form::requestMethod());
+            $this->assertSame('', Form::requestMethod());
         } finally {
             $_SERVER = $originalServer;
         }
     }
 
-    public static function requestMethodInputs(): array
+    public static function requestMethodInvalidInputs(): array
     {
         return [
-            'POST' => ['POST', 'POST'],
-            'GET' => ['GET', 'GET'],
-            'lowercase' => ['post', 'POST'],
-            'missing' => [null, ''],
-            'array is invalid' => [['POST'], ''],
+            'missing' => [null],
+            'array is invalid' => [['POST']],
+            'integer is invalid' => [1],
         ];
     }
 

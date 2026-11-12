@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<ruleset name="Woocommerce MercadoPago Security">
+    <description>WordPress security sniffs, the family of the WooCommerce QIT security test.
+        phpcs.xml includes this file. It has no exclude-pattern on purpose: bin/phpcs-security.sh and
+        composer phpcs:security choose the files themselves, so no directory name in the checkout or
+        temporary path can turn the check off.</description>
+
+    <rule ref="WordPress.Security.ValidatedSanitizedInput" />
+    <rule ref="WordPress.Security.EscapeOutput.OutputNotEscaped" />
+    <rule ref="WordPress.Security.ValidatedSanitizedInput.InputNotSanitized" />
+</ruleset>

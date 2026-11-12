@@ -10,9 +10,11 @@ class Form
 {
     public static function requestMethod(): string
     {
-        $method = $_SERVER['REQUEST_METHOD'] ?? '';
+        if (!isset($_SERVER['REQUEST_METHOD']) || !is_string($_SERVER['REQUEST_METHOD'])) {
+            return '';
+        }
 
-        return is_string($method) ? strtoupper($method) : '';
+        return strtoupper(sanitize_text_field(wp_unslash($_SERVER['REQUEST_METHOD'])));
     }
 
     /**

@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 8.10.1
+Stable tag: 8.10.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -133,6 +133,10 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 5. Access **advanced** plugin and checkout **settings** only when you want to change the default settings.
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
+
+= v8.10.2 (12/11/2026) =
+* Fixed
+- Improve request validation for Mercado Pago notices in the WordPress admin
 
 = v8.10.1 (12/11/2026) =
 * Added
