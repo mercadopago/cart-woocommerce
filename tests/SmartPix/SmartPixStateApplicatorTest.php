@@ -382,7 +382,8 @@ class SmartPixStateApplicatorTest extends TestCase
         $this->assertSame(['outcome' => 'applied', 'reason' => 'native_unpaid_status_verified', 'status' => 'failed'], $result);
     }
 
-    public function testRejectionAcceptsAnAuthoritativeTotalWithExtraFractionalZeros(): void
+    /** @dataProvider roundedAuthoritativeTotalProvider */
+    public function testRejectionAcceptsAnAuthoritativeTotalThatRoundsToThePaidAmount(string $total): void
     {
         $response = $this->response('rejected');
         $metadata = Mockery::mock(OrderMetadata::class);
@@ -390,8 +391,8 @@ class SmartPixStateApplicatorTest extends TestCase
         $seller->shouldReceive('getSiteId')->andReturn('MLB');
         $pending = $this->orderSnapshot($metadata, $response, 'pending', false);
         $persisted = $this->orderSnapshot($metadata, $response, 'failed', false);
-        $pending->shouldReceive('get_total')->with('edit')->andReturn('125.5000');
-        $persisted->shouldReceive('get_total')->with('edit')->andReturn('125.5000');
+        $pending->shouldReceive('get_total')->with('edit')->andReturn($total);
+        $persisted->shouldReceive('get_total')->with('edit')->andReturn($total);
         $pending->shouldReceive('update_status')->with('failed')->once()->andReturn(true);
         foreach ([$pending, $persisted] as $order) {
             $order->shouldNotReceive('payment_complete');
@@ -403,6 +404,15 @@ class SmartPixStateApplicatorTest extends TestCase
         $result = (new SmartPixStateApplicator($metadata, new SmartPixStateReducer(), $seller, $this->ownership()))
             ->apply(321, 'attempt_fixture_query_success_001', $response);
         $this->assertSame(['outcome' => 'applied', 'reason' => 'native_unpaid_status_verified', 'status' => 'failed'], $result);
+    }
+
+    public static function roundedAuthoritativeTotalProvider(): array
+    {
+        return [
+            'extra fractional zeros' => ['125.5000'],
+            'sub-cent below half rounds down like the other payment methods' => ['125.501'],
+            'half cent rounds up like the other payment methods' => ['125.495'],
+        ];
     }
 
     public function testCancellationFromOnHoldUsesOnlyNativeStatusChange(): void
@@ -499,6 +509,34 @@ class SmartPixStateApplicatorTest extends TestCase
         return $cases;
     }
 
+    /** @dataProvider missingOrderProvider */
+    public function testAMissingOrMismatchedOrderNeverReceivesAnEffect(?int $loadedId): void
+    {
+        // Given an approval for an order that WooCommerce no longer returns as that order
+        $response = $this->response('approved');
+        $seller = Mockery::mock(Seller::class);
+        $seller->shouldReceive('getSiteId')->andReturn('MLB');
+        $loaded = false;
+        if ($loadedId !== null) {
+            $loaded = Mockery::mock(\WC_Order::class);
+            $loaded->shouldReceive('get_id')->andReturn($loadedId);
+            $loaded->shouldNotReceive('payment_complete', 'update_status', 'save');
+        }
+        WP_Mock::userFunction('wc_get_order', ['args' => [321], 'return' => $loaded]);
+        $applicator = new SmartPixStateApplicator(Mockery::mock(OrderMetadata::class), new SmartPixStateReducer(), $seller, $this->ownership());
+
+        // When the approval is applied
+        $result = $applicator->apply(321, 'attempt_fixture_query_success_001', $response);
+
+        // Then nothing is applied to any order
+        $this->assertSame(['outcome' => 'conflict', 'reason' => 'order_context_mismatch', 'status' => null], $result);
+    }
+
+    public static function missingOrderProvider(): array
+    {
+        return ['deleted order' => [null], 'another order' => [999]];
+    }
+
     /** @dataProvider incompatibleTotalProvider */
     public function testIncompatibleAuthoritativeTotalsCannotExecuteEffects($total): void
     {
@@ -513,7 +551,7 @@ class SmartPixStateApplicatorTest extends TestCase
 
     public static function incompatibleTotalProvider(): array
     {
-        return [['125.5001'], ['1.255e2'], [125.50], ['0.0000'], [str_repeat('1', 65)]];
+        return [['1.255e2'], [125.50], ['0.0000'], ['-125.50'], [str_repeat('1', 65)]];
     }
 
     /** @dataProvider invalidCurrencyProvider */
@@ -583,7 +621,7 @@ class SmartPixStateApplicatorTest extends TestCase
                 $order->shouldReceive('get_date_paid')->with('edit')->andReturn(new \stdClass());
                 break;
             case 'total':
-                $order->shouldReceive('get_total')->with('edit')->andReturn('125.501');
+                $order->shouldReceive('get_total')->with('edit')->andReturn('1.255e2');
                 break;
         }
         $this->forbidEffects($order);

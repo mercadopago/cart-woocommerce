@@ -171,7 +171,7 @@ class RealSmartPixOrderClientTest extends TestCase
                 'processing_mode' => 'automatic', 'type' => 'online', 'description' => 'Synthetic product x 1',
                 'external_reference' => 'WC-321', 'transaction_amount' => '125.50', 'sponsor_id' => '208686191',
                 'notification_url' => 'https://store.example.test/wc-api/WC_WooMercadoPago_Pix_Gateway/?source_news=webhooks',
-                'ip_address' => '203.0.113.10',
+                'ip_address' => '127.0.0.1',
                 'payments' => [[
                     'amount' => '125.50', 'date_of_expiration' => 'PT15M', 'payment_method' => [
                         'id' => 'smart_transfer', 'type' => 'smart_transfer', 'token' => 'SYNTHETIC_PROOF',
@@ -201,7 +201,9 @@ class RealSmartPixOrderClientTest extends TestCase
                 'payment_method' => ['id' => 'smart_transfer', 'type' => 'smart_transfer'],
             ]],
         ]));
-        $result = $client->create($this->request(), $this->payment());
+        $request = $this->request();
+        $request['order_details']['ip_address'] = '127.0.0.1';
+        $result = $client->create($request, $this->payment());
         $this->assertSame('success', $result['outcome']);
         $this->assertSame('processing', $result['state']);
         $this->assertSame('ORDER_SYNTHETIC', $result['order_reference']);
@@ -593,7 +595,7 @@ class RealSmartPixOrderClientTest extends TestCase
                 $request['payment_contract'] = 'payments_v1';
                 break;
             case 'attempt':
-                $request['attempt_reference'] = '../321';
+                $request['attempt_reference'] = '';
                 break;
             case 'reference':
                 $request['order_reference'] = 'https://example.test/order';
@@ -796,15 +798,12 @@ class RealSmartPixOrderClientTest extends TestCase
             'blank description' => [['order_details', 'description'], '   '],
             'nonstring description' => [['order_details', 'description'], 123],
             'missing address' => [['order_details', 'ip_address'], $unset],
-            'invalid address' => [['order_details', 'ip_address'], 'not-an-ip'],
             'nonstring address' => [['order_details', 'ip_address'], 3405803786],
             'nonarray payer' => [['order_details', 'payer'], 'SYNTHETIC'],
             'extra payer key' => [['order_details', 'payer', 'phone'], '5511999999999'],
             'null identification' => [['order_details', 'payer', 'identification'], null],
             'invalid email' => [['order_details', 'payer', 'email'], 'not-an-email'],
             'nonstring email' => [['order_details', 'payer', 'email'], null],
-            'empty first name' => [['order_details', 'payer', 'first_name'], ''],
-            'blank last name' => [['order_details', 'payer', 'last_name'], '   '],
             'missing last name' => [['order_details', 'payer', 'last_name'], null],
             'extra identification key' => [['order_details', 'payer', 'identification', 'masked'], '123.456.789-09'],
             'missing identification number' => [['order_details', 'payer', 'identification', 'number'], $unset],
@@ -880,29 +879,30 @@ class RealSmartPixOrderClientTest extends TestCase
         $this->assertFalse($result['error']['retryable']);
     }
 
-    /** @dataProvider invalidStoreProvider */
-    public function testUnusableStoreReferenceStopsBeforeHttp(string $storeId, string $siteUrl): void
+    /**
+     * @dataProvider storeFactsProvider
+     * @param array<string, string>|null $expectedStore
+     */
+    public function testStoreFactsAreSentUnvalidatedAndEmptyOnesOmitted(string $storeId, string $siteUrl, ?array $expectedStore): void
     {
         $this->siteUrl($siteUrl);
-        WP_Mock::userFunction('wc_get_logger', ['times' => 0]);
         [$client, $http] = $this->storeClient(['store_id' => $storeId]);
-        $http->shouldNotReceive('request');
+        $body = null;
+        $this->expectCreate($http, $body);
 
-        $result = $client->create($this->request(), $this->payment());
-
-        $this->assertSame('validation', $result['error']['category']);
-        $this->assertFalse($result['error']['retryable']);
-        $this->assertNull($client->creationDurationSeconds());
+        $this->assertSame('success', $client->create($this->request(), $this->payment())['outcome']);
+        $this->assertSame($expectedStore, $body['store'] ?? null);
     }
 
-    public static function invalidStoreProvider(): array
+    public static function storeFactsProvider(): array
     {
         return [
-            'empty store id' => ['', 'https://store.example.test'],
-            'blank store id' => ['   ', 'https://store.example.test'],
-            'invalid site url' => ['WC-', 'not a url'],
-            'empty site url' => ['WC-', ''],
-            'relative site url' => ['WC-', '/store'],
+            'empty store id' => ['', 'https://store.example.test', ['url' => 'https://store.example.test']],
+            'blank store id' => ['   ', 'https://store.example.test', ['url' => 'https://store.example.test']],
+            'invalid site url' => ['WC-', 'not a url', ['id' => 'WC-', 'url' => 'not a url']],
+            'empty site url' => ['WC-', '', ['id' => 'WC-']],
+            'relative site url' => ['WC-', '/store', ['id' => 'WC-', 'url' => '/store']],
+            'nothing to send' => ['', '', null],
         ];
     }
 
@@ -941,23 +941,85 @@ class RealSmartPixOrderClientTest extends TestCase
         ];
     }
 
-    /** @dataProvider invalidSellerUrlProvider */
-    public function testInvalidSellerUrlStopsBeforeHttp(string $homeUrl): void
+    /**
+     * @dataProvider unvalidatedSellerUrlProvider
+     * @param array<string, string>|null $expectedSeller
+     */
+    public function testSellerUrlIsSentUnvalidatedAndOmittedWhenEmpty(string $homeUrl, ?array $expectedSeller): void
     {
         $this->siteUrl('https://store.example.test', $homeUrl);
         [$client, $http] = $this->client();
-        $http->shouldNotReceive('request');
+        $body = null;
+        $this->expectCreate($http, $body);
 
-        $result = $client->create($this->request(), $this->payment());
-
-        $this->assertSame('validation', $result['error']['category']);
-        $this->assertFalse($result['error']['retryable']);
-        $this->assertNull($client->creationDurationSeconds());
+        $this->assertSame('success', $client->create($this->request(), $this->payment())['outcome']);
+        $this->assertSame($expectedSeller, $body['seller'] ?? null);
     }
 
-    public static function invalidSellerUrlProvider(): array
+    public static function unvalidatedSellerUrlProvider(): array
     {
-        return [[''], ['not a url'], ['/store?q=1'], ['ftp://store.example.test']];
+        return [
+            'empty' => ['', null],
+            'not a url' => ['not a url', ['referral_url' => 'not a url', 'website' => 'not a url']],
+            'relative with query' => ['/store?q=1', ['referral_url' => '/store', 'website' => '/store']],
+            'other scheme' => ['ftp://store.example.test', ['referral_url' => 'ftp://store.example.test', 'website' => 'ftp://store.example.test']],
+        ];
+    }
+
+    /** @dataProvider freeFormAttemptReferenceProvider */
+    public function testAnyNonEmptyAttemptReferenceIsSentAsTheExternalReference(string $attemptReference): void
+    {
+        [$client, $http] = $this->client();
+        $request = $this->request();
+        $request['attempt_reference'] = $attemptReference;
+        $body = null;
+        $http->shouldReceive('request')->once()->withArgs(function (string $method, string $path, array $headers, string $raw) use (&$body): bool {
+            $body = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+            return $method === 'POST';
+        })->andReturn(new HttpResponse(201, [], '', ['external_reference' => $attemptReference] + $this->pending()));
+
+        $this->assertSame('success', $client->create($request, $this->payment())['outcome']);
+        $this->assertSame($attemptReference, $body['external_reference']);
+    }
+
+    public static function freeFormAttemptReferenceProvider(): array
+    {
+        return [
+            'empty store identificator' => ['258623'],
+            'order below 100 without prefix' => ['5'],
+            'identificator with space, dot and accent' => ['Loja Ação. 321'],
+        ];
+    }
+
+    public function testEmptyFirstNameAndBlankLastNameAreSentLikeTheOtherPaymentMethods(): void
+    {
+        [$client, $http] = $this->client();
+        $request = $this->request();
+        $request['order_details']['payer']['first_name'] = '';
+        $request['order_details']['payer']['last_name'] = '   ';
+        $body = null;
+        $this->expectCreate($http, $body);
+
+        $this->assertSame('success', $client->create($request, $this->payment())['outcome']);
+        $this->assertSame(['', '   '], [$body['payer']['first_name'], $body['payer']['last_name']]);
+    }
+
+    /** @dataProvider unvalidatedAddressProvider */
+    public function testAddressIsSentUnvalidatedAndOmittedWhenEmpty(string $address, bool $sent): void
+    {
+        [$client, $http] = $this->client();
+        $request = $this->request();
+        $request['order_details']['ip_address'] = $address;
+        $body = null;
+        $this->expectCreate($http, $body);
+
+        $this->assertSame('success', $client->create($request, $this->payment())['outcome']);
+        $this->assertSame($sent ? $address : null, $body['ip_address'] ?? null);
+    }
+
+    public static function unvalidatedAddressProvider(): array
+    {
+        return [['127.0.0.1', true], ['not-an-ip', true], ['', false]];
     }
 
     /** @dataProvider unavailableNotificationUrlProvider */

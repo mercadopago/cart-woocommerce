@@ -116,6 +116,28 @@ class SmartPixNotificationLinkageTest extends TestCase
         $this->assertSame('ORDER_SYNTHETIC_001', $result['order_reference']);
     }
 
+    /** @dataProvider freeFormStoreIdentificatorProvider */
+    public function testResolveAcceptsAnEmptyOrFreeFormStoreIdentificatorLikeTheConventionalPix(string $prefix, string $attemptReference, int $orderId): void
+    {
+        $order = $this->order(['id' => $orderId]);
+        $this->expectPrefix($prefix);
+        WP_Mock::userFunction('wc_get_order', ['args' => [$orderId], 'times' => 1, 'return' => $order]);
+
+        $result = $this->linkage($order)->resolve($attemptReference, 'ORDER_SYNTHETIC_001');
+
+        $this->assertTrue($result['linked']);
+        $this->assertSame($order, $result['order']);
+    }
+
+    public function freeFormStoreIdentificatorProvider(): array
+    {
+        return [
+            'empty identificator' => ['', '258623', 258623],
+            'order below 100 without prefix' => ['', '5', 5],
+            'space, dot and accent' => ['Loja Ação. ', 'Loja Ação. 321', 321],
+        ];
+    }
+
     /** @dataProvider invalidAttemptReferenceProvider */
     public function testResolveRejectsAnInvalidAttemptReferenceBeforeLoadingTheOrder(string $prefix, string $attemptReference): void
     {
@@ -139,6 +161,7 @@ class SmartPixNotificationLinkageTest extends TestCase
             'prefix with different case' => ['WC-', 'wc-321'],
             'default prefix with custom store identificator' => ['STORE_A-', 'WC-321'],
             'prefix only' => ['WC-', 'WC-'],
+            'empty prefix without id' => ['', 'WC-321'],
             'non-numeric id' => ['WC-', 'WC-abc'],
             'mixed id' => ['WC-', 'WC-321abc'],
             'zero id' => ['WC-', 'WC-0'],
@@ -172,7 +195,6 @@ class SmartPixNotificationLinkageTest extends TestCase
     public function invalidStoreIdentificatorProvider(): array
     {
         return [
-            'empty string' => [''],
             'false' => [false],
             'null' => [null],
             'integer' => [123],
@@ -485,7 +507,7 @@ class SmartPixNotificationLinkageTest extends TestCase
         $order = Mockery::mock(WC_Order::class);
         $store = Mockery::mock();
         $store->shouldReceive('read')->with($order)->once();
-        $order->shouldReceive('get_id')->andReturn(321);
+        $order->shouldReceive('get_id')->andReturn($overrides['id'] ?? 321);
         $order->shouldReceive('get_data_store')->once()->andReturn($store);
         $order->shouldReceive('read_meta_data')->with(true)->once();
         $order->shouldReceive('get_payment_method')->with('edit')

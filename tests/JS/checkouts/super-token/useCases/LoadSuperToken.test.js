@@ -9,6 +9,7 @@ const buildSession = (overrides = {}) => ({
   isFetching: jest.fn(() => false),
   amountHasChanged: jest.fn(() => false),
   emailHasChanged: jest.fn(() => false),
+  fetchingIdentityHasChanged: jest.fn(() => false),
   clearRememberedSelections: jest.fn(),
   cancelInvalidAmount: jest.fn(),
   resetFlow: jest.fn(),
@@ -110,7 +111,11 @@ describe('LoadSuperToken', () => {
   });
 
   it('Given a fetch in flight but the amount changed, When executed, Then it proceeds past the debounce guard', async () => {
-    const session = buildSession({ isFetching: jest.fn(() => true), amountHasChanged: jest.fn(() => true) });
+    const session = buildSession({
+      isFetching: jest.fn(() => true),
+      fetchingIdentityHasChanged: jest.fn(() => true),
+      amountHasChanged: jest.fn(() => true),
+    });
     const metrics = buildMetrics();
 
     await run(session, metrics);
@@ -118,6 +123,20 @@ describe('LoadSuperToken', () => {
     expect(session.resetFlow).toHaveBeenCalledTimes(1);
     expect(session.clearRememberedSelections).toHaveBeenCalledTimes(1);
     expect(metrics.resetOnAmountChange).toHaveBeenCalledTimes(1);
+    expect(session.fetchAndRender).toHaveBeenCalledTimes(1);
+  });
+
+  it('Given a fetch in flight for another amount while the shared authenticator already uses the new one, When executed, Then it fetches without the amount-change reset', async () => {
+    const session = buildSession({
+      isFetching: jest.fn(() => true),
+      fetchingIdentityHasChanged: jest.fn(() => true),
+    });
+    const metrics = buildMetrics();
+
+    await run(session, metrics);
+
+    expect(session.resetFlow).not.toHaveBeenCalled();
+    expect(metrics.resetOnAmountChange).not.toHaveBeenCalled();
     expect(session.fetchAndRender).toHaveBeenCalledTimes(1);
   });
 

@@ -418,7 +418,7 @@ class PixGateway extends AbstractGateway
             'smart_pix_selected_account_text'  => $this->storeTranslations['smart_pix_selected_account_text'],
             'amount'                           => $amountAndCurrencyRatio['amount'],
             'smart_pix_amount'                 => $amountAndCurrencyRatio['amount'] === null
-                ? null : SmartPixDecimal::canonical((string) $amountAndCurrencyRatio['amount']),
+                ? null : SmartPixDecimal::roundHalfUp((string) $amountAndCurrencyRatio['amount']),
             'message_error_amount'             => $this->storeTranslations['message_error_amount'],
             'icon'                             => $this->icon,
             'smart_pix_mp_icon_src'            => $this->mercadopago->helpers->url->getImageAsset('icons/icon-mp'),

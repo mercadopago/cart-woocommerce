@@ -456,6 +456,32 @@ describe('SuperTokenAuthenticator', () => {
       expect(metrics.errorToGetAccountPaymentMethods).toHaveBeenCalledTimes(1);
       expect(result).toBeNull();
     });
+
+    describe('when the SDK never settles', () => {
+      beforeEach(() => {
+        jest.useFakeTimers();
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      it('Given the SDK authenticator never settles, When the 30 s cap expires, Then Super Token and Smart Pix get null and the fallback metric is sent', async () => {
+        const sdk = { authenticator: jest.fn(() => new Promise(() => {})) };
+        const metrics = buildMetrics();
+        const { authenticator } = build({ sdk, metrics });
+
+        const forSuperToken = authenticator.getAccountPaymentMethods('10.00', 'buyer@example.com');
+        const forSmartPix = authenticator.getSmartTransferPaymentMethods('10.00', 'buyer@example.com');
+        await jest.advanceTimersByTimeAsync(30000);
+
+        await expect(forSuperToken).resolves.toBeNull();
+        await expect(forSmartPix).resolves.toBeNull();
+        expect(sdk.authenticator).toHaveBeenCalledTimes(1);
+        expect(metrics.sendMetric).toHaveBeenCalledWith('super_token_account_payment_methods_fallback', 'timeout', '');
+        expect(metrics.errorToGetAccountPaymentMethods).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe('authorizePayment (submit orchestration)', () => {

@@ -16,6 +16,7 @@ use MercadoPago\Woocommerce\SmartPix\Core\SmartPixOrderNormalizer;
 use MercadoPago\Woocommerce\SmartPix\Core\SmartPixPaidStatus;
 use MercadoPago\Woocommerce\SmartPix\Core\SmartPixStateReducer;
 use MercadoPago\Woocommerce\SmartPix\Adapters\Telemetry\SmartPixTelemetry;
+use MercadoPago\Woocommerce\SmartPix\Core\SmartPixDecimal;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -370,15 +371,8 @@ final class SmartPixStateApplicator
      */
     private function decimalAmount($total): ?array
     {
-        if (
-            !is_string($total)
-            || strlen($total) > 64
-            || preg_match('/^(0|[1-9][0-9]*)(?:\.([0-9]{1,2})0*)?$/D', $total, $parts) !== 1
-        ) {
-            return null;
-        }
-        $value = $parts[1] . '.' . str_pad($parts[2] ?? '', 2, '0');
-        return $value === '0.00' ? null : ['value' => $value, 'currency' => 'BRL'];
+        $value = SmartPixDecimal::roundHalfUp($total);
+        return $value === null || $value === '0.00' ? null : ['value' => $value, 'currency' => 'BRL'];
     }
 
     /**

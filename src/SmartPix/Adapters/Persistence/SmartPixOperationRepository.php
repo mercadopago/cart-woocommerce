@@ -9,6 +9,7 @@ use WC_Order;
 use WC_Order_Refund;
 use MercadoPago\Woocommerce\SmartPix\Core\SmartPixMoney;
 use MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixRefundReconciler;
+use MercadoPago\Woocommerce\SmartPix\Core\SmartPixDecimal;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -89,7 +90,7 @@ class SmartPixOperationRepository
                 throw new RuntimeException('operation_unresolved');
             }
             $record = reset($unresolved);
-            $native = SmartPixMoney::normalize((string) $order->get_total_refunded());
+            $native = SmartPixDecimal::roundHalfUp((string) $order->get_total_refunded());
             $remaining = $native === null ? null : SmartPixMoney::subtract($total, $native);
             if (
                 $record['operation'] !== 'refund' || $record['status'] !== 'uncertain'
@@ -147,7 +148,7 @@ class SmartPixOperationRepository
             if ($record === null) {
                 return [];
             }
-            $native = SmartPixMoney::normalize((string) $order->get_total_refunded());
+            $native = SmartPixDecimal::roundHalfUp((string) $order->get_total_refunded());
             if ($native === null) {
                 return [];
             }

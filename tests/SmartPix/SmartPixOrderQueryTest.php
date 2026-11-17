@@ -67,6 +67,41 @@ class SmartPixOrderQueryTest extends TestCase
         $this->assertSame($expected, (new SmartPixOrderQuery($client, $metadata, $seller))->query($order, $surface));
     }
 
+    /** @dataProvider freeFormStoreIdentificatorProvider */
+    public function testQueryAcceptsAnEmptyOrFreeFormStoreIdentificator(string $identificator, int $orderId, string $attemptReference): void
+    {
+        WP_Mock::tearDown();
+        WP_Mock::setUp();
+        WP_Mock::userFunction('get_option', ['args' => ['_mp_store_identificator', 'WC-'], 'return' => $identificator]);
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('get_id')->andReturn($orderId);
+        $order->shouldReceive('get_payment_method')->andReturn(PixGateway::ID);
+        $order->shouldReceive('get_currency')->andReturn('BRL');
+        $order->shouldReceive('read_meta_data')->with(true);
+        $seller = Mockery::mock(Seller::class);
+        $seller->shouldReceive('getSiteId')->andReturn('MLB');
+        $metadata = Mockery::mock(OrderMetadata::class);
+        $metadata->shouldReceive('getPaymentContract')->with($order)->andReturn('orders_smart_pix_v1');
+        $metadata->shouldReceive('getIdempotencyKey')->with($order)->andReturn('SYNTHETIC_KEY');
+        $metadata->shouldReceive('getPpOrderId')->with($order)->andReturn('ORDER_SYNTHETIC_001');
+        $client = Mockery::mock(SmartPixOrderClient::class);
+        $expected = ['outcome' => 'success', 'state' => 'processing'];
+        $client->shouldReceive('query')->once()->with(Mockery::on(static function (array $request) use ($attemptReference): bool {
+            return $request['attempt_reference'] === $attemptReference;
+        }))->andReturn($expected);
+
+        $this->assertSame($expected, (new SmartPixOrderQuery($client, $metadata, $seller))->query($order, 'classic'));
+    }
+
+    public static function freeFormStoreIdentificatorProvider(): array
+    {
+        return [
+            'empty identificator' => ['', 258623, '258623'],
+            'order below 100 without prefix' => ['', 5, '5'],
+            'space, dot and accent' => ['Loja Ação. ', 321, 'Loja Ação. 321'],
+        ];
+    }
+
     public function testQueryReadsACandidateThatTheCheckoutPersistedMeanwhileAsTheLinkedOrder(): void
     {
         $order = Mockery::mock(WC_Order::class);

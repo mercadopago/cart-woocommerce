@@ -4,13 +4,13 @@
  * Plugin Name: Mercado Pago
  * Plugin URI: https://github.com/mercadopago/cart-woocommerce
  * Description: Configure the payment options and accept payments with cards, ticket and money of Mercado Pago account.
- * Version: 8.10.2
+ * Version: 8.10.3
  * Author: Mercado Pago
  * Author URI: https://developers.mercadopago.com/
  * Text Domain: woocommerce-mercadopago
  * Domain Path: /i18n/languages/
  * WC requires at least: 5.5.2
- * WC tested up to: 11.0.1
+ * WC tested up to: 10.8.1
  * Requires PHP: 7.4
  * Requires Plugins: woocommerce
  *

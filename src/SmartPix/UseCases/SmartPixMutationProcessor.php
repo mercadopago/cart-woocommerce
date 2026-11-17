@@ -19,6 +19,8 @@ use MercadoPago\Woocommerce\SmartPix\Contracts\SmartPixOrderClient;
 use MercadoPago\Woocommerce\SmartPix\Core\SmartPixOrderNormalizer;
 use MercadoPago\Woocommerce\SmartPix\Core\SmartPixPaidStatus;
 use MercadoPago\Woocommerce\SmartPix\Adapters\Telemetry\SmartPixTelemetry;
+use MercadoPago\Woocommerce\SmartPix\Core\SmartPixAttemptReference;
+use MercadoPago\Woocommerce\SmartPix\Core\SmartPixDecimal;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -232,7 +234,7 @@ final class SmartPixMutationProcessor
     private function context(WC_Order $order, string $operation, string $amount): array
     {
         $order->read_meta_data(true);
-        $total = SmartPixMoney::normalize($order->get_total('edit'));
+        $total = SmartPixDecimal::roundHalfUp($order->get_total('edit'));
         $seller = $this->seller->getCustIdFromAT();
         $key = $this->metadata->getIdempotencyKey($order);
         $reference = $this->metadata->getPpOrderId($order);
@@ -244,7 +246,7 @@ final class SmartPixMutationProcessor
             || $total === null || $total === '0.00' || !is_string($seller) || $seller === ''
             || !is_string($key) || $key === '' || !is_string($reference)
             || preg_match('/^[A-Za-z0-9][A-Za-z0-9_-]{2,127}$/D', $reference) !== 1
-            || preg_match('/^[A-Za-z0-9][A-Za-z0-9_-]{2,127}$/D', $attemptReference) !== 1
+            || !SmartPixAttemptReference::isValid($attemptReference)
             || SmartPixMoney::normalize($amount) !== $amount
             || ($operation === 'refund' && ($amount === '0.00'
                 || !SmartPixPaidStatus::isPaid($order->get_status('edit'), $order->is_paid())

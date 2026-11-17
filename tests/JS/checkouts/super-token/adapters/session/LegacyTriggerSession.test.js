@@ -43,6 +43,16 @@ describe('LegacyTriggerSession', () => {
     expect(triggerHandler.isFetchingPaymentMethods).toBe(false);
   });
 
+  it('Given a fetch starting, When its identity is remembered, Then the handler keeps that amount and e-mail', () => {
+    const triggerHandler = buildTriggerHandler();
+    const session = new LegacyTriggerSession(triggerHandler);
+
+    session.rememberFetchIdentity('100.00', 'buyer@test.com');
+
+    expect(triggerHandler.fetchingAmount).toBe('100.00');
+    expect(triggerHandler.fetchingEmail).toBe('buyer@test.com');
+  });
+
   it('Given the load generation and current amount, When read, Then it reflects the live legacy state', () => {
     const triggerHandler = buildTriggerHandler();
     const session = new LegacyTriggerSession(triggerHandler);

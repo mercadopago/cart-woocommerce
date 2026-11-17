@@ -14,6 +14,14 @@ function mount(busy = null, id = 'mp-checkout-pix-root') {
   return host;
 }
 
+function failToLoad(tagName, id) {
+  const asset = document.createElement(tagName);
+  asset.id = id;
+  document.head.appendChild(asset);
+  asset.dispatchEvent(new Event('error'));
+  return asset;
+}
+
 function start() {
   jest.isolateModules(() => require(source));
 }
@@ -36,7 +44,7 @@ it('arms the recovery before activating first-paint presentation', () => {
   expect(document.documentElement.classList.contains(enabledClass)).toBe(true);
   expect(host.getAttribute('aria-busy')).toBe('true');
   expect(host.getAttribute(attribute)).toBe('pending');
-  jest.advanceTimersByTime(9999);
+  jest.advanceTimersByTime(29999);
   expect(host.getAttribute(attribute)).toBe('pending');
   jest.advanceTimersByTime(1);
   expect(host.getAttribute(attribute)).toBe('fallback');
@@ -55,7 +63,7 @@ it('discovers PHP fragments and later Blocks mounts before waiting for the bundl
   await Promise.resolve();
   const host = container.firstElementChild;
   expect(host.getAttribute('aria-busy')).toBe('true');
-  jest.advanceTimersByTime(10000);
+  jest.advanceTimersByTime(30000);
   expect(host.getAttribute(attribute)).toBe('fallback');
 });
 
@@ -66,7 +74,7 @@ it.each([null, 'false', 'true'])('hands off to the bundle and restores previous 
   await Promise.resolve();
   expect(host.getAttribute('aria-busy')).toBe(busy);
   expect(jest.getTimerCount()).toBe(0);
-  jest.advanceTimersByTime(10000);
+  jest.advanceTimersByTime(30000);
   expect(host.getAttribute(attribute)).toBe('complete');
 });
 
@@ -89,7 +97,7 @@ it('cleans detached hosts and arms a new bounded wait if they are inserted again
   document.body.appendChild(host);
   await Promise.resolve();
   expect(host.getAttribute('aria-busy')).toBe('true');
-  jest.advanceTimersByTime(10000);
+  jest.advanceTimersByTime(30000);
   expect(host.getAttribute(attribute)).toBe('fallback');
 });
 
@@ -133,7 +141,7 @@ it('recovers observation for new checkout fragments after history-cache restorat
   await Promise.resolve();
   expect(document.documentElement.classList.contains(enabledClass)).toBe(true);
   expect(fresh.getAttribute('aria-busy')).toBe('true');
-  jest.advanceTimersByTime(10000);
+  jest.advanceTimersByTime(30000);
   expect(fresh.getAttribute(attribute)).toBe('fallback');
 });
 
@@ -149,4 +157,75 @@ it('keeps conventional Pix available when observation is unsupported', () => {
   } finally {
     global.MutationObserver = observer;
   }
+});
+
+it.each([
+  ['script', 'wc_mercadopago_smart_pix-js'],
+  ['link', 'wc_mercadopago_smart_pix-css'],
+])('shows conventional Pix at once when the Smart Pix %s fails to load', (tagName, id) => {
+  // Given a pending Pix host waiting for the bundle
+  const host = mount();
+  start();
+
+  // When the Smart Pix asset fails to load
+  failToLoad(tagName, id);
+
+  // Then conventional Pix is released without waiting for the cap
+  expect(host.getAttribute(attribute)).toBe('fallback');
+  expect(host.hasAttribute('aria-busy')).toBe(false);
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it('keeps waiting for the bundle when another asset fails to load', () => {
+  // Given a pending Pix host waiting for the bundle
+  const host = mount();
+  start();
+
+  // When an unrelated script fails to load
+  failToLoad('script', 'theme-analytics-js');
+
+  // Then the Smart Pix presentation keeps its bounded wait
+  expect(host.getAttribute(attribute)).toBe('pending');
+  expect(jest.getTimerCount()).toBe(1);
+});
+
+it('tags hosts released by an asset failure with the asset reason', () => {
+  // Given a pending Pix host waiting for the bundle
+  const host = mount();
+  start();
+
+  // When the Smart Pix script fails to load
+  failToLoad('script', 'wc_mercadopago_smart_pix-js');
+
+  // Then the bundle can tell an asset failure from a slow page
+  expect(host.getAttribute('data-mp-smart-pix-fallback-reason')).toBe('asset_load_failed');
+});
+
+it('releases a host mounted after an asset failure at once', async () => {
+  // Given the Smart Pix stylesheet already failed to load
+  start();
+  failToLoad('link', 'wc_mercadopago_smart_pix-css');
+
+  // When Blocks mounts, or Classic re-renders, the Pix host afterwards
+  const host = mount('false');
+  await Promise.resolve();
+
+  // Then conventional Pix shows without the 30-second wait
+  expect(host.getAttribute(attribute)).toBe('fallback');
+  expect(host.getAttribute('data-mp-smart-pix-fallback-reason')).toBe('asset_load_failed');
+  expect(host.getAttribute('aria-busy')).toBe('false');
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it('leaves no reason when the wait ends without an asset failure', () => {
+  // Given a pending Pix host and no asset failure
+  const host = mount();
+  start();
+
+  // When the wait reaches its cap
+  jest.advanceTimersByTime(30000);
+
+  // Then only the fallback marker is set, so the bundle reports a slow page
+  expect(host.getAttribute(attribute)).toBe('fallback');
+  expect(host.hasAttribute('data-mp-smart-pix-fallback-reason')).toBe(false);
 });

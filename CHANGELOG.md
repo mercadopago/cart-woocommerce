@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.10.3] 2026-11-17
+### Changed
+- Load Pix via Open Finance only on the checkout and Order Pay pages, so the cart and order pages no longer download it.
+
+### Fixed
+- Keep Pix via Open Finance loading for up to 30 seconds on slow checkout pages instead of showing only the conventional Pix after 10 seconds, and show the conventional Pix at once when Pix via Open Finance cannot be downloaded.
+- Stop the card checkout from loading forever when Fast Payments does not answer: after 30 seconds the buyer can pay with a new card.
+- Start a new Fast Payments load when the buyer leaves and returns to the card option, resets the checkout or applies a coupon while a previous load is still pending. Before, the new load was ignored.
+- Mark Pix via Open Finance orders as refunded when Mercado Pago refunds the rest of an order whose total has more than two decimals after a partial refund. Before, the order stayed paid.
+- Create the Pix via Open Finance order after the buyer authorizes it, as the other payment methods do, when the store identifier is empty or uses spaces, dots or accents, the order total has more than two decimals (rounded to cents), or the buyer name or product lines are missing. Before, the payment was authorized but no order was created.
+
 ## [8.10.2] 2026-11-12
 ### Fixed
 - Improve request validation for Mercado Pago notices in the WordPress admin
@@ -67,7 +78,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Prevent subscription payment credentials from being copied into payment metadata and transaction logs
 - Remove credentials from refund diagnostics before logging
-
 
 ## [8.9.6] 2026-10-07
 ### Added
@@ -483,7 +493,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed currency conversion in refund
 - Fixed display unhandled and untranslated error message
 
-
 ## [8.5.6] - 2025-10-10
 ### Fixed
 - Fix installments field validation during payment processing and enhanced error messaging 
@@ -736,7 +745,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Corrected the support component's link URL**, ensuring users are directed to the appropriate help resources without encountering broken or incorrect links, improving support accessibility.
-
 
 ## [7.7.0] - 2024-09-11
 

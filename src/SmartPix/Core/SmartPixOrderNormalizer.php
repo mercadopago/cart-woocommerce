@@ -56,7 +56,7 @@ final class SmartPixOrderNormalizer
             return $this->failure('linkage_mismatch', $expectedReference);
         }
         if (
-            $this->invalid(!$this->isReference($data['external_reference'] ?? null), 'order.external_reference is missing or invalid')
+            $this->invalid(!SmartPixAttemptReference::isValid($data['external_reference'] ?? null), 'order.external_reference is missing or invalid')
             || $this->invalid(($expectedAttemptReference !== null && !hash_equals($expectedAttemptReference, $data['external_reference'])), 'order.external_reference does not match the attempt')
         ) {
             return $this->failure('linkage_mismatch', $expectedReference);

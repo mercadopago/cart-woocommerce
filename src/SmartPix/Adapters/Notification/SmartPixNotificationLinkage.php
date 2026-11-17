@@ -149,14 +149,17 @@ final class SmartPixNotificationLinkage
         return $this->metadata->getMpOrderId($order) === $providerOrderReference;
     }
 
-    /** Accepts only "<store prefix><positive decimal id>" without padding or overflow. */
+    /**
+     * Accepts only "<store prefix><positive decimal id>" without padding or overflow. Like the
+     * conventional Pix notification, an empty store prefix leaves only the order ID.
+     */
     private function orderId(string $attemptReference): ?int
     {
         $prefix = get_option('_mp_store_identificator', 'WC-');
-        if (!is_string($prefix) || $prefix === '' || strpos($attemptReference, $prefix) !== 0) {
+        if (!is_string($prefix) || substr($attemptReference, 0, strlen($prefix)) !== $prefix) {
             return null;
         }
-        $digits = substr($attemptReference, strlen($prefix));
+        $digits = (string) substr($attemptReference, strlen($prefix));
         if (preg_match('/^[1-9][0-9]{0,18}$/D', $digits) !== 1) {
             return null;
         }

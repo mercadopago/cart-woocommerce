@@ -26,6 +26,8 @@ import type { PaymentMethod } from '@super-token/types/external-globals';
 export interface LegacyLoadTriggerHandler {
   currentAmount: string | null;
   isFetchingPaymentMethods: boolean;
+  fetchingAmount?: string | null;
+  fetchingEmail?: string | null;
   loadGeneration: number;
   getBuyerEmail(): string | null | undefined;
   wcEmailListener: { isValid(email: string): boolean };
@@ -51,6 +53,11 @@ export class LegacyTriggerSession implements FetchAndRenderSession, CancelLoadSe
 
   setFetching(isFetching: boolean): void {
     this.triggerHandler.isFetchingPaymentMethods = isFetching;
+  }
+
+  rememberFetchIdentity(amount: string | null, buyerEmail: string): void {
+    this.triggerHandler.fetchingAmount = amount;
+    this.triggerHandler.fetchingEmail = buyerEmail;
   }
 
   getLoadGeneration(): number {

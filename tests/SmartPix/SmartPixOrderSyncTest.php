@@ -106,10 +106,11 @@ class SmartPixOrderSyncTest extends TestCase
         ]], $sync->paymentData($order));
     }
 
-    public function testConfirmedFullRefundRefreshesWithoutAnotherFinancialEffect(): void
+    /** @dataProvider fullRefundTotalProvider */
+    public function testConfirmedFullRefundRefreshesWithoutAnotherFinancialEffect(string $total): void
     {
-        [$metadata, $order] = $this->context();
-        $this->nativeRefund($metadata, $order);
+        [$metadata, $order] = $this->context($total);
+        $this->nativeRefund($metadata, $order, 'refunded', $total);
         $reads = 0;
         $sync = new SmartPixOrderSync($metadata, function () use (&$reads): array {
             $reads++;
@@ -127,6 +128,14 @@ class SmartPixOrderSyncTest extends TestCase
 
         $this->assertSame(3, $reads);
         $this->assertSame('refunded', $sync->paymentData($order)[0]['status']);
+    }
+
+    public static function fullRefundTotalProvider(): array
+    {
+        return [
+            'exact cents' => ['20.00'],
+            'sub-cent total and refund rounded like the other payment methods' => ['20.004'],
+        ];
     }
 
     /** @dataProvider paidStatusProvider */
@@ -469,7 +478,32 @@ class SmartPixOrderSyncTest extends TestCase
         $sync->paymentData($order);
     }
 
-    private function context(): array
+    /** @dataProvider nativePartialRefundProvider */
+    public function testNativePartialRefundIsReadWithTheSameRoundingAsTheOtherReaders(string $total, float $refunded, bool $expected): void
+    {
+        // Given an order whose WooCommerce amounts may keep three store decimals
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('get_total')->with('edit')->andReturn($total);
+        $order->shouldReceive('get_total_refunded')->andReturn($refunded);
+
+        // When the sync decides which provider read to use
+        $result = SmartPixOrderSync::hasNativePartialRefund($order);
+
+        // Then a sub-cent total still counts as partially refunded instead of being ignored
+        $this->assertSame($expected, $result);
+    }
+
+    public static function nativePartialRefundProvider(): array
+    {
+        return [
+            'sub-cent total with a partial refund' => ['2.355', 1.0, true],
+            'sub-cent total fully refunded' => ['2.355', 2.355, false],
+            'nothing refunded' => ['2.355', 0.0, false],
+            'exact cents with a partial refund' => ['20.00', 5.0, true],
+        ];
+    }
+
+    private function context(string $total = '20.00'): array
     {
         $metadata = Mockery::mock(OrderMetadata::class);
         $order = Mockery::mock(WC_Order::class);
@@ -477,7 +511,7 @@ class SmartPixOrderSyncTest extends TestCase
         $order->shouldReceive('read_meta_data')->with(true);
         $order->shouldReceive('get_payment_method')->with('edit')->andReturn(PixGateway::ID);
         $order->shouldReceive('get_currency')->with('edit')->andReturn('BRL');
-        $order->shouldReceive('get_total')->with('edit')->andReturn('20.00');
+        $order->shouldReceive('get_total')->with('edit')->andReturn($total);
         $order->shouldReceive('get_total_refunded')->byDefault()->andReturn(0.0);
         $order->shouldNotReceive('payment_complete', 'update_status', 'save');
         $metadata->shouldReceive('getPaymentContract')->with($order)->andReturn(OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1);

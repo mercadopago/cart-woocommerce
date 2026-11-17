@@ -2,6 +2,17 @@ CHANGELOG:
 
 == Changelog
 
+= v8.10.3 (17/11/2026) =
+* Changed
+- Load Pix via Open Finance only on the checkout and Order Pay pages, so the cart and order pages no longer download it.
+
+* Fixed
+- Keep Pix via Open Finance loading for up to 30 seconds on slow checkout pages instead of showing only the conventional Pix after 10 seconds, and show the conventional Pix at once when Pix via Open Finance cannot be downloaded.
+- Stop the card checkout from loading forever when Fast Payments does not answer: after 30 seconds the buyer can pay with a new card.
+- Start a new Fast Payments load when the buyer leaves and returns to the card option, resets the checkout or applies a coupon while a previous load is still pending. Before, the new load was ignored.
+- Mark Pix via Open Finance orders as refunded when Mercado Pago refunds the rest of an order whose total has more than two decimals after a partial refund. Before, the order stayed paid.
+- Create the Pix via Open Finance order after the buyer authorizes it, as the other payment methods do, when the store identifier is empty or uses spaces, dots or accents, the order total has more than two decimals (rounded to cents), or the buyer name or product lines are missing. Before, the payment was authorized but no order was created.
+
 = v8.10.2 (12/11/2026) =
 * Fixed
 - Improve request validation for Mercado Pago notices in the WordPress admin

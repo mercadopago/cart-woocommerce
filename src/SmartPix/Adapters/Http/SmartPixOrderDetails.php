@@ -12,7 +12,6 @@ use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 use WC_Order;
 use WC_Order_Item_Product;
 use MercadoPago\Woocommerce\SmartPix\Core\SmartPixCpf;
-use MercadoPago\Woocommerce\SmartPix\Core\SmartPixDecimal;
 
 if (!defined('ABSPATH')) {
     // @codeCoverageIgnoreStart
@@ -31,43 +30,46 @@ final class SmartPixOrderDetails
 
     public const MAX_ITEM_TYPE_LENGTH = 256;
 
+    public const CONSOLIDATED_ITEMS = 'Consolidated Items';
+
     private OrderBilling $billing;
 
     private ?Store $store;
 
-    private Closure $requestIpAddress;
+    private Closure $serverAddress;
 
     /**
-     * @param Store|null    $store            Defaults to the plugin store configuration, like the other payment methods.
-     * @param callable|null $requestIpAddress Returns the address of the current request. Defaults to the
-     *                                        WooCommerce geolocation address, the browser that is paying now.
+     * @param Store|null    $store         Defaults to the plugin store configuration, like the other payment methods.
+     * @param callable|null $serverAddress Defaults to the address the other payment methods send.
      */
-    public function __construct(?OrderBilling $billing = null, ?Store $store = null, ?callable $requestIpAddress = null)
+    public function __construct(?OrderBilling $billing = null, ?Store $store = null, ?callable $serverAddress = null)
     {
-        $this->billing          = $billing ?? new OrderBilling();
-        $this->store            = $store;
-        $this->requestIpAddress = $requestIpAddress === null
+        $this->billing       = $billing ?? new OrderBilling();
+        $this->store         = $store;
+        $this->serverAddress = $serverAddress === null
             ? static function (): string {
-                return class_exists('\WC_Geolocation') ? (string) \WC_Geolocation::get_ip_address() : '';
+                $plugin = $GLOBALS['mercadopago'] ?? null;
+                return $plugin instanceof WoocommerceMercadoPago && isset($plugin->helpers->url)
+                    ? $plugin->helpers->url->getServerAddress() : '';
             }
-            : Closure::fromCallable($requestIpAddress);
+            : Closure::fromCallable($serverAddress);
     }
 
     /**
      * @param string $amount Authoritative canonical order total; items never change it.
      * @return array<string, mixed>
-     * @throws InvalidArgumentException When a mandatory buyer or cart fact is missing.
+     * @throws InvalidArgumentException When the buyer e-mail is invalid.
      */
     public function build(WC_Order $order, string $amount): array
     {
         return [
             'description' => $this->productDescription($order),
-            'ip_address'  => $this->ipAddress($order),
+            'ip_address'  => (string) ($this->serverAddress)(),
             'payer'       => $this->payer($order),
             // Use the validated server total without allocating discounts or rounding item prices.
             'items'       => [[
                 'id'         => (string) $order->get_id(),
-                'title'      => 'Consolidated Items',
+                'title'      => self::CONSOLIDATED_ITEMS,
                 'unit_price' => $amount,
                 'quantity'   => 1,
                 'type'       => $this->itemType(),
@@ -93,13 +95,13 @@ final class SmartPixOrderDetails
     /** @return array<string, mixed> */
     private function payer(WC_Order $order): array
     {
-        $email     = $this->billing->getEmail($order);
-        $firstName = trim($this->billing->getFirstName($order));
-        // Like the other gateways, an underivable last name is sent empty.
-        $lastName = trim($this->billing->getLastName($order));
-        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false || $firstName === '') {
+        $email = $this->billing->getEmail($order);
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
             throw new InvalidArgumentException('Invalid Smart Pix payer.');
         }
+        // Like the other gateways, an underivable name is sent empty.
+        $firstName = trim($this->billing->getFirstName($order));
+        $lastName  = trim($this->billing->getLastName($order));
 
         $payer = [
             'email'      => $email,
@@ -115,73 +117,16 @@ final class SmartPixOrderDetails
         return $payer;
     }
 
-    /**
-     * The buyer paying now may differ from the one stored on the order (an order created in the
-     * admin and paid on the order-pay page), so the current request address wins. The stored
-     * order address is the fallback; the server address is never sent.
-     */
-    private function ipAddress(WC_Order $order): string
-    {
-        $ipAddress = $this->validIpAddress(($this->requestIpAddress)())
-            ?? $this->validIpAddress($order->get_customer_ip_address());
-        if ($ipAddress === null) {
-            throw new InvalidArgumentException('Invalid Smart Pix buyer address.');
-        }
-
-        return $ipAddress;
-    }
-
-    /**
-     * Request and stored order data are not trusted to match the stub types.
-     * @param mixed $ipAddress
-     */
-    private function validIpAddress($ipAddress): ?string
-    {
-        if (!is_string($ipAddress) || filter_var($ipAddress, FILTER_VALIDATE_IP) === false) {
-            return null;
-        }
-
-        return $ipAddress;
-    }
-
-    /**
-     * Any positive finite quantity is accepted, including decimal quantities from quantity plugins.
-     * @param mixed $quantity
-     */
-    private function isQuantity($quantity): bool
-    {
-        if (!is_int($quantity) && !is_float($quantity) && !is_string($quantity)) {
-            return false;
-        }
-        if (!is_numeric($quantity)) {
-            return false;
-        }
-        $value = (float) $quantity;
-
-        return is_finite($value) && $value > 0 && $value <= SmartPixDecimal::MAX_FACTOR;
-    }
-
-    /**
-     * @throws InvalidArgumentException
-     */
+    /** Same "name x quantity" list as the other payment methods; the cart never blocks the payment. */
     private function productDescription(WC_Order $order): string
     {
         $lines = [];
         foreach ($order->get_items() as $item) {
-            if (!$item instanceof WC_Order_Item_Product) {
-                throw new InvalidArgumentException('Invalid Smart Pix order items.');
+            if ($item instanceof WC_Order_Item_Product) {
+                $lines[] = trim((string) $item->get_name()) . ' x ' . $item->get_quantity();
             }
-            $name     = trim((string) $item->get_name());
-            $quantity = $item->get_quantity();
-            if ($name === '' || !$this->isQuantity($quantity)) {
-                throw new InvalidArgumentException('Invalid Smart Pix order items.');
-            }
-            $lines[] = $name . ' x ' . $quantity;
-        }
-        if ($lines === []) {
-            throw new InvalidArgumentException('Invalid Smart Pix order items.');
         }
 
-        return implode(', ', $lines);
+        return $lines === [] ? self::CONSOLIDATED_ITEMS : implode(', ', $lines);
     }
 }

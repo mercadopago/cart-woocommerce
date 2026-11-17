@@ -9,6 +9,7 @@ const buildSession = (overrides = {}) => ({
   isValidEmail: jest.fn(() => true),
   bumpLoadGeneration: jest.fn(),
   setFetching: jest.fn(),
+  rememberFetchIdentity: jest.fn(),
   getLoadGeneration: jest.fn(() => 0),
   currentAmount: jest.fn(() => AMOUNT),
   fetchAccountPaymentMethods: jest.fn(async () => METHODS),
@@ -36,6 +37,7 @@ describe('FetchAndRenderPaymentMethods', () => {
     expect(metrics.emailCaptured).toHaveBeenCalledTimes(1);
     expect(session.bumpLoadGeneration).toHaveBeenCalledTimes(1);
     expect(session.setFetching).toHaveBeenNthCalledWith(1, true);
+    expect(session.rememberFetchIdentity).toHaveBeenCalledWith(AMOUNT, EMAIL);
     expect(session.fetchAccountPaymentMethods).toHaveBeenCalledWith(AMOUNT, EMAIL);
     expect(session.setFetching).toHaveBeenNthCalledWith(2, false);
     expect(session.renderAccountPaymentMethods).toHaveBeenCalledWith(METHODS, AMOUNT);

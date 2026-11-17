@@ -13,6 +13,7 @@ use MercadoPago\Woocommerce\SmartPix\Adapters\Telemetry\SmartPixDiagnostic;
 use MercadoPago\Woocommerce\SmartPix\SmartPixExistingPixException;
 use MercadoPago\Woocommerce\SmartPix\Adapters\Http\SmartPixOrderDetails;
 use MercadoPago\Woocommerce\SmartPix\Adapters\Telemetry\SmartPixTelemetry;
+use MercadoPago\Woocommerce\SmartPix\Core\SmartPixDecimal;
 
 if (!defined('ABSPATH')) {
     // @codeCoverageIgnoreStart
@@ -140,28 +141,19 @@ final class SmartPixValidator
             }
         }
 
-        // The store identificator prefix matches the external reference used by the other
-        // gateways and by notification linkage. External references remain validated at
-        // the client boundary, so a prefix outside the opaque reference format fails closed.
+        // Same external reference as the other gateways and the notification linkage, including
+        // an empty or free-form store identificator.
         return get_option('_mp_store_identificator', 'WC-') . $nativeOrderId;
     }
 
     /**
-     * Preserve WooCommerce's authoritative decimal total; do not introduce float rounding.
+     * WooCommerce's authoritative total, rounded to cents like the other payment methods.
      * @param mixed $total
      */
     private function normalizeAmount($total): string
     {
-        if (
-            !is_string($total)
-            || strlen($total) > 64
-            || preg_match('/^(0|[1-9][0-9]*)(?:\.([0-9]{1,2})0*)?$/D', $total, $parts) !== 1
-        ) {
-            throw new InvalidArgumentException('Invalid Smart Pix order total.');
-        }
-
-        $amount = $parts[1] . '.' . str_pad($parts[2] ?? '', 2, '0');
-        if ($amount === '0.00') {
+        $amount = SmartPixDecimal::roundHalfUp($total);
+        if ($amount === null || $amount === '0.00') {
             throw new InvalidArgumentException('Invalid Smart Pix order total.');
         }
 

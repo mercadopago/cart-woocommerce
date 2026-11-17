@@ -52,6 +52,12 @@ class Scripts
 
     public const SMART_PIX_STYLE_NAME = 'wc_mercadopago_smart_pix';
 
+    private const SMART_PIX_BOOTSTRAP_NAME = 'wc_mercadopago_pix_bootstrap';
+
+    // WordPress prints the head stylesheets at wp_head priority 8: a stylesheet that fails before
+    // the bootstrap listens never reports its error again.
+    public const SMART_PIX_BOOTSTRAP_HEAD_PRIORITY = 7;
+
     private const SMART_PIX_ASSET_VERSION = 'v1';
 
     private const SMART_PIX_LOCAL_SCRIPT_PATH = 'checkouts/smart-pix/smart-pix.bundle';
@@ -236,6 +242,7 @@ class Scripts
         }
 
         add_filter('style_loader_tag', [$this, 'addSmartPixStyleCrossOrigin'], 10, 2);
+        add_action('wp_head', [$this, 'printSmartPixBootstrapBeforeStyles'], self::SMART_PIX_BOOTSTRAP_HEAD_PRIORITY);
 
         add_action('wp_enqueue_scripts', function () use ($environment) {
             $this->enqueueSmartPixCheckoutAssets($environment);
@@ -256,7 +263,7 @@ class Scripts
     }
 
     /**
-     * Enqueue one allow-listed Smart Pix environment on payment-related pages.
+     * Enqueue one allow-listed Smart Pix environment only where the checkout payment form can render.
      *
      * Kept separate from hook registration so the fixed URL/dependency contract is testable
      * without invoking a captured WordPress closure.
@@ -267,7 +274,7 @@ class Scripts
      */
     public function enqueueSmartPixCheckoutAssets(string $environment): void
     {
-        if (!isset(self::SMART_PIX_ASSETS[$environment]) || !$this->isPaymentsRelatedPage()) {
+        if (!isset(self::SMART_PIX_ASSETS[$environment]) || !$this->isPaymentFormPage()) {
             return;
         }
 
@@ -317,6 +324,8 @@ class Scripts
      */
     public function registerSmartPixLocalCheckoutAssets(): void
     {
+        add_action('wp_head', [$this, 'printSmartPixBootstrapBeforeStyles'], self::SMART_PIX_BOOTSTRAP_HEAD_PRIORITY);
+
         add_action('wp_enqueue_scripts', function () {
             $this->enqueueSmartPixLocalCheckoutAssets();
         });
@@ -324,7 +333,7 @@ class Scripts
 
     public function enqueueSmartPixLocalCheckoutAssets(): void
     {
-        if (!$this->isPaymentsRelatedPage()) {
+        if (!$this->isPaymentFormPage()) {
             return;
         }
 
@@ -357,18 +366,29 @@ class Scripts
     private function enqueueSmartPixBootstrapAssets(): void
     {
         wp_enqueue_style(
-            'wc_mercadopago_pix_bootstrap',
+            self::SMART_PIX_BOOTSTRAP_NAME,
             $this->url->getCssAsset('checkouts/mp-pix-bootstrap'),
             [],
             $this->url->assetVersion()
         );
         wp_enqueue_script(
-            'wc_mercadopago_pix_bootstrap',
+            self::SMART_PIX_BOOTSTRAP_NAME,
             $this->url->getJsAsset('checkouts/pix/mp-pix-bootstrap'),
             [],
             $this->url->assetVersion(),
             false
         );
+    }
+
+    /**
+     * Print the bootstrap ahead of the stylesheets so it sees a Smart Pix stylesheet that fails;
+     * WordPress then skips it in the regular head scripts.
+     */
+    public function printSmartPixBootstrapBeforeStyles(): void
+    {
+        if (wp_script_is(self::SMART_PIX_BOOTSTRAP_NAME, 'enqueued')) {
+            wp_scripts()->do_items([self::SMART_PIX_BOOTSTRAP_NAME]);
+        }
     }
 
     /**
@@ -408,8 +428,8 @@ class Scripts
             return null;
         }
 
-        // Exact canonical BRL total; sub-cent, negative or malformed totals yield no context.
-        $amount     = SmartPixDecimal::canonical((string) $order->get_total());
+        // BRL total rounded to cents like the order creation; negative or malformed totals yield no context.
+        $amount     = SmartPixDecimal::roundHalfUp((string) $order->get_total());
         $buyerEmail = trim((string) $order->get_billing_email());
         $resolvedId = (int) $order->get_id();
 

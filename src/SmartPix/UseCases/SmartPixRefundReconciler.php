@@ -15,6 +15,7 @@ use MercadoPago\Woocommerce\SmartPix\Core\SmartPixMoney;
 use MercadoPago\Woocommerce\SmartPix\Core\SmartPixPaidStatus;
 use MercadoPago\Woocommerce\SmartPix\Adapters\Persistence\SmartPixOperationRepository;
 use MercadoPago\Woocommerce\SmartPix\Adapters\WooCommerce\SmartPixRefundContext;
+use MercadoPago\Woocommerce\SmartPix\Core\SmartPixDecimal;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -41,7 +42,7 @@ final class SmartPixRefundReconciler
     {
         try {
             $context = $this->partialContext($order, $key, $response);
-            if (SmartPixMoney::normalize((string) $order->get_total_refunded()) !== $context['amount']) {
+            if (SmartPixDecimal::roundHalfUp((string) $order->get_total_refunded()) !== $context['amount']) {
                 throw new RuntimeException('refund_context_conflict');
             }
             return $this->result('no_change', 'refund_already_applied', $order->get_status('edit'));
@@ -64,7 +65,7 @@ final class SmartPixRefundReconciler
                 // Recovery is best-effort: the reservation below still fails closed on an unresolved journal.
             }
             $this->assertSettledNativeRefunds($order, $key, $context['total']);
-            if (SmartPixMoney::normalize((string) $order->get_total_refunded()) === $context['amount']) {
+            if (SmartPixDecimal::roundHalfUp((string) $order->get_total_refunded()) === $context['amount']) {
                 return $this->result('no_change', 'refund_already_applied', $order->get_status('edit'));
             }
             // The cumulative provider balance identifies this import, not a new financial refund.
@@ -77,7 +78,7 @@ final class SmartPixRefundReconciler
                 throw new RuntimeException('refund_context_conflict');
             }
             $this->assertSettledNativeRefunds($order, $key, $context['total']);
-            $native = SmartPixMoney::normalize((string) $order->get_total_refunded());
+            $native = SmartPixDecimal::roundHalfUp((string) $order->get_total_refunded());
             $remaining = $native === null ? null : SmartPixMoney::subtract($context['amount'], $native);
             if ($remaining === null) {
                 throw new RuntimeException('refund_context_conflict');
@@ -153,7 +154,7 @@ final class SmartPixRefundReconciler
     /** Reject in-flight gateway refunds: WooCommerce saves them before the gateway is called. */
     private function assertSettledNativeRefunds(WC_Order $order, string $key, string $total): void
     {
-        $native = SmartPixMoney::normalize((string) $order->get_total_refunded());
+        $native = SmartPixDecimal::roundHalfUp((string) $order->get_total_refunded());
         $sum = '0.00';
         foreach ($order->get_refunds() as $refund) {
             if (
@@ -163,7 +164,7 @@ final class SmartPixRefundReconciler
                 throw new RuntimeException('native_refund_unresolved');
             }
             $value = (string) $refund->get_total('edit');
-            $amount = substr($value, 0, 1) === '-' ? SmartPixMoney::normalize(substr($value, 1)) : null;
+            $amount = substr($value, 0, 1) === '-' ? SmartPixDecimal::roundHalfUp(substr($value, 1)) : null;
             $sum = $amount === null ? null : SmartPixMoney::add($sum, $amount);
             if ($sum === null || $amount === '0.00') {
                 throw new RuntimeException('native_refund_unresolved');
@@ -195,8 +196,8 @@ final class SmartPixRefundReconciler
     private function partialContext(WC_Order $order, string $key, array $response): array
     {
         $snapshot = $response['refund_context'] ?? null;
-        $total = SmartPixMoney::normalize($order->get_total('edit'));
-        $native = SmartPixMoney::normalize((string) $order->get_total_refunded());
+        $total = SmartPixDecimal::roundHalfUp($order->get_total('edit'));
+        $native = SmartPixDecimal::roundHalfUp((string) $order->get_total_refunded());
         $target = is_array($snapshot) ? SmartPixMoney::normalize($snapshot['refunded_amount'] ?? null) : null;
         $seller = $this->seller->getCustIdFromAT();
         $reference = $this->metadata->getPpOrderId($order);
@@ -263,9 +264,16 @@ final class SmartPixRefundReconciler
                 throw new RuntimeException('refund_context_conflict');
             }
             $this->assertNoRefundInFlight($order);
-            $local = SmartPixMoney::normalize((string) $order->get_total_refunded());
+            $refunded = (string) $order->get_total_refunded();
+            $local = SmartPixDecimal::roundHalfUp($refunded);
             $remaining = $local === null ? null : SmartPixMoney::subtract($context['total'], $local);
-            if ($remaining === null || $remaining === '0.00') {
+            // The provider refunded cents; WooCommerce only accepts its own balance, which keeps the store decimals.
+            // A fractional earlier refund and this balance round apart, so only their exact sum must close the total.
+            $nativeRemaining = (string) $order->get_remaining_refund_amount();
+            if (
+                $remaining === null || $remaining === '0.00'
+                || SmartPixDecimal::roundedSum($refunded, $nativeRemaining) !== $context['total']
+            ) {
                 throw new RuntimeException('refund_context_conflict');
             }
             if (!$beforeEffect()) {
@@ -273,14 +281,14 @@ final class SmartPixRefundReconciler
             }
             $started = true;
             $refund = wc_create_refund([
-                'order_id' => $order->get_id(), 'amount' => $remaining,
+                'order_id' => $order->get_id(), 'amount' => $nativeRemaining,
                 'reason' => __('Mercado Pago: payment refunded.', 'woocommerce-mercadopago'),
                 'refund_payment' => false, 'restock_items' => false,
             ]);
             if (
                 !$refund instanceof WC_Order_Refund || $refund->get_id() <= 0
                 || $refund->get_parent_id('edit') !== $order->get_id()
-                || SmartPixMoney::normalize(substr((string) $refund->get_total('edit'), 1)) !== $remaining
+                || SmartPixDecimal::roundedSum($refunded, substr((string) $refund->get_total('edit'), 1)) !== $context['total']
                 || substr((string) $refund->get_total('edit'), 0, 1) !== '-'
             ) {
                 throw new RuntimeException('native_refund_not_verified');
@@ -307,7 +315,7 @@ final class SmartPixRefundReconciler
     private function context(WC_Order $order, string $key, array $response): array
     {
         $snapshot = $response['refund_context'] ?? null;
-        $total = SmartPixMoney::normalize($order->get_total('edit'));
+        $total = SmartPixDecimal::roundHalfUp($order->get_total('edit'));
         $reference = $this->metadata->getPpOrderId($order);
         $seller = $this->seller->getCustIdFromAT();
         $attempt = get_option('_mp_store_identificator', 'WC-') . $order->get_id();
@@ -365,7 +373,7 @@ final class SmartPixRefundReconciler
     private function confirmed(WC_Order $order, string $total): bool
     {
         return $order->get_status('edit') === 'refunded'
-            && SmartPixMoney::normalize((string) $order->get_total_refunded()) === $total;
+            && SmartPixDecimal::roundHalfUp((string) $order->get_total_refunded()) === $total;
     }
 
     private function result(string $outcome, string $reason, ?string $status = null): array

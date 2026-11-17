@@ -125,6 +125,60 @@ class SmartPixMutationProcessorTest extends TestCase
         return [['25.50'], ['125.50']];
     }
 
+    /** @dataProvider subCentOrderTotalProvider */
+    public function testRefundOfAnOrderWithASubCentTotalUsesTheTotalRoundedLikeTheOtherPaymentMethods(string $total): void
+    {
+        $this->order->shouldReceive('get_total')->with('edit')->andReturn($total);
+        $this->reserve();
+        $this->client->shouldReceive('query')->once()->with($this->request())->andReturn($this->response('query'));
+        $response = $this->response('refund');
+        $response['payments'][0]['amount']['value'] = '25.50';
+        $response['order_context']['refunded_amount'] = '25.50';
+        $request = $this->request();
+        $request['refund_amount'] = ['value' => '25.50', 'currency' => 'BRL'];
+        $request['operation_context'] = $this->mutationContext();
+        $this->client->shouldReceive('refund')->once()->with($request)->andReturn($response);
+        $this->operations->shouldReceive('finish')->once()->with($this->order, Mockery::type('array'), 'succeeded');
+
+        $this->assertTrue($this->processor()->refund($this->order, 'refund_42', '25.50')['success']);
+    }
+
+    public static function subCentOrderTotalProvider(): array
+    {
+        return [['125.495'], ['125.504']];
+    }
+
+    /** @dataProvider freeFormAttemptReferenceProvider */
+    public function testRefundAcceptsTheAttemptReferenceOfAnEmptyOrFreeFormStoreIdentificator(string $attemptReference): void
+    {
+        $this->metadata->shouldReceive('getSmartPixAttemptReference')->andReturn($attemptReference);
+        $this->reserve();
+        $request = ['attempt_reference' => $attemptReference] + $this->request();
+        $query = $this->response('query');
+        $query['order_context']['attempt_reference'] = $attemptReference;
+        $this->client->shouldReceive('query')->once()->with($request)->andReturn($query);
+        $response = $this->response('refund');
+        $response['payments'][0]['amount']['value'] = '25.50';
+        $response['order_context']['refunded_amount'] = '25.50';
+        $response['order_context']['attempt_reference'] = $attemptReference;
+        $refund = $request;
+        $refund['refund_amount'] = ['value' => '25.50', 'currency' => 'BRL'];
+        $refund['operation_context'] = $this->mutationContext();
+        $this->client->shouldReceive('refund')->once()->with($refund)->andReturn($response);
+        $this->operations->shouldReceive('finish')->once()->with($this->order, Mockery::type('array'), 'succeeded');
+
+        $this->assertTrue($this->processor()->refund($this->order, 'refund_42', '25.50')['success']);
+    }
+
+    public static function freeFormAttemptReferenceProvider(): array
+    {
+        return [
+            'empty identificator' => ['258623'],
+            'order below 100 without prefix' => ['5'],
+            'space, dot and accent' => ['Loja Ação. 321'],
+        ];
+    }
+
     public function testSuccessfulRefundPersistsTheConfirmedProviderStatusWithoutChangingItsIdentifiers(): void
     {
         $this->reserve();

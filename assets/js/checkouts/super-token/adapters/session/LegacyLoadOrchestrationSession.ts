@@ -31,6 +31,8 @@ export interface LegacyLoadOrchestrationTriggerHandler {
   isFetchingPaymentMethods: boolean;
   amountHasChanged(): boolean;
   emailHasChanged(): boolean;
+  // Optional: a handler from an older runtime build only knows the authenticator's identity.
+  fetchingIdentityHasChanged?(): boolean;
   cancelLoad(): void;
   resetFlow(): void;
   isSuperTokenPaymentMethodsLoaded(): boolean;
@@ -81,6 +83,13 @@ export class LegacyLoadOrchestrationSession implements LoadSuperTokenSession {
 
   emailHasChanged(): boolean {
     return this.triggerHandler.emailHasChanged();
+  }
+
+  fetchingIdentityHasChanged(): boolean {
+    if (typeof this.triggerHandler.fetchingIdentityHasChanged !== 'function') {
+      return this.triggerHandler.amountHasChanged() || this.triggerHandler.emailHasChanged();
+    }
+    return this.triggerHandler.fetchingIdentityHasChanged();
   }
 
   clearRememberedSelections(): void {

@@ -515,11 +515,7 @@ class Dependencies
         return new \MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderSync(
             $this->orderMetadata,
             static function (\WC_Order $order) use ($query, $partialRefundQuery): array {
-                $refunded = \MercadoPago\Woocommerce\SmartPix\Core\SmartPixMoney::normalize((string) $order->get_total_refunded());
-                $total = \MercadoPago\Woocommerce\SmartPix\Core\SmartPixMoney::normalize($order->get_total('edit'));
-                $hasPartialRefund = $refunded !== null && $total !== null
-                    && $refunded !== '0.00'
-                    && \MercadoPago\Woocommerce\SmartPix\Core\SmartPixMoney::compare($refunded, $total) < 0;
+                $hasPartialRefund = \MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderSync::hasNativePartialRefund($order);
                 return ($hasPartialRefund ? $partialRefundQuery : $query)->query($order, 'server');
             },
             [$apply, 'apply']

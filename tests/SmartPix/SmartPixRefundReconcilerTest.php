@@ -44,6 +44,7 @@ class SmartPixRefundReconcilerTest extends TestCase
         // WooCommerce reports a store-configured paid status as paid.
         $order->shouldReceive('is_paid')->andReturn($status === 'paid-by-store');
         $order->shouldReceive('get_total_refunded')->andReturn((float) $previous, 20.0);
+        $order->shouldReceive('get_remaining_refund_amount')->andReturn($previous === '0.00' ? '20.00' : '15.00');
         $operations->shouldReceive('reserve')->once()->with($order, 'provider_full_refund', Mockery::on(static function ($context): bool {
             return $context['amount'] === '20.00' && $context['operation'] === 'refund'
                 && $context['order_reference'] === 'PPORDSYNTHETIC';
@@ -95,6 +96,9 @@ class SmartPixRefundReconcilerTest extends TestCase
         });
         $order->shouldReceive('get_total_refunded')->andReturnUsing(static function () use (&$nativeTotal): float {
             return $nativeTotal;
+        });
+        $order->shouldReceive('get_remaining_refund_amount')->andReturnUsing(static function () use (&$nativeTotal): string {
+            return number_format(1.18 - $nativeTotal, 2, '.', '');
         });
         $partial = Mockery::mock(WC_Order_Refund::class);
         $partial->shouldReceive('get_id')->andReturn(154);
@@ -155,6 +159,138 @@ class SmartPixRefundReconcilerTest extends TestCase
         $this->assertSame('succeeded', $records[hash('sha256', 'SYNTHETIC_KEY|provider_full_refund')]['status']);
     }
 
+    /** @dataProvider subCentFullRefundProvider */
+    public function testProviderFullRefundOfASubCentOrderRefundsTheNativeBalance(string $total, string $providerTotal): void
+    {
+        // Given a paid order whose total keeps three store decimals and a provider refund of its rounded total
+        $state = $this->subCentFullRefund($total, $providerTotal);
+
+        // When the provider full refund is imported
+        $result = $state->reconciler->apply($state->order, 'SYNTHETIC_KEY', $state->response, static fn(): bool => true);
+
+        // Then WooCommerce refunds its own balance and the order closes as refunded
+        $this->assertSame(['outcome' => 'applied', 'reason' => 'native_refund_verified', 'status' => 'refunded'], $result);
+        $this->assertSame('refunded', $state->native->status);
+        $this->assertSame((float) $total, $state->native->total);
+    }
+
+    public static function subCentFullRefundProvider(): array
+    {
+        return [
+            'half cent rounds the provider total up' => ['2.355', '2.36'],
+            'below half cent rounds the provider total down' => ['2.354', '2.35'],
+        ];
+    }
+
+    public function testProviderFullRefundAfterAFractionalPartialRefundsTheNativeBalance(): void
+    {
+        // Given a 20.000 order with a native partial refund of 1.005, sent to the provider as 1.01
+        $state = $this->subCentFullRefund('20.000', '20.00', '18.995', 1, '18.995', 'refunded', 1.005);
+
+        // When the provider refunds the rest and the full refund is imported
+        $result = $state->reconciler->apply($state->order, 'SYNTHETIC_KEY', $state->response, static fn(): bool => true);
+
+        // Then WooCommerce refunds its remaining 18.995 and the order closes as refunded
+        $this->assertSame(['outcome' => 'applied', 'reason' => 'native_refund_verified', 'status' => 'refunded'], $result);
+        $this->assertSame('refunded', $state->native->status);
+        $this->assertSame(20.0, round($state->native->total, 3));
+    }
+
+    public function testNativeBalanceThatDoesNotRoundToTheProviderAmountCreatesNoRefund(): void
+    {
+        // Given WooCommerce's balance rounds to another amount than the provider refunded
+        $state = $this->subCentFullRefund('2.355', '2.36', '2.354', 0);
+
+        // When the provider full refund is imported
+        $result = $state->reconciler->apply($state->order, 'SYNTHETIC_KEY', $state->response, static fn(): bool => true);
+
+        // Then no native refund is created and the import stays retryable
+        $this->assertSame(['outcome' => 'uncertain', 'reason' => 'refund_reconciliation_unavailable', 'status' => null], $result);
+        $this->assertSame('processing', $state->native->status);
+    }
+
+    /** @dataProvider unverifiedSubCentRefundProvider */
+    public function testUnverifiedNativeRefundOfASubCentOrderIsNotReportedAsApplied(string $createdTotal, string $statusAfter): void
+    {
+        // Given WooCommerce creates a refund that does not match or does not close the order
+        $state = $this->subCentFullRefund('2.355', '2.36', null, 1, $createdTotal, $statusAfter);
+
+        // When the provider full refund is imported
+        $result = $state->reconciler->apply($state->order, 'SYNTHETIC_KEY', $state->response, static fn(): bool => true);
+
+        // Then the effect is uncertain instead of applied
+        $this->assertSame(['outcome' => 'uncertain', 'reason' => 'native_refund_not_verified', 'status' => null], $result);
+    }
+
+    public static function unverifiedSubCentRefundProvider(): array
+    {
+        return [
+            'created refund rounds to another amount' => ['2.344', 'refunded'],
+            'order is not closed as refunded' => ['2.355', 'processing'],
+        ];
+    }
+
+    /**
+     * A three-decimal order paid by Smart Pix, with native totals that change when wc_create_refund runs.
+     * @return object{reconciler: SmartPixRefundReconciler, order: WC_Order, response: array, native: object}
+     */
+    private function subCentFullRefund(
+        string $total,
+        string $providerTotal,
+        ?string $nativeRemaining = null,
+        int $refunds = 1,
+        ?string $createdTotal = null,
+        string $statusAfter = 'refunded',
+        float $refundedBefore = 0.0
+    ): object {
+        [, $order, , $metadata, $seller] = $this->context();
+        $native = (object) ['total' => $refundedBefore, 'status' => 'processing'];
+        $order->shouldReceive('get_total')->with('edit')->andReturn($total);
+        $order->shouldReceive('get_status')->with('edit')->andReturnUsing(static fn(): string => $native->status);
+        $order->shouldReceive('get_total_refunded')->andReturnUsing(static fn(): float => $native->total);
+        $order->shouldReceive('get_remaining_refund_amount')->andReturnUsing(
+            static fn(): string => $nativeRemaining ?? number_format((float) $total - $native->total, 3, '.', '')
+        );
+        $order->shouldReceive('get_refunds')->andReturn([]);
+        $encoded = '';
+        $order->shouldReceive('get_meta')->with(SmartPixOperationRepository::META_KEY, true, 'edit')
+            ->andReturnUsing(static function () use (&$encoded): string {
+                return $encoded;
+            });
+        $order->shouldReceive('update_meta_data')->with(SmartPixOperationRepository::META_KEY, Mockery::type('string'))
+            ->andReturnUsing(static function ($field, $value) use (&$encoded): void {
+                $encoded = $value;
+            });
+        $order->shouldReceive('save_meta_data');
+        $created = $createdTotal ?? $total;
+        $refund = Mockery::mock(WC_Order_Refund::class);
+        $refund->shouldReceive('get_id')->andReturn(156);
+        $refund->shouldReceive('get_parent_id')->with('edit')->andReturn(321);
+        $refund->shouldReceive('get_total')->with('edit')->andReturn('-' . $created);
+        WP_Mock::userFunction('wc_create_refund', [
+            'args' => [['order_id' => 321, 'amount' => $nativeRemaining ?? $total,
+                'reason' => 'Mercado Pago: payment refunded.', 'refund_payment' => false, 'restock_items' => false]],
+            'times' => $refunds,
+            'return' => static function () use ($native, $refund, $created, $statusAfter): WC_Order_Refund {
+                $native->total += (float) $created;
+                $native->status = $statusAfter;
+                return $refund;
+            },
+        ]);
+        $response = $this->response();
+        $response['payments'][0]['amount']['value'] = $providerTotal;
+        $response['refund_context']['amount']['value'] = $providerTotal;
+        $response['refund_context']['refunded_amount'] = $providerTotal;
+        $operations = new SmartPixOperationRepository(new SmartPixStatusLock(new SmartPixStatusLockDatabase(), 'operation_'));
+
+        return (object) [
+            'reconciler' => new SmartPixRefundReconciler($metadata, $seller, $operations),
+            'order' => $order,
+            'response' => $response,
+            'native' => $native,
+        ];
+    }
+
     /** An uncertain admin partial refund cannot block importing the provider's later full refund. */
     public function testProviderFullRefundImportsTheWholeTotalAfterAnUncertainAdminPartialOfAnotherAmount(): void
     {
@@ -167,6 +303,9 @@ class SmartPixRefundReconcilerTest extends TestCase
         });
         $order->shouldReceive('get_total_refunded')->andReturnUsing(static function () use (&$nativeTotal): float {
             return $nativeTotal;
+        });
+        $order->shouldReceive('get_remaining_refund_amount')->andReturnUsing(static function () use (&$nativeTotal): string {
+            return number_format(1.18 - $nativeTotal, 2, '.', '');
         });
         // WooCommerce removed the provisional admin refund after its gateway call failed.
         $order->shouldReceive('get_refunds')->andReturn([]);
@@ -358,6 +497,7 @@ class SmartPixRefundReconcilerTest extends TestCase
         [$reconciler, $order, $operations] = $this->context([$this->nativeRefund($inFlight, $refundedPayment)]);
         $order->shouldReceive('get_status')->with('edit')->andReturn('processing', 'processing', 'processing', 'refunded');
         $order->shouldReceive('get_total_refunded')->andReturn(5.0, 20.0);
+        $order->shouldReceive('get_remaining_refund_amount')->andReturn('15.00');
         $operations->shouldReceive('reserve')->once()->andReturn(['dispatch' => 'yes']);
         $operations->shouldReceive('finish')->once()->with($order, ['dispatch' => 'yes'], 'succeeded');
         $refund = Mockery::mock(WC_Order_Refund::class);
@@ -517,6 +657,8 @@ class SmartPixRefundReconcilerTest extends TestCase
         $order = Mockery::mock(WC_Order::class);
         $order->shouldReceive('get_id')->andReturn(321);
         $order->shouldReceive('get_total')->with('edit')->andReturn('20.00')->byDefault();
+        // WooCommerce's own balance (total minus native refunds), kept at the store decimals.
+        $order->shouldReceive('get_remaining_refund_amount')->andReturn('20.00')->byDefault();
         $order->shouldReceive('get_currency')->with('edit')->andReturn('BRL');
         $order->shouldReceive('get_payment_method')->with('edit')->andReturn(PixGateway::ID);
         $order->shouldReceive('read_meta_data')->with(true);

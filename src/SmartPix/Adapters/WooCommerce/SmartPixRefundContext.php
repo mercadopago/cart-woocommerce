@@ -8,7 +8,7 @@ use MercadoPago\Woocommerce\Order\OrderMetadata;
 use Throwable;
 use WC_Order;
 use WC_Order_Refund;
-use MercadoPago\Woocommerce\SmartPix\Core\SmartPixMoney;
+use MercadoPago\Woocommerce\SmartPix\Core\SmartPixDecimal;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -78,17 +78,18 @@ final class SmartPixRefundContext
             return null;
         }
         // get_amount() casts to float; the native negative total retains the CRUD decimal string.
-        $canonical = $this->refundAmount($this->refund->get_total('edit'));
-        if ($canonical === null || $canonical === '0.00' || !is_finite($amount) || (float) $canonical !== $amount) {
+        $native = $this->refundAmount($this->refund->get_total('edit'));
+        $canonical = $native === null ? null : SmartPixDecimal::roundHalfUp($native);
+        if ($canonical === null || $canonical === '0.00' || !is_finite($amount) || (float) $native !== $amount) {
             return null;
         }
+        // Like the other payment methods, the refund is sent rounded to cents.
         return ['identity' => 'refund_' . $this->refund->get_id(), 'amount' => $canonical];
     }
 
     /** @param mixed $total Stubs declare float, while native CRUD retains the decimal string. */
     private function refundAmount($total): ?string
     {
-        return is_string($total) && substr($total, 0, 1) === '-'
-            ? SmartPixMoney::normalize(substr($total, 1)) : null;
+        return is_string($total) && substr($total, 0, 1) === '-' ? substr($total, 1) : null;
     }
 }

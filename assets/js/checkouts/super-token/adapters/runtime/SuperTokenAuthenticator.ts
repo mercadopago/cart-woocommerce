@@ -42,6 +42,8 @@ import {
 } from '@super-token/core/checkoutSession/BuyerEmail';
 import { SITES_WITHOUT_DECIMAL_AMOUNTS } from '@super-token/core/constants';
 
+const ACCOUNT_PAYMENT_METHODS_FALLBACK_METRIC = 'super_token_account_payment_methods_fallback';
+
 /** Superset of the metrics the load use case, the submit use case and the primitives emit. */
 export interface SuperTokenAuthenticatorMetrics extends AuthenticatorMetrics, AuthorizePaymentMetrics {
   errorToBuildAuthenticator(error: unknown): void;
@@ -240,6 +242,7 @@ export class SuperTokenAuthenticator {
     return this.coordinateAccountPaymentMethodsUseCase.execute({
       amount,
       buyerEmail: normalizedEmail,
+      onTimeout: () => this.metrics.sendMetric(ACCOUNT_PAYMENT_METHODS_FALLBACK_METRIC, 'timeout', ''),
       fetch: (signal) => {
         // A reset or a newer fetch supersedes this one even if its SDK call is still pending.
         const generation = ++this.loadGeneration;
