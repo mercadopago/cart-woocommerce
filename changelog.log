@@ -2,6 +2,16 @@ CHANGELOG:
 
 == Changelog
 
+= v8.10.3 (18/11/2026) =
+* Changed
+- Load Pix via Open Finance only on the checkout and order payment pages
+
+* Fixed
+- Improve how Pix via Open Finance loads on slower checkout pages, and show the conventional Pix right away when it cannot load
+- Prevent the card checkout from loading indefinitely when Fast Payments does not respond
+- Reload Fast Payments correctly when the buyer changes the checkout, such as applying a coupon
+- Improve the creation and refunds of Pix via Open Finance orders in more store configurations
+
 = v8.10.2 (12/11/2026) =
 * Fixed
 - Improve request validation for Mercado Pago notices in the WordPress admin

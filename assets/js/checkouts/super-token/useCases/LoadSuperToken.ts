@@ -27,6 +27,7 @@ export interface LoadSuperTokenSession {
   isFetching(): boolean;
   amountHasChanged(): boolean;
   emailHasChanged(): boolean;
+  fetchingIdentityHasChanged(): boolean;
   clearRememberedSelections(): void;
   cancelInvalidAmount(): void;
   resetFlow(): void;
@@ -75,7 +76,7 @@ export class LoadSuperToken {
     }
 
     // Prevent unnecessary re-fetching of payment methods.
-    if (session.isFetching() && !session.amountHasChanged() && !session.emailHasChanged()) {
+    if (session.isFetching() && !session.fetchingIdentityHasChanged()) {
       return;
     }
 

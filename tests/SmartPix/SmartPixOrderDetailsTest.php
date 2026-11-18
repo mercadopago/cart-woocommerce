@@ -6,6 +6,8 @@ namespace MercadoPago\Woocommerce\Tests\SmartPix;
 
 use InvalidArgumentException;
 use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Helpers;
+use MercadoPago\Woocommerce\Helpers\Url;
 use MercadoPago\Woocommerce\SmartPix\Adapters\Http\SmartPixOrderDetails;
 use MercadoPago\Woocommerce\WoocommerceMercadoPago;
 use Mockery;
@@ -118,50 +120,56 @@ class SmartPixOrderDetailsTest extends TestCase
     }
 
     /**
-     * @dataProvider missingCartFactProvider
-     * @param array<string, mixed> $changes
+     * @dataProvider invalidEmailProvider
+     * @param mixed $email
      */
-    public function testMissingMandatoryFactFailsClosedWithoutPersonalData(array $changes, string $message): void
+    public function testInvalidEmailFailsClosedWithoutPersonalData($email): void
     {
         $order = Mockery::mock(WC_Order::class);
-        $this->stubOrderDetailsWith($order, $changes);
+        $this->stubOrderDetailsWith($order, ['email' => $email]);
 
         try {
             (new SmartPixOrderDetails())->build($order, '4.00');
             $this->fail('Expected the order details to be rejected.');
         } catch (InvalidArgumentException $failure) {
-            $this->assertSame($message, $failure->getMessage());
+            $this->assertSame('Invalid Smart Pix payer.', $failure->getMessage());
             $this->assertStringNotContainsString(self::$syntheticCpf, $failure->getMessage());
         }
     }
 
-    public static function missingCartFactProvider(): array
+    public static function invalidEmailProvider(): array
     {
-        $items = 'Invalid Smart Pix order items.';
-        $payer = 'Invalid Smart Pix payer.';
-        $address = 'Invalid Smart Pix buyer address.';
+        return ['invalid email' => ['not-an-email'], 'empty email' => [''], 'missing email' => [null]];
+    }
+
+    /**
+     * @dataProvider unvalidatedCartFactProvider
+     * @param array<string, mixed> $changes
+     */
+    public function testCartAndBuyerFactsNeverBlockThePaymentLikeTheOtherPaymentMethods(array $changes, string $description, string $firstName): void
+    {
+        $order = Mockery::mock(WC_Order::class);
+        $this->stubOrderDetailsWith($order, $changes);
+
+        $details = (new SmartPixOrderDetails())->build($order, '4.00');
+
+        $this->assertSame($description, $details['description']);
+        $this->assertSame($firstName, $details['payer']['first_name']);
+        $this->assertSame([
+            ['id' => '321', 'title' => 'Consolidated Items', 'unit_price' => '4.00', 'quantity' => 1, 'type' => 'others'],
+        ], $details['items']);
+    }
+
+    public static function unvalidatedCartFactProvider(): array
+    {
         return [
-            'no product lines' => [['items' => []], $items],
-            'empty name' => [['name' => ''], $items],
-            'blank name' => [['name' => '   '], $items],
-            'zero quantity' => [['quantity' => 0], $items],
-            'negative quantity' => [['quantity' => -1], $items],
-            'quantity above the decimal factor' => [['quantity' => 1000000], $items],
-            'fractional quantity above the decimal factor' => [['quantity' => 999999.5], $items],
-            'non-numeric string quantity' => [['quantity' => 'abc'], $items],
-            'boolean quantity' => [['quantity' => true], $items],
-            'array quantity' => [['quantity' => [1]], $items],
-            'missing quantity' => [['quantity' => null], $items],
-            'infinite quantity' => [['quantity' => INF], $items],
-            'invalid email' => [['email' => 'not-an-email'], $payer],
-            'empty email' => [['email' => ''], $payer],
-            'missing email' => [['email' => null], $payer],
-            'empty first name' => [['first_name' => ''], $payer],
-            'blank first name' => [['first_name' => '   '], $payer],
-            'missing address' => [['ip' => null], $address],
-            'empty address' => [['ip' => ''], $address],
-            'invalid address' => [['ip' => '203.0.113.300'], $address],
-            'nonstring address' => [['ip' => 3405803786], $address],
+            'no product lines' => [['items' => []], 'Consolidated Items', 'Synthetic'],
+            'empty name' => [['name' => ''], ' x 1', 'Synthetic'],
+            'zero quantity' => [['quantity' => 0], 'Synthetic product x 0', 'Synthetic'],
+            'non-numeric string quantity' => [['quantity' => 'abc'], 'Synthetic product x abc', 'Synthetic'],
+            'missing quantity' => [['quantity' => null], 'Synthetic product x ', 'Synthetic'],
+            'empty first name' => [['first_name' => ''], 'Synthetic product x 1', ''],
+            'blank first name' => [['first_name' => '   '], 'Synthetic product x 1', ''],
         ];
     }
 
@@ -169,70 +177,51 @@ class SmartPixOrderDetailsTest extends TestCase
      * @dataProvider orderAddressProvider
      * @param mixed $orderAddress
      */
-    public function testCurrentRequestAddressIsSentEvenWhenTheOrderAddressDiffers($orderAddress): void
+    public function testServerAddressIsSentLikeTheOtherPaymentMethodsWhateverTheOrderAddress($orderAddress): void
     {
         $order = Mockery::mock(WC_Order::class);
         $this->stubOrderDetailsWith($order, ['ip' => $orderAddress]);
 
-        $details = $this->withRequestAddress('198.51.100.20')->build($order, '4.00');
+        $details = $this->withServerAddress('198.51.100.20')->build($order, '4.00');
 
         $this->assertSame('198.51.100.20', $details['ip_address']);
     }
 
     public static function orderAddressProvider(): array
     {
-        // An order created in the admin and paid on the order-pay page stores another or no address.
-        return ['different order address' => ['203.0.113.10'], 'empty order address' => [''], 'missing order address' => [null]];
-    }
-
-    /**
-     * @dataProvider unusableRequestAddressProvider
-     * @param mixed $requestAddress
-     */
-    public function testUnusableRequestAddressFallsBackToTheOrderAddress($requestAddress): void
-    {
-        $order = Mockery::mock(WC_Order::class);
-        $this->stubOrderDetailsWith($order, []);
-
-        $details = $this->withRequestAddress($requestAddress)->build($order, '4.00');
-
-        $this->assertSame('203.0.113.10', $details['ip_address']);
-    }
-
-    public static function unusableRequestAddressProvider(): array
-    {
-        // An empty request address is the server or cron context, where no browser is paying.
         return [
-            'empty' => [''],
-            'invalid' => ['203.0.113.300'],
-            'missing' => [null],
-            'integer' => [3405803786],
-            'array' => [['198.51.100.20']],
+            'different order address' => ['203.0.113.10'],
+            'invalid order address' => ['203.0.113.300'],
+            'empty order address' => [''],
+            'missing order address' => [null],
         ];
     }
 
-    /**
-     * @dataProvider unusableRequestAddressProvider
-     * @param mixed $requestAddress
-     */
-    public function testUnusableRequestAndOrderAddressesFailClosed($requestAddress): void
+    public function testPluginServerAddressIsTheDefault(): void
     {
-        $order = Mockery::mock(WC_Order::class);
-        $this->stubOrderDetailsWith($order, ['ip' => '203.0.113.300']);
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid Smart Pix buyer address.');
-        $this->withRequestAddress($requestAddress)->build($order, '4.00');
-    }
-
-    public function testValidIpv6RequestAddressIsSent(): void
-    {
+        $url = Mockery::mock(Url::class);
+        $url->shouldReceive('getServerAddress')->andReturn('127.0.0.1');
+        $helpers = Mockery::mock(Helpers::class);
+        $helpers->url = $url;
+        $plugin = Mockery::mock(WoocommerceMercadoPago::class);
+        $plugin->helpers = $helpers;
+        $plugin->storeConfig = Mockery::mock(Store::class, ['getStoreCategory' => 'others']);
+        $GLOBALS['mercadopago'] = $plugin;
         $order = Mockery::mock(WC_Order::class);
         $this->stubOrderDetailsWith($order, []);
 
-        $details = $this->withRequestAddress('2001:db8::20')->build($order, '4.00');
+        $this->assertSame('127.0.0.1', (new SmartPixOrderDetails())->build($order, '4.00')['ip_address']);
+    }
 
-        $this->assertSame('2001:db8::20', $details['ip_address']);
+    public function testPluginWithoutHelpersSendsAnEmptyAddressInsteadOfFailing(): void
+    {
+        $plugin = Mockery::mock(WoocommerceMercadoPago::class);
+        $plugin->storeConfig = Mockery::mock(Store::class, ['getStoreCategory' => 'others']);
+        $GLOBALS['mercadopago'] = $plugin;
+        $order = Mockery::mock(WC_Order::class);
+        $this->stubOrderDetailsWith($order, []);
+
+        $this->assertSame('', (new SmartPixOrderDetails())->build($order, '4.00')['ip_address']);
     }
 
     /**
@@ -289,7 +278,7 @@ class SmartPixOrderDetailsTest extends TestCase
     }
 
     /** @dataProvider nonProductItemProvider */
-    public function testNonProductOrderItemFailsClosed(string $class): void
+    public function testNonProductOrderItemIsLeftOutOfTheDescription(string $class): void
     {
         $item = Mockery::mock($class);
         $item->shouldReceive('get_name')->andReturn('Synthetic extra');
@@ -299,9 +288,7 @@ class SmartPixOrderDetailsTest extends TestCase
         $order = Mockery::mock(WC_Order::class);
         $this->stubOrderDetailsWith($order, ['items' => [$item]]);
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid Smart Pix order items.');
-        (new SmartPixOrderDetails())->build($order, '4.00');
+        $this->assertSame('Consolidated Items', (new SmartPixOrderDetails())->build($order, '4.00')['description']);
     }
 
     public static function nonProductItemProvider(): array
@@ -466,10 +453,10 @@ class SmartPixOrderDetailsTest extends TestCase
     }
 
     /** @param mixed $requestAddress */
-    private function withRequestAddress($requestAddress): SmartPixOrderDetails
+    private function withServerAddress(string $serverAddress): SmartPixOrderDetails
     {
-        return new SmartPixOrderDetails(null, null, static function () use ($requestAddress) {
-            return $requestAddress;
+        return new SmartPixOrderDetails(null, null, static function () use ($serverAddress): string {
+            return $serverAddress;
         });
     }
 

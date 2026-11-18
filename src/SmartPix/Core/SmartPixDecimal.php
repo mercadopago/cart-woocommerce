@@ -42,6 +42,30 @@ final class SmartPixDecimal
         return $parts[1] . '.' . str_pad($parts[2] ?? '', 2, '0');
     }
 
+    /**
+     * Round a nonnegative WooCommerce total half up to cents, like the other payment methods do.
+     * Provider amounts must keep using canonical(): only the store's own totals are rounded.
+     *
+     * @param mixed $value
+     */
+    public static function roundHalfUp($value): ?string
+    {
+        if (is_int($value) && $value >= 0) {
+            return $value . '.00';
+        }
+        if (
+            !is_string($value)
+            || strlen($value) > self::MAX_LENGTH
+            || preg_match('/^(0|[1-9][0-9]*)(?:\.([0-9]+))?$/D', $value, $parts) !== 1
+        ) {
+            return null;
+        }
+        $fraction = $parts[2] ?? '';
+        $cents    = $parts[1] . '.' . str_pad((string) substr($fraction, 0, 2), 2, '0');
+
+        return strlen($fraction) > 2 && (int) $fraction[2] >= 5 ? self::add($cents, '0.01') : $cents;
+    }
+
     /** @param mixed $value */
     public static function isCanonical($value): bool
     {
@@ -52,20 +76,33 @@ final class SmartPixDecimal
 
     public static function add(string $left, string $right): string
     {
-        $left   = self::cents($left);
-        $right  = self::cents($right);
-        $length = max(strlen($left), strlen($right));
-        $left   = str_pad($left, $length, '0', STR_PAD_LEFT);
-        $right  = str_pad($right, $length, '0', STR_PAD_LEFT);
-        $carry  = 0;
-        $result = '';
-        for ($index = $length - 1; $index >= 0; $index--) {
-            $digit  = (int) $left[$index] + (int) $right[$index] + $carry;
-            $result = ($digit % 10) . $result;
-            $carry  = intdiv($digit, 10);
-        }
+        return self::fromCents(self::addDigits(self::cents($left), self::cents($right)));
+    }
 
-        return self::fromCents(($carry > 0 ? (string) $carry : '') . $result);
+    /**
+     * Add two nonnegative WooCommerce totals of any scale and round the exact sum half up to cents.
+     * Rounding each part first may drift a cent from the rounded whole.
+     */
+    public static function roundedSum(string $left, string $right): ?string
+    {
+        $pattern = '/^(0|[1-9][0-9]*)(?:\.([0-9]+))?$/D';
+        if (
+            strlen($left) > self::MAX_LENGTH || strlen($right) > self::MAX_LENGTH
+            || preg_match($pattern, $left, $leftParts) !== 1 || preg_match($pattern, $right, $rightParts) !== 1
+        ) {
+            return null;
+        }
+        $scale = max(strlen($leftParts[2] ?? ''), strlen($rightParts[2] ?? ''));
+        $sum   = self::addDigits(
+            $leftParts[1] . str_pad($leftParts[2] ?? '', $scale, '0'),
+            $rightParts[1] . str_pad($rightParts[2] ?? '', $scale, '0')
+        );
+        if ($scale === 0) {
+            return self::roundHalfUp(ltrim($sum, '0') ?: '0');
+        }
+        $sum = str_pad(ltrim($sum, '0'), $scale + 1, '0', STR_PAD_LEFT);
+
+        return self::roundHalfUp(substr($sum, 0, -$scale) . '.' . substr($sum, -$scale));
     }
 
     /** Multiply by a positive quantity bounded by MAX_FACTOR. */
@@ -101,6 +138,22 @@ final class SmartPixDecimal
         }
 
         return $remainder === 0 ? self::fromCents($result) : null;
+    }
+
+    private static function addDigits(string $left, string $right): string
+    {
+        $length = max(strlen($left), strlen($right));
+        $left   = str_pad($left, $length, '0', STR_PAD_LEFT);
+        $right  = str_pad($right, $length, '0', STR_PAD_LEFT);
+        $carry  = 0;
+        $result = '';
+        for ($index = $length - 1; $index >= 0; $index--) {
+            $digit  = (int) $left[$index] + (int) $right[$index] + $carry;
+            $result = ($digit % 10) . $result;
+            $carry  = intdiv($digit, 10);
+        }
+
+        return ($carry > 0 ? (string) $carry : '') . $result;
     }
 
     private static function cents(string $value): string

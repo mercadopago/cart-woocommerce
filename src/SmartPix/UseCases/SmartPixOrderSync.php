@@ -12,6 +12,7 @@ use WC_Order;
 use MercadoPago\Woocommerce\SmartPix\Adapters\Notification\SmartPixCoreNotificationIdentifiers;
 use MercadoPago\Woocommerce\SmartPix\Core\SmartPixMoney;
 use MercadoPago\Woocommerce\SmartPix\Core\SmartPixPaidStatus;
+use MercadoPago\Woocommerce\SmartPix\Core\SmartPixDecimal;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -74,7 +75,7 @@ class SmartPixOrderSync
                     throw new RuntimeException('Smart Pix synchronization could not be confirmed.');
                 }
                 $context = $result['refund_context'] ?? $result['order_context'];
-                if (SmartPixMoney::normalize((string) $order->get_total_refunded()) === $context['refunded_amount']) {
+                if (SmartPixDecimal::roundHalfUp((string) $order->get_total_refunded()) === $context['refunded_amount']) {
                     $this->display[$order->get_id()] = $this->project($result);
                     return;
                 }
@@ -101,7 +102,7 @@ class SmartPixOrderSync
             if (
                 $this->hasPartialRefundFacts($result)
                 && (!$this->isValidPartialRefund($order, $result)
-                    || SmartPixMoney::normalize((string) $order->get_total_refunded()) !== $result['refund_context']['refunded_amount'])
+                    || SmartPixDecimal::roundHalfUp((string) $order->get_total_refunded()) !== $result['refund_context']['refunded_amount'])
             ) {
                 throw new RuntimeException('Smart Pix synchronization could not be confirmed.');
             }
@@ -126,10 +127,10 @@ class SmartPixOrderSync
         }
         $result = ($this->query)($order);
         $payments = $result['payments'] ?? null;
-        $amount = SmartPixMoney::normalize($order->get_total('edit'));
+        $amount = SmartPixDecimal::roundHalfUp($order->get_total('edit'));
         $providerRefunded = is_array($payments) && (($payments[0]['state'] ?? null) === 'refunded');
         if (
-            $providerRefunded && $this->hasNativePartialRefund($order)
+            $providerRefunded && self::hasNativePartialRefund($order)
             && isset($result['order_context']) && !isset($result['refund_context'])
         ) {
             // The partial-refund read keeps the raw snapshot; a full provider refund is applied
@@ -146,7 +147,7 @@ class SmartPixOrderSync
             || $amount === null || $amount === '0.00'
             || ($payments[0]['amount'] ?? null) !== ['value' => $amount, 'currency' => 'BRL']
             || !in_array($payments[0]['state'] ?? null, ['processing', 'approved', 'rejected', 'cancelled', 'refunded'], true)
-            || (!$providerRefunded && $this->hasNativePartialRefund($order) && !$this->isValidPartialRefund($order, $result))
+            || (!$providerRefunded && self::hasNativePartialRefund($order) && !$this->isValidPartialRefund($order, $result))
             || ($this->hasPartialRefundFacts($result) && !$this->isValidPartialRefund($order, $result))
             || ($payments[0]['state'] === 'refunded' && (!$this->isConfirmedProviderRefund($order, $result)
                 || (!isset($result['refund_context']) && !$this->isConfirmedFullRefund($order, $result))))
@@ -159,8 +160,8 @@ class SmartPixOrderSync
     /** A verified provider partial may exceed the native balance; only sync imports the difference. */
     private function isValidPartialRefund(WC_Order $order, array $result): bool
     {
-        $total = SmartPixMoney::normalize($order->get_total('edit'));
-        $native = SmartPixMoney::normalize((string) $order->get_total_refunded());
+        $total = SmartPixDecimal::roundHalfUp($order->get_total('edit'));
+        $native = SmartPixDecimal::roundHalfUp((string) $order->get_total_refunded());
         $context = $result['refund_context'] ?? $result['order_context'] ?? null;
         $target = is_array($context) ? SmartPixMoney::normalize($context['refunded_amount'] ?? null) : null;
         return SmartPixPaidStatus::isPaid($order->get_status('edit'), $order->is_paid())
@@ -194,10 +195,11 @@ class SmartPixOrderSync
                 && ($result['payments'][0]['state'] ?? null) !== 'refunded');
     }
 
-    private function hasNativePartialRefund(WC_Order $order): bool
+    /** Shared with the query selection, so both read WooCommerce amounts with the same rounding. */
+    public static function hasNativePartialRefund(WC_Order $order): bool
     {
-        $total = SmartPixMoney::normalize($order->get_total('edit'));
-        $refunded = SmartPixMoney::normalize((string) $order->get_total_refunded());
+        $total = SmartPixDecimal::roundHalfUp($order->get_total('edit'));
+        $refunded = SmartPixDecimal::roundHalfUp((string) $order->get_total_refunded());
         return $total !== null && $refunded !== null && $refunded !== '0.00'
             && SmartPixMoney::compare($refunded, $total) < 0;
     }
@@ -205,16 +207,16 @@ class SmartPixOrderSync
     /** Only acknowledges an existing full native refund confirmed by authenticated Orders history. */
     private function isConfirmedFullRefund(WC_Order $order, array $result): bool
     {
-        $total = SmartPixMoney::normalize($order->get_total('edit'));
+        $total = SmartPixDecimal::roundHalfUp($order->get_total('edit'));
         return $order->get_status('edit') === 'refunded'
             && $total !== null && $total !== '0.00'
-            && SmartPixMoney::normalize((string) $order->get_total_refunded()) === $total
+            && SmartPixDecimal::roundHalfUp((string) $order->get_total_refunded()) === $total
             && $this->isConfirmedProviderRefund($order, $result);
     }
 
     private function isConfirmedProviderRefund(WC_Order $order, array $result): bool
     {
-        $total = SmartPixMoney::normalize($order->get_total('edit'));
+        $total = SmartPixDecimal::roundHalfUp($order->get_total('edit'));
         $context = $result['refund_context'] ?? $result['order_context'] ?? [];
         return $total !== null && $total !== '0.00'
             && ($context['contract_version'] ?? null) === SmartPixMutationProcessor::SNAPSHOT_CONTRACT

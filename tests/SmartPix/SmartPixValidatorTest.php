@@ -239,8 +239,6 @@ class SmartPixValidatorTest extends TestCase
             'missing credentials' => ['credential' => ''],
             'zero total' => ['total' => '0.00'],
             'negative total' => ['total' => '-4.00'],
-            'subcent total' => ['total' => '4.005'],
-            'nonzero fourth decimal' => ['total' => '4.0001'],
             'oversized total' => ['total' => str_repeat('1', 65)],
             'zero with extra decimals' => ['total' => '0.000'],
             'float total' => ['total' => 4.00],
@@ -286,9 +284,59 @@ class SmartPixValidatorTest extends TestCase
     public static function invalidOrderDetailsProvider(): array
     {
         return [
-            'no product lines' => [['items' => []], 'Invalid Smart Pix order items.'],
             'invalid email' => [['email' => 'not-an-email'], 'Invalid Smart Pix payer.'],
-            'missing address' => [['ip' => ''], 'Invalid Smart Pix buyer address.'],
+        ];
+    }
+
+    /** @dataProvider unroundedTotalProvider */
+    public function testTotalWithMoreThanTwoDecimalsIsRoundedHalfUpLikeTheOtherPaymentMethods(string $total, string $amount): void
+    {
+        [$validator, $order] = $this->fixture(['total' => $total]);
+
+        $result = $validator->validate($order, 321, 'classic', $this->proof());
+
+        $this->assertSame(['value' => $amount, 'currency' => 'BRL'], $result['amount']);
+        $this->assertSame($amount, $result['order_details']['items'][0]['unit_price']);
+    }
+
+    public static function unroundedTotalProvider(): array
+    {
+        return [
+            'half cent rounds up' => ['4.005', '4.01'],
+            'below half cent rounds down' => ['4.0049', '4.00'],
+            'nonzero fourth decimal' => ['4.0001', '4.00'],
+            'carry into units' => ['9.999', '10.00'],
+        ];
+    }
+
+    public function testCartWithoutProductLinesAndAddressStillCreatesTheOrder(): void
+    {
+        [$validator, $order] = $this->fixture(['details' => ['items' => [], 'ip' => '']]);
+
+        $result = $validator->validate($order, 321, 'classic', $this->proof());
+
+        $this->assertSame('Consolidated Items', $result['order_details']['description']);
+    }
+
+    /** @dataProvider freeFormStoreIdentificatorProvider */
+    public function testAnyStoreIdentificatorBecomesTheTechnicalReference(string $identificator, int $id, string $reference): void
+    {
+        WP_Mock::tearDown();
+        WP_Mock::setUp();
+        WP_Mock::userFunction('get_option', ['args' => ['_mp_store_identificator', 'WC-'], 'return' => $identificator]);
+
+        [$validator, $order] = $this->fixture(['id' => $id]);
+        $result = $validator->validate($order, $id, 'classic', $this->proof());
+
+        $this->assertSame($reference, $result['attempt_reference']);
+    }
+
+    public static function freeFormStoreIdentificatorProvider(): array
+    {
+        return [
+            'empty identificator' => ['', 258623, '258623'],
+            'order below 100 without prefix' => ['', 5, '5'],
+            'space, dot and accent' => ['Loja Ação. ', 321, 'Loja Ação. 321'],
         ];
     }
 
@@ -335,7 +383,7 @@ class SmartPixValidatorTest extends TestCase
     {
         return [
             [['id' => 322], 'Invalid Smart Pix order context.'],
-            [['total' => '4.005'], 'Invalid Smart Pix order total.'],
+            [['total' => '4e0'], 'Invalid Smart Pix order total.'],
             [['proof' => []], 'Invalid Smart Pix fields.'],
         ];
     }
@@ -345,7 +393,7 @@ class SmartPixValidatorTest extends TestCase
         $sink = Mockery::mock(SmartPixMetricSink::class);
         $sink->shouldReceive('count')->once()->andThrow(new \Error('SYNTHETIC_PRIVATE_TELEMETRY'));
         $sink->shouldNotReceive('distribution');
-        [$validator, $order] = $this->fixture(['total' => '4.005'], new SmartPixTelemetry($sink));
+        [$validator, $order] = $this->fixture(['total' => '4e0'], new SmartPixTelemetry($sink));
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid Smart Pix order total.');
         $validator->validate($order, 321, 'classic', $this->proof());

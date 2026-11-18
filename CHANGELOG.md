@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.10.3] 2026-11-18
+### Changed
+- Load Pix via Open Finance only on the checkout and order payment pages
+
+### Fixed
+- Improve how Pix via Open Finance loads on slower checkout pages, and show the conventional Pix right away when it cannot load
+- Prevent the card checkout from loading indefinitely when Fast Payments does not respond
+- Reload Fast Payments correctly when the buyer changes the checkout, such as applying a coupon
+- Improve the creation and refunds of Pix via Open Finance orders in more store configurations
+
 ## [8.10.2] 2026-11-12
 ### Fixed
 - Improve request validation for Mercado Pago notices in the WordPress admin
@@ -67,7 +77,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Prevent subscription payment credentials from being copied into payment metadata and transaction logs
 - Remove credentials from refund diagnostics before logging
-
 
 ## [8.9.6] 2026-10-07
 ### Added
@@ -483,7 +492,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed currency conversion in refund
 - Fixed display unhandled and untranslated error message
 
-
 ## [8.5.6] - 2025-10-10
 ### Fixed
 - Fix installments field validation during payment processing and enhanced error messaging 
@@ -736,7 +744,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Corrected the support component's link URL**, ensuring users are directed to the appropriate help resources without encountering broken or incorrect links, improving support accessibility.
-
 
 ## [7.7.0] - 2024-09-11
 

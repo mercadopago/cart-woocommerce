@@ -20,6 +20,7 @@ export interface FetchAndRenderSession {
   isValidEmail(email: string): boolean;
   bumpLoadGeneration(): void;
   setFetching(isFetching: boolean): void;
+  rememberFetchIdentity(amount: string | null, buyerEmail: string): void;
   getLoadGeneration(): number;
   currentAmount(): string | null;
   fetchAccountPaymentMethods(amount: string | null, buyerEmail: string): Promise<PaymentMethod[] | null>;
@@ -60,11 +61,13 @@ export class FetchAndRenderPaymentMethods {
     // Every new fetch supersedes the previous one, even when the previous SDK call is still pending.
     session.bumpLoadGeneration();
     session.setFetching(true);
+    const amount = session.currentAmount();
+    session.rememberFetchIdentity(amount, buyerEmail);
 
     const generation = session.getLoadGeneration();
     let paymentMethods: PaymentMethod[] | null;
     try {
-      paymentMethods = await session.fetchAccountPaymentMethods(session.currentAmount(), buyerEmail);
+      paymentMethods = await session.fetchAccountPaymentMethods(amount, buyerEmail);
     } catch (_) {
       // Transient fetch failure: only release the flag if we still own this load, so a newer
       // generation that superseded us keeps ownership. Without this the flag stays stuck at true

@@ -14,6 +14,7 @@ use MercadoPago\Woocommerce\SmartPix\Adapters\Telemetry\SmartPixMetricContext;
 use MercadoPago\Woocommerce\SmartPix\Contracts\SmartPixOrderClient;
 use MercadoPago\Woocommerce\SmartPix\Contracts\SmartPixRequestObservation;
 use MercadoPago\Woocommerce\SmartPix\Adapters\Telemetry\SmartPixTelemetry;
+use MercadoPago\Woocommerce\SmartPix\Core\SmartPixAttemptReference;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -73,7 +74,7 @@ final class SmartPixOrderQuery
                 || $order->get_currency() !== 'BRL'
                 || $this->seller->getSiteId() !== 'MLB'
                 || !$this->isReference($candidateReference)
-                || !$this->isReference($attemptReference)
+                || !SmartPixAttemptReference::isValid($attemptReference)
             ) {
                 return $this->failure('server');
             }
@@ -135,7 +136,7 @@ final class SmartPixOrderQuery
             || $contract !== OrderMetadata::PAYMENT_CONTRACT_ORDERS_SMART_PIX_V1
             || !is_string($key) || $key === ''
             || !$this->isReference($reference)
-            || !$this->isReference($attemptReference)
+            || !SmartPixAttemptReference::isValid($attemptReference)
         ) {
             return $this->failure($surface);
         }

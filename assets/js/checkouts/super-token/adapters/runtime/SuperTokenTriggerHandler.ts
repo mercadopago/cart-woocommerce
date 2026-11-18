@@ -117,6 +117,8 @@ export class SuperTokenTriggerHandler {
   isAlreadyListeningForm = false;
   lastException: unknown = null;
   isFetchingPaymentMethods = false;
+  fetchingAmount: string | null = null;
+  fetchingEmail: string | null = null;
   customHandlerMissingReportedOnReset = false;
   loadGeneration = 0;
   cacheMetricsDispatched = false;
@@ -186,6 +188,11 @@ export class SuperTokenTriggerHandler {
     return buyerEmail != null && emailUsed != null && buyerEmail !== emailUsed;
   }
 
+  // Smart Pix rebuilds the shared authenticator too, so a repeat is judged against this handler's own load.
+  fetchingIdentityHasChanged(): boolean {
+    return this.currentAmount !== this.fetchingAmount || this.getBuyerEmail() !== this.fetchingEmail;
+  }
+
   isDifferentEmail(newEmail: string): boolean {
     return this.wcBuyerEmail != newEmail;
   }
@@ -211,7 +218,8 @@ export class SuperTokenTriggerHandler {
 
   resetFlow(): void {
     this.mpSuperTokenAuthenticator.reset();
-    this.mpSuperTokenPaymentMethods.reset();
+    // The reset abandons the in-flight load, so the reload that follows cannot be discarded as a repeat.
+    this.cancelLoad();
   }
 
   resetCustomCheckout(shouldClearCache = true): void {

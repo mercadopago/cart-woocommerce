@@ -36,7 +36,7 @@
   "assets/js/checkouts/mp-checkout-update.min.js": "99423b855711476924567120d19c9ed70ddf3ff4c33a37cea74115246578f9e8",
   "assets/js/checkouts/mp-plugins-components.min.js": "480397cc37a0e60bf56155abfe4d0abc10460d452d138e32c876950e64ab389a",
   "assets/js/checkouts/mp-sdk-metrics.min.js": "10f6007d8c657d164742b16e99a3ccf7f5bb9e936c686544993615c1f255b763",
-  "assets/js/checkouts/pix/mp-pix-bootstrap.min.js": "d9a6efe898cf85af55b28f90c951b9041de73ab366084bd7d9c95093e9e6c283",
+  "assets/js/checkouts/pix/mp-pix-bootstrap.min.js": "9668bc35ca4b338634f685b810d6cde2bb24cd6aa362092a841f074fedf33bd5",
   "assets/js/checkouts/pix/mp-pix-pooling.min.js": "eccf5e46079077eac3d9100f1b217498986cd4068c4f225084ef62c4402896e8",
   "assets/js/checkouts/pix/mp-smart-pix-status.min.js": "743c8edcec4d7627b68fb3dfe4c1b77e9670d0b46d4854093c3b52cc0146caa2",
   "assets/js/checkouts/pse/mp-pse-checkout.min.js": "f809c12f0ac9b73868c8e2d9123b944ea120eb466c231a1178db78785f215b0c",

@@ -1560,7 +1560,8 @@ class PixGatewayTest extends TestCase
      *
      * @return void
      */
-    public function testGetPaymentFieldsParams(): void
+    /** @dataProvider smartPixAmountProvider */
+    public function testGetPaymentFieldsParams(float $amount, string $smartPixAmount): void
     {
         $this->gateway->icon = 'test-icon';
 
@@ -1605,7 +1606,7 @@ class PixGatewayTest extends TestCase
 
         $this->gateway->shouldAllowMockingProtectedMethods();
         $this->gateway->shouldReceive('getAmountAndCurrency')
-            ->andReturn(['amount' => 2657.6, 'currencyRatio' => 1.0]);
+            ->andReturn(['amount' => $amount, 'currencyRatio' => 1.0]);
 
         $params = $this->gateway->getPaymentFieldsParams();
 
@@ -1617,8 +1618,8 @@ class PixGatewayTest extends TestCase
         $this->assertArrayHasKey('test_mode', $params);
         $this->assertArrayHasKey('pix_template_src', $params);
         $this->assertArrayHasKey('icon', $params);
-        $this->assertSame(2657.6, $params['amount']);
-        $this->assertSame('2657.60', $params['smart_pix_amount']);
+        $this->assertSame($amount, $params['amount']);
+        $this->assertSame($smartPixAmount, $params['smart_pix_amount']);
         $this->assertArrayHasKey('smart_pix_mp_icon_src', $params);
         $this->assertArrayHasKey('smart_pix_pix_icon_src', $params);
         $this->assertArrayHasKey('smart_pix_bb_icon_src', $params);
@@ -1628,6 +1629,14 @@ class PixGatewayTest extends TestCase
             $params['smart_pix_selected_account_text']
         );
         $this->assertEquals('test-icon', $params['icon']);
+    }
+
+    public static function smartPixAmountProvider(): array
+    {
+        return [
+            'serialized without the trailing zero' => [2657.6, '2657.60'],
+            'half cent rounds up like the order creation' => [4.005, '4.01'],
+        ];
     }
 
     /**

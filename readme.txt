@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 8.10.2
+Stable tag: 8.10.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,22 +134,15 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.10.2 (12/11/2026) =
-* Fixed
-- Improve request validation for Mercado Pago notices in the WordPress admin
-
-= v8.10.1 (12/11/2026) =
-* Added
-- Pix via Open Finance (Brazil): eligible buyers can pay with a bank account already connected to their Mercado Pago account, without copying a Pix code or scanning a QR code. Available on the Classic, Blocks and Order Pay checkouts. The conventional Pix QR code and copy-and-paste code remain available as an option. While Open Finance loads, the Pix option shows a loading indicator; if it cannot load, the conventional Pix is shown
-- Pix via Open Finance order confirmation: the page shows the payment progress and updates automatically when the payment is approved, rejected or cancelled, with specific messages for insufficient balance and daily limit, and a link to start a new purchase
-- Pix via Open Finance orders are confirmed by Mercado Pago notifications and respect the store's paid order status. Cancellations and full or partial refunds stay in sync with Mercado Pago, including refunds made outside WooCommerce
-- Show the Mercado Pago Order ID of Pix via Open Finance orders in the order Custom Fields, as "Mercado Pago - Order ID"
-- Add an account-linking notice to the WooCommerce admin, with a "Vincular conta" / "Vincular cuenta" button. Merchants can close it temporarily, and it does not overlap other notices
+= v8.10.3 (18/11/2026) =
+* Changed
+- Load Pix via Open Finance only on the checkout and order payment pages
 
 * Fixed
-- Always show and require the cardholder name in the card checkout, and move the focus to the field when it is empty. Before, the field could be hidden for some cards, and the payment was rejected after the order was placed
-- Restore the card checkout fields on mobile when the checkout is updated several times in a row
-- Stop unnecessary reloads of the fast payment styles in Safari
+- Improve how Pix via Open Finance loads on slower checkout pages, and show the conventional Pix right away when it cannot load
+- Prevent the card checkout from loading indefinitely when Fast Payments does not respond
+- Reload Fast Payments correctly when the buyer changes the checkout, such as applying a coupon
+- Improve the creation and refunds of Pix via Open Finance orders in more store configurations
 
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

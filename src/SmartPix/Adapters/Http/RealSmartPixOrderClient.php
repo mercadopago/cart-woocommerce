@@ -16,6 +16,7 @@ use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Device;
 use MercadoPago\Woocommerce\Helpers\WebhookUrl;
 use Throwable;
+use MercadoPago\Woocommerce\SmartPix\Core\SmartPixAttemptReference;
 use MercadoPago\Woocommerce\SmartPix\Core\SmartPixAuthorizedPayment;
 use MercadoPago\Woocommerce\SmartPix\Core\SmartPixCpf;
 use MercadoPago\Woocommerce\SmartPix\Contracts\SmartPixCreationDispatchClient;
@@ -124,14 +125,8 @@ final class RealSmartPixOrderClient implements SmartPixCreationDispatchClient, S
             return $this->observedFailure('validation', false, 'error', 'create', $request, null, 'required create integration headers are missing');
         }
 
-        $store = $this->buildStore();
-        $seller = $this->buildSeller();
-        if ($store === null || $seller === null) {
-            return $this->observedFailure('validation', false, 'error', 'create', $request, null, 'store or seller configuration is missing/invalid');
-        }
-
         try {
-            $body = json_encode($this->buildCreateBody($request, $payment, $store, $seller), JSON_THROW_ON_ERROR);
+            $body = json_encode($this->buildCreateBody($request, $payment), JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
             return $this->observedFailure('validation', false, 'error', 'create', $request, null, SmartPixDiagnostic::exception($exception));
         }
@@ -480,12 +475,9 @@ final class RealSmartPixOrderClient implements SmartPixCreationDispatchClient, S
      * Key order follows the provider's documented create payload.
      *
      * @param array<string, mixed>  $request
-     * @param array<string, string> $store
-     * @param array<string, string> $seller
-     *
      * @return array<string, mixed>
      */
-    private function buildCreateBody(array $request, SmartPixAuthorizedPayment $payment, array $store, array $seller): array
+    private function buildCreateBody(array $request, SmartPixAuthorizedPayment $payment): array
     {
         $amount  = $request['amount']['value'];
         $details = $request['order_details'];
@@ -505,8 +497,17 @@ final class RealSmartPixOrderClient implements SmartPixCreationDispatchClient, S
             $body['notification_url'] = $notificationUrl;
         }
 
+        if ($details['ip_address'] !== '') {
+            $body['ip_address'] = $details['ip_address'];
+        }
+
+        $storefrontUrl = $this->storefrontUrl();
+        $merchant = $this->presentFields([
+            'store'  => $this->presentFields(['id' => $this->getStoreReference(), 'url' => (string) get_site_url()]),
+            'seller' => $this->presentFields(['referral_url' => $storefrontUrl, 'website' => $storefrontUrl]),
+        ]);
+
         return $body + [
-            'ip_address'         => $details['ip_address'],
             'payments'           => [
                 [
                     'amount'             => $amount,
@@ -521,8 +522,7 @@ final class RealSmartPixOrderClient implements SmartPixCreationDispatchClient, S
             ],
             'payer'              => $details['payer'],
             'items'              => $details['items'],
-            'store'              => $store,
-            'seller'             => $seller,
+        ] + $merchant + [
             'config'             => [
                 'capture'         => true,
                 'binary_mode'     => false,
@@ -560,29 +560,26 @@ final class RealSmartPixOrderClient implements SmartPixCreationDispatchClient, S
         return $notificationUrl;
     }
 
-    /** @return array<string, string>|null */
-    private function buildStore(): ?array
+    /**
+     * Like the other payment methods, store and seller facts are informative: an empty value is
+     * omitted instead of blocking a payment the buyer already authorized.
+     *
+     * @param array<string, mixed> $fields
+     * @return array<string, mixed>
+     */
+    private function presentFields(array $fields): array
     {
-        $storeId = $this->getStoreReference();
-        $siteUrl = get_site_url();
-        if ($storeId === '' || filter_var($siteUrl, FILTER_VALIDATE_URL) === false) {
-            return null;
-        }
-
-        return ['id' => $storeId, 'url' => $siteUrl];
+        return array_filter($fields, static function ($value): bool {
+            return $value !== '' && $value !== [];
+        });
     }
 
-    /** @return array<string, string>|null */
-    private function buildSeller(): ?array
+    /** Match the other gateways' public storefront URL, not the current checkout request. */
+    private function storefrontUrl(): string
     {
-        // Match the other gateways' public storefront URL, not the current checkout request.
-        $url = explode('?', home_url(), 2)[0];
-        $url = explode('#', $url, 2)[0];
-        if (filter_var($url, FILTER_VALIDATE_URL) === false || !in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true)) {
-            return null;
-        }
+        $url = explode('?', (string) home_url(), 2)[0];
 
-        return ['referral_url' => $url, 'website' => $url];
+        return explode('#', $url, 2)[0];
     }
 
     /**
@@ -630,7 +627,7 @@ final class RealSmartPixOrderClient implements SmartPixCreationDispatchClient, S
             && $this->isKnownSurface($request['surface'])
             && ($request['country'] ?? null) === 'MLB'
             && ($request['payment_contract'] ?? null) === 'orders_smart_pix_v1'
-            && $this->isOpaqueReference($request['attempt_reference'] ?? null)
+            && SmartPixAttemptReference::isValid($request['attempt_reference'] ?? null)
             && ($request['order_reference'] ?? null) === null
             && is_array($request['amount'] ?? null)
             && array_keys($request['amount']) === ['value', 'currency']
@@ -655,7 +652,6 @@ final class RealSmartPixOrderClient implements SmartPixCreationDispatchClient, S
             && $this->hasExactKeys($details, ['description', 'ip_address', 'payer', 'items'])
             && $this->isNonEmptyText($details['description'])
             && is_string($details['ip_address'])
-            && filter_var($details['ip_address'], FILTER_VALIDATE_IP) !== false
             && $this->isPayerValid($details['payer'])
             && $this->isItemsValid($details['items'], $amount);
     }
@@ -668,8 +664,8 @@ final class RealSmartPixOrderClient implements SmartPixCreationDispatchClient, S
                 || $this->hasExactKeys($payer, ['email', 'first_name', 'last_name', 'identification']))
             && is_string($payer['email'])
             && filter_var($payer['email'], FILTER_VALIDATE_EMAIL) !== false
-            && $this->isNonEmptyText($payer['first_name'])
-            && ($payer['last_name'] === '' || $this->isNonEmptyText($payer['last_name']))
+            && is_string($payer['first_name'])
+            && is_string($payer['last_name'])
             && (!array_key_exists('identification', $payer) || (
                 is_array($payer['identification'])
                 && $this->hasExactKeys($payer['identification'], ['type', 'number'])
@@ -726,7 +722,7 @@ final class RealSmartPixOrderClient implements SmartPixCreationDispatchClient, S
             && $this->isKnownSurface($request['surface'])
             && ($request['country'] ?? null) === 'MLB'
             && ($request['payment_contract'] ?? null) === 'orders_smart_pix_v1'
-            && $this->isOpaqueReference($request['attempt_reference'] ?? null)
+            && SmartPixAttemptReference::isValid($request['attempt_reference'] ?? null)
             && $this->isOpaqueReference($orderReference)
             && ($request['amount'] ?? null) === null
             && ($request['refund_amount'] ?? null) === null;

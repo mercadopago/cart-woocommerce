@@ -749,6 +749,7 @@ class ScriptsTest extends TestCase
             ->perform(function () {
             });
 
+        $this->expectSmartPixBootstrapPrintedBeforeStyles();
         $this->scripts->registerSmartPixCheckoutAssets($environment);
 
         WP_Mock::userFunction('is_view_order_page', ['return' => false]);
@@ -935,6 +936,7 @@ class ScriptsTest extends TestCase
             ->with([$this->scripts, 'addSmartPixStyleCrossOrigin'], 10, 2)
             ->perform(function () {
             });
+        $this->expectSmartPixBootstrapPrintedBeforeStyles();
         $callback = $this->captureAction(function () {
             $this->scripts->registerSmartPixCheckoutAssets(Scripts::SMART_PIX_ENV_PRODUCTION);
         });
@@ -951,6 +953,7 @@ class ScriptsTest extends TestCase
 
     public function testRegisteredSmartPixLocalCallbackSkipsPagesWithoutPayments(): void
     {
+        $this->expectSmartPixBootstrapPrintedBeforeStyles();
         $callback = $this->captureAction(function () {
             $this->scripts->registerSmartPixLocalCheckoutAssets();
         });
@@ -964,6 +967,44 @@ class ScriptsTest extends TestCase
         $this->assertSame([], $effects->scripts);
         $this->assertSame([], $effects->styles);
         $this->assertSame([], $this->getTrackedScriptHandles());
+    }
+
+    /**
+     * @dataProvider paymentFormContextProvider
+     */
+    public function testSmartPixCdnAssetsLoadOnlyWhereThePaymentFormRenders(array $context, bool $expected): void
+    {
+        $this->mockPageContext($context);
+        $effects = $this->recordWordPressEffects();
+
+        $this->scripts->enqueueSmartPixCheckoutAssets(Scripts::SMART_PIX_ENV_PRODUCTION);
+
+        $this->assertSmartPixAssetsEnqueued($expected, $effects);
+    }
+
+    /**
+     * @dataProvider paymentFormContextProvider
+     */
+    public function testSmartPixLocalAssetsLoadOnlyWhereThePaymentFormRenders(array $context, bool $expected): void
+    {
+        $this->mockPageContext($context);
+        $effects = $this->recordWordPressEffects();
+
+        $this->scripts->enqueueSmartPixLocalCheckoutAssets();
+
+        $this->assertSmartPixAssetsEnqueued($expected, $effects);
+    }
+
+    private function assertSmartPixAssetsEnqueued(bool $expected, \stdClass $effects): void
+    {
+        $handles = ['wc_mercadopago_pix_bootstrap', Scripts::SMART_PIX_SCRIPT_NAME];
+        $this->assertSame($expected ? $handles : [], array_column($effects->scripts, 0));
+        $this->assertSame($expected ? $handles : [], array_column($effects->styles, 0));
+        $this->assertSame(
+            $expected ? [Scripts::SMART_PIX_SCRIPT_NAME] : [],
+            array_column($effects->localized, 0)
+        );
+        $this->assertSame($expected ? [Scripts::SMART_PIX_SCRIPT_NAME] : [], $this->getTrackedScriptHandles());
     }
 
     public function testSmartPixLocalAssetsAreAvailableOnlyWhenBothBuiltFilesExist(): void
@@ -1015,6 +1056,7 @@ class ScriptsTest extends TestCase
             ->with(Mockery::type('callable'), 10, 1)
             ->perform(function () {
             });
+        $this->expectSmartPixBootstrapPrintedBeforeStyles();
         $this->scripts->registerSmartPixLocalCheckoutAssets();
 
         WP_Mock::userFunction('is_view_order_page', ['return' => false]);
@@ -1047,6 +1089,14 @@ class ScriptsTest extends TestCase
         $this->assertContains(Scripts::SMART_PIX_SCRIPT_NAME, $this->getTrackedScriptHandles());
     }
 
+    private function expectSmartPixBootstrapPrintedBeforeStyles(): void
+    {
+        WP_Mock::onHookAdded('wp_head', 'action')
+            ->with([$this->scripts, 'printSmartPixBootstrapBeforeStyles'], Scripts::SMART_PIX_BOOTSTRAP_HEAD_PRIORITY, 1)
+            ->perform(function () {
+            });
+    }
+
     private function expectSmartPixBootstrapAssets(): void
     {
         WP_Mock::userFunction('wp_enqueue_style')
@@ -1055,12 +1105,34 @@ class ScriptsTest extends TestCase
             ->once()->with('wc_mercadopago_pix_bootstrap', 'fixture/checkouts/pix/mp-pix-bootstrap.js', [], '1.0.0', false);
     }
 
+    public function testSmartPixBootstrapIsPrintedBeforeWordPressPrintsTheHeadStylesheets(): void
+    {
+        // WordPress core hooks wp_print_styles on wp_head at priority 8.
+        $this->assertLessThan(8, Scripts::SMART_PIX_BOOTSTRAP_HEAD_PRIORITY);
+
+        $printed = Mockery::mock('WP_Scripts');
+        $printed->shouldReceive('do_items')->once()->with(['wc_mercadopago_pix_bootstrap']);
+        WP_Mock::userFunction('wp_script_is', ['args' => ['wc_mercadopago_pix_bootstrap', 'enqueued'], 'return' => true]);
+        WP_Mock::userFunction('wp_scripts', ['return' => $printed]);
+
+        $this->scripts->printSmartPixBootstrapBeforeStyles();
+    }
+
+    public function testSmartPixBootstrapIsNotPrintedEarlyWhenItWasNotEnqueued(): void
+    {
+        $this->expectNotToPerformAssertions();
+        WP_Mock::userFunction('wp_script_is', ['args' => ['wc_mercadopago_pix_bootstrap', 'enqueued'], 'return' => false]);
+        WP_Mock::userFunction('wp_scripts', ['times' => 0]);
+
+        $this->scripts->printSmartPixBootstrapBeforeStyles();
+    }
+
     /**
      * @dataProvider smartPixOrderPayTotalProvider
      *
      * @param mixed $total
      */
-    public function testSmartPixOrderPayContextCarriesOnlyACanonicalPositiveTotal($total, ?array $expectedContext): void
+    public function testSmartPixOrderPayContextCarriesTheRoundedPositiveTotal($total, ?array $expectedContext): void
     {
         $_GET['key'] = 'wc_order_key';
         $order = Mockery::mock('WC_Order');
@@ -1123,7 +1195,8 @@ class ScriptsTest extends TestCase
             'one decimal float' => [150.5, $context('150.50')],
             'zero total' => ['0.00', null],
             'negative total' => ['-1.00', null],
-            'sub-cent total' => ['10.005', null],
+            'half cent rounds up like the order creation' => ['10.005', $context('10.01')],
+            'below half cent rounds down' => ['10.004', $context('10.00')],
             'malformed total' => ['abc', null],
         ];
     }
@@ -1450,7 +1523,10 @@ class ScriptsTest extends TestCase
         });
         try {
             $register();
-            $captured = $GLOBALS['__test_captured_script_actions'];
+            $captured = array_values(array_filter(
+                $GLOBALS['__test_captured_script_actions'],
+                static fn(array $action): bool => $action['tag'] === $tag
+            ));
         } finally {
             unset($GLOBALS['__test_capture_script_actions'], $GLOBALS['__test_captured_script_actions']);
         }

@@ -36,6 +36,57 @@ class SmartPixDecimalTest extends TestCase
     }
 
     /**
+     * @dataProvider roundedTotalProvider
+     * @param mixed $value
+     */
+    public function testStoreTotalsAreRoundedHalfUpToCentsWithoutFloats($value, string $expected): void
+    {
+        $this->assertSame($expected, SmartPixDecimal::roundHalfUp($value));
+    }
+
+    public static function roundedTotalProvider(): array
+    {
+        return [
+            'integer' => [7, '7.00'],
+            'integer string' => ['4', '4.00'],
+            'one decimal' => ['4.1', '4.10'],
+            'exact cents' => ['4.10', '4.10'],
+            'half cent rounds up' => ['4.005', '4.01'],
+            'below half cent rounds down' => ['4.0049', '4.00'],
+            'only the third decimal decides' => ['4.0050', '4.01'],
+            'carry into units' => ['4.995', '5.00'],
+            'carry across digits' => ['9.999', '10.00'],
+            'zero rounds to zero' => ['0.004', '0.00'],
+            'half cent of zero' => ['0.005', '0.01'],
+            'beyond integer precision' => ['9007199254740993.015', '9007199254740993.02'],
+        ];
+    }
+
+    /**
+     * @dataProvider unroundableTotalProvider
+     * @param mixed $value
+     */
+    public function testMalformedStoreTotalsAreNotRounded($value): void
+    {
+        $this->assertNull(SmartPixDecimal::roundHalfUp($value));
+    }
+
+    public static function unroundableTotalProvider(): array
+    {
+        return [
+            'null' => [null],
+            'float' => [4.005],
+            'negative integer' => [-1],
+            'negative string' => ['-4.00'],
+            'exponent' => ['1e3'],
+            'trailing dot' => ['4.'],
+            'leading zero' => ['04.00'],
+            'trailing newline' => ["4.00\n"],
+            'oversized' => [str_repeat('1', 65)],
+        ];
+    }
+
+    /**
      * @dataProvider rejectedValueProvider
      * @param mixed $value
      */
@@ -94,6 +145,27 @@ class SmartPixDecimalTest extends TestCase
     public function testCanonicalLengthLimitIsInclusive(): void
     {
         $this->assertTrue(SmartPixDecimal::isCanonical(str_repeat('9', 61) . '.00'));
+    }
+
+    /** @dataProvider roundedSumProvider */
+    public function testStoreTotalsAreSummedExactlyBeforeRounding(string $left, string $right, ?string $expected): void
+    {
+        $this->assertSame($expected, SmartPixDecimal::roundedSum($left, $right));
+    }
+
+    public static function roundedSumProvider(): array
+    {
+        return [
+            'fractional refund and balance close the total' => ['1.005', '18.995', '20.00'],
+            'parts rounded first would drift a cent' => ['1.005', '1.005', '2.01'],
+            'scales differ' => ['1.5', '0.125', '1.63'],
+            'integers' => ['0', '20', '20.00'],
+            'carry into a new unit' => ['9.999', '0.001', '10.00'],
+            'below half cent rounds down' => ['0', '2.354', '2.35'],
+            'negative is rejected' => ['-1.00', '2.00', null],
+            'exponent is rejected' => ['1.0E-5', '2.00', null],
+            'over the length limit is rejected' => [str_repeat('9', 65), '0', null],
+        ];
     }
 
     public function testAdditionCarriesAcrossUnitsWithoutFloatRounding(): void

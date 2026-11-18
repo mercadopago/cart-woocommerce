@@ -335,8 +335,10 @@ final class SmartPixNotificationReceiver
                     || ($response['observed']['order_status_detail'] ?? null) === 'partially_refunded'
                     || ($response['observed']['payment_status_detail'] ?? null) === 'partially_refunded')
                 && !in_array($result['outcome'], ['applied', 'no_change'], true);
-            if ($unresolvedRefund && $result['reason'] !== self::REASON_OWNERSHIP_UNAVAILABLE
-                && $this->linkage->inManualReview($link['order'])) {
+            if (
+                $unresolvedRefund && $result['reason'] !== self::REASON_OWNERSHIP_UNAVAILABLE
+                && $this->linkage->inManualReview($link['order'])
+            ) {
                 // The merchant already owns this refund: redelivery can no longer resolve it.
                 return ['status' => 200, 'message' => self::MESSAGE_PROCESSED, 'success' => true];
             }
@@ -466,7 +468,7 @@ final class SmartPixNotificationReceiver
     private function matchesOrderTotal($payments, WC_Order $order): bool
     {
         // WooCommerce stubs describe float, but CRUD preserves the decimal string.
-        $total = SmartPixDecimal::canonical($order->get_total('edit'));
+        $total = SmartPixDecimal::roundHalfUp($order->get_total('edit'));
         if ($total === null || $total === '0.00' || !is_array($payments) || $payments === []) {
             return false;
         }

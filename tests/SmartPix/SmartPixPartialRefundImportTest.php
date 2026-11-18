@@ -50,6 +50,7 @@ class SmartPixPartialRefundImportTest extends TestCase
         $order->shouldReceive('is_paid')->andReturn(true);
         $order->shouldReceive('get_date_paid')->with('edit')->andReturn(new \stdClass());
         $order->shouldReceive('get_total_refunded')->andReturnUsing(fn(): float => (float) $this->native);
+        $order->shouldReceive('get_remaining_refund_amount')->andReturnUsing(fn(): string => number_format(2.36 - (float) $this->native, 2, '.', ''));
         $order->shouldReceive('get_refunds')->andReturnUsing(fn(): array => $this->refunds)->byDefault();
         $order->shouldReceive('read_meta_data')->with(true);
         $store = Mockery::mock();

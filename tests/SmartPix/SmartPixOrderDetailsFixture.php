@@ -84,7 +84,7 @@ trait SmartPixOrderDetailsFixture
     {
         return [
             'description' => 'Synthetic product x 1',
-            'ip_address'  => '203.0.113.10',
+            'ip_address'  => '',
             'payer'       => [
                 'email'          => 'buyer@example.test',
                 'first_name'     => 'Synthetic',

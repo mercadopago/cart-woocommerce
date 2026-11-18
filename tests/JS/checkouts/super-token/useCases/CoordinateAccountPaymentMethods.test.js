@@ -1,4 +1,5 @@
 const {
+  ACCOUNT_PAYMENT_METHODS_TIMEOUT_MS,
   CoordinateAccountPaymentMethods,
 } = require('@super-token/useCases/CoordinateAccountPaymentMethods');
 
@@ -162,5 +163,121 @@ describe('CoordinateAccountPaymentMethods', () => {
     rejectStale(new Error('late sdk failure'));
 
     await expect(request).resolves.toBeNull();
+  });
+
+  describe('when the SDK never settles', () => {
+    const neverSettles = () => new Promise(() => {});
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('Given a fetch that never settles, When invalidated, Then the waiter gets null and the same identity fetches again', async () => {
+      const methods = [{ type: 'credit_card' }];
+      const fetch = jest.fn().mockImplementationOnce(neverSettles).mockResolvedValue(methods);
+      const coordinator = new CoordinateAccountPaymentMethods();
+
+      const stalled = coordinator.execute(context(fetch));
+      await jest.advanceTimersByTimeAsync(0);
+      coordinator.invalidate();
+
+      await expect(stalled).resolves.toBeNull();
+      await expect(coordinator.execute(context(fetch))).resolves.toEqual(methods);
+      expect(fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('Given a fetch shared by Super Token and Smart Pix, When the 30 s cap expires, Then both get null and the timeout is reported once', async () => {
+      const onTimeout = jest.fn();
+      const fetch = jest.fn(neverSettles);
+      const coordinator = new CoordinateAccountPaymentMethods();
+
+      const forSuperToken = coordinator.execute(context(fetch, { onTimeout }));
+      const forSmartPix = coordinator.execute(context(fetch, { onTimeout }));
+      await jest.advanceTimersByTimeAsync(ACCOUNT_PAYMENT_METHODS_TIMEOUT_MS - 1);
+      expect(onTimeout).not.toHaveBeenCalled();
+      await jest.advanceTimersByTimeAsync(1);
+
+      await expect(forSuperToken).resolves.toBeNull();
+      await expect(forSmartPix).resolves.toBeNull();
+      expect(ACCOUNT_PAYMENT_METHODS_TIMEOUT_MS).toBe(30000);
+      expect(onTimeout).toHaveBeenCalledTimes(1);
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(fetch.mock.calls[0][0].aborted).toBe(true);
+    });
+
+    it('Given the cap expired, When the late SDK response arrives, Then it does not repopulate the cache', async () => {
+      let resolveLate;
+      const methods = [{ type: 'credit_card' }];
+      const fetch = jest.fn()
+        .mockImplementationOnce(() => new Promise((resolve) => { resolveLate = resolve; }))
+        .mockResolvedValue(methods);
+      const coordinator = new CoordinateAccountPaymentMethods();
+
+      const expired = coordinator.execute(context(fetch));
+      await jest.advanceTimersByTimeAsync(ACCOUNT_PAYMENT_METHODS_TIMEOUT_MS);
+      await expect(expired).resolves.toBeNull();
+      resolveLate([{ type: 'late' }]);
+      await jest.advanceTimersByTimeAsync(0);
+
+      await expect(coordinator.execute(context(fetch))).resolves.toEqual(methods);
+      expect(fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('Given a replacement cached after an invalidation, When the old cap would expire, Then the replacement stays cached', async () => {
+      const methods = [{ type: 'credit_card' }];
+      const fetch = jest.fn().mockImplementationOnce(neverSettles).mockResolvedValue(methods);
+      const coordinator = new CoordinateAccountPaymentMethods();
+
+      coordinator.execute(context(fetch));
+      await jest.advanceTimersByTimeAsync(0);
+      coordinator.invalidate();
+      await coordinator.execute(context(fetch));
+      await jest.advanceTimersByTimeAsync(ACCOUNT_PAYMENT_METHODS_TIMEOUT_MS);
+
+      await expect(coordinator.execute(context(fetch))).resolves.toEqual(methods);
+      expect(fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('Given another identity queued behind a stalled one, When the cap expires, Then the queued identity is fetched', async () => {
+      const queuedMethods = [{ type: 'smart_transfer', bank: {} }];
+      const stalled = jest.fn(neverSettles);
+      const queued = jest.fn(async () => queuedMethods);
+      const coordinator = new CoordinateAccountPaymentMethods();
+
+      coordinator.execute(context(stalled));
+      await jest.advanceTimersByTimeAsync(10000);
+      const queuedRequest = coordinator.execute(context(queued, { amount: '200.00' }));
+      await jest.advanceTimersByTimeAsync(ACCOUNT_PAYMENT_METHODS_TIMEOUT_MS - 10000 - 1);
+      expect(queued).not.toHaveBeenCalled();
+      await jest.advanceTimersByTimeAsync(1);
+
+      await expect(queuedRequest).resolves.toEqual(queuedMethods);
+      expect(queued).toHaveBeenCalledTimes(1);
+    });
+
+    it('Given the timeout report throws, When the cap expires, Then the waiter still gets null', async () => {
+      const onTimeout = jest.fn(() => { throw new Error('telemetry down'); });
+      const coordinator = new CoordinateAccountPaymentMethods();
+
+      const request = coordinator.execute(context(jest.fn(neverSettles), { onTimeout }));
+      await jest.advanceTimersByTimeAsync(ACCOUNT_PAYMENT_METHODS_TIMEOUT_MS);
+
+      await expect(request).resolves.toBeNull();
+    });
+
+    it('Given the SDK answers before the cap, When the cap time passes, Then no timeout is reported', async () => {
+      const onTimeout = jest.fn();
+      const methods = [{ type: 'credit_card' }];
+      const coordinator = new CoordinateAccountPaymentMethods();
+
+      await expect(coordinator.execute(context(jest.fn(async () => methods), { onTimeout }))).resolves.toEqual(methods);
+      await jest.advanceTimersByTimeAsync(ACCOUNT_PAYMENT_METHODS_TIMEOUT_MS);
+
+      expect(onTimeout).not.toHaveBeenCalled();
+    });
   });
 });

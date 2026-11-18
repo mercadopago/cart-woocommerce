@@ -1384,6 +1384,8 @@ class GetAccountPaymentMethods {
   }
 }
 ;// ./assets/js/checkouts/super-token/useCases/CoordinateAccountPaymentMethods.ts
+/** Same safety cap as the Smart Pix eligibility: an SDK step that never settles cannot hold the checkout. */
+const ACCOUNT_PAYMENT_METHODS_TIMEOUT_MS = 30000;
 /**
  * Single-flight and single-result cache for the buyer/amount identity currently
  * active in checkout. It retains only one entry and never logs or exposes its key.
@@ -1392,6 +1394,9 @@ class CoordinateAccountPaymentMethods {
   cached = null;
   requestTail = Promise.resolve();
   activeControllers = new Set();
+  constructor(timeoutMs = ACCOUNT_PAYMENT_METHODS_TIMEOUT_MS) {
+    this.timeoutMs = timeoutMs;
+  }
   execute(ctx) {
     const key = JSON.stringify([ctx.amount, ctx.buyerEmail]);
     if (this.cached?.key === key) {
@@ -1403,12 +1408,20 @@ class CoordinateAccountPaymentMethods {
 
     // Different checkout identities must not mutate the shared authenticator in
     // parallel. Queue them while still sharing one promise for equal identities.
-    // An explicit invalidation aborts this generation and replaces requestTail so
-    // a stalled SDK promise cannot retain every later checkout identity.
+    // An explicit invalidation or the safety cap aborts this generation and
+    // resolves its waiters with null, so a stalled SDK promise can neither keep
+    // them pending nor retain every later checkout identity.
     const controller = new AbortController();
     this.activeControllers.add(controller);
+    const timeout = setTimeout(() => {
+      reportTimeout(ctx);
+      controller.abort();
+    }, this.timeoutMs);
     let entry;
-    const promise = this.requestTail.catch(() => undefined).then(() => controller.signal.aborted ? null : ctx.fetch(controller.signal)).then(methods => !controller.signal.aborted && Array.isArray(methods) ? methods.slice() : null).then(methods => {
+    const request = this.requestTail.catch(() => undefined).then(() => controller.signal.aborted ? null : ctx.fetch(controller.signal));
+    // Once abandoned, the SDK promise may still reject; nobody awaits it any more.
+    request.catch(() => undefined);
+    const promise = Promise.race([request, resolveNullOnAbort(controller.signal)]).then(methods => !controller.signal.aborted && Array.isArray(methods) ? methods.slice() : null).then(methods => {
       if (!methods && this.cached === entry) {
         this.cached = null;
       }
@@ -1422,6 +1435,7 @@ class CoordinateAccountPaymentMethods {
       }
       throw error;
     }).finally(() => {
+      clearTimeout(timeout);
       this.activeControllers.delete(controller);
     });
     entry = {
@@ -1440,6 +1454,20 @@ class CoordinateAccountPaymentMethods {
     this.activeControllers.forEach(controller => controller.abort());
     this.activeControllers.clear();
     this.requestTail = Promise.resolve();
+  }
+}
+function resolveNullOnAbort(signal) {
+  return new Promise(resolve => {
+    signal.addEventListener('abort', () => resolve(null), {
+      once: true
+    });
+  });
+}
+function reportTimeout(ctx) {
+  try {
+    ctx.onTimeout?.();
+  } catch {
+    // Telemetry cannot keep the waiters pending.
   }
 }
 ;// ./assets/js/checkouts/super-token/useCases/AuthorizePayment.ts
@@ -1539,10 +1567,12 @@ class FetchAndRenderPaymentMethods {
     // Every new fetch supersedes the previous one, even when the previous SDK call is still pending.
     session.bumpLoadGeneration();
     session.setFetching(true);
+    const amount = session.currentAmount();
+    session.rememberFetchIdentity(amount, buyerEmail);
     const generation = session.getLoadGeneration();
     let paymentMethods;
     try {
-      paymentMethods = await session.fetchAccountPaymentMethods(session.currentAmount(), buyerEmail);
+      paymentMethods = await session.fetchAccountPaymentMethods(amount, buyerEmail);
     } catch (_) {
       // Transient fetch failure: only release the flag if we still own this load, so a newer
       // generation that superseded us keeps ownership. Without this the flag stays stuck at true
@@ -1595,6 +1625,10 @@ class LegacyTriggerSession {
   }
   setFetching(isFetching) {
     this.triggerHandler.isFetchingPaymentMethods = isFetching;
+  }
+  rememberFetchIdentity(amount, buyerEmail) {
+    this.triggerHandler.fetchingAmount = amount;
+    this.triggerHandler.fetchingEmail = buyerEmail;
   }
   getLoadGeneration() {
     return this.triggerHandler.loadGeneration;
@@ -1685,7 +1719,7 @@ class LoadSuperToken {
     }
 
     // Prevent unnecessary re-fetching of payment methods.
-    if (session.isFetching() && !session.amountHasChanged() && !session.emailHasChanged()) {
+    if (session.isFetching() && !session.fetchingIdentityHasChanged()) {
       return;
     }
     if (session.amountHasChanged()) {
@@ -1750,6 +1784,12 @@ class LegacyLoadOrchestrationSession {
   }
   emailHasChanged() {
     return this.triggerHandler.emailHasChanged();
+  }
+  fetchingIdentityHasChanged() {
+    if (typeof this.triggerHandler.fetchingIdentityHasChanged !== 'function') {
+      return this.triggerHandler.amountHasChanged() || this.triggerHandler.emailHasChanged();
+    }
+    return this.triggerHandler.fetchingIdentityHasChanged();
   }
   clearRememberedSelections() {
     this.triggerHandler.mpSuperTokenPaymentMethods.clearRememberedSelections();
@@ -6426,6 +6466,7 @@ class SuperTokenPaymentMethods {
 
 
 
+const ACCOUNT_PAYMENT_METHODS_FALLBACK_METRIC = 'super_token_account_payment_methods_fallback';
 
 /** Superset of the metrics the load use case, the submit use case and the primitives emit. */
 
@@ -6574,6 +6615,7 @@ class SuperTokenAuthenticator {
     return this.coordinateAccountPaymentMethodsUseCase.execute({
       amount,
       buyerEmail: normalizedEmail,
+      onTimeout: () => this.metrics.sendMetric(ACCOUNT_PAYMENT_METHODS_FALLBACK_METRIC, 'timeout', ''),
       fetch: signal => {
         // A reset or a newer fetch supersedes this one even if its SDK call is still pending.
         const generation = ++this.loadGeneration;
@@ -6757,6 +6799,8 @@ class SuperTokenTriggerHandler {
   isAlreadyListeningForm = false;
   lastException = null;
   isFetchingPaymentMethods = false;
+  fetchingAmount = null;
+  fetchingEmail = null;
   customHandlerMissingReportedOnReset = false;
   loadGeneration = 0;
   cacheMetricsDispatched = false;
@@ -6813,6 +6857,11 @@ class SuperTokenTriggerHandler {
     const emailUsed = this.mpSuperTokenAuthenticator.getEmailUsed();
     return buyerEmail != null && emailUsed != null && buyerEmail !== emailUsed;
   }
+
+  // Smart Pix rebuilds the shared authenticator too, so a repeat is judged against this handler's own load.
+  fetchingIdentityHasChanged() {
+    return this.currentAmount !== this.fetchingAmount || this.getBuyerEmail() !== this.fetchingEmail;
+  }
   isDifferentEmail(newEmail) {
     return this.wcBuyerEmail != newEmail;
   }
@@ -6830,7 +6879,8 @@ class SuperTokenTriggerHandler {
   }
   resetFlow() {
     this.mpSuperTokenAuthenticator.reset();
-    this.mpSuperTokenPaymentMethods.reset();
+    // The reset abandons the in-flight load, so the reload that follows cannot be discarded as a repeat.
+    this.cancelLoad();
   }
   resetCustomCheckout(shouldClearCache = true) {
     this.resetCustomCheckoutUseCase.execute({

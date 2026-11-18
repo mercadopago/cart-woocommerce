@@ -77,6 +77,23 @@ describe('LegacyLoadOrchestrationSession', () => {
     expect(triggerHandler.isSuperTokenPaymentMethodsLoaded).toHaveBeenCalled();
   });
 
+  it('Given a handler that tracks its own load, When the repeat guard is read, Then it forwards to that identity', () => {
+    const triggerHandler = buildTriggerHandler({ fetchingIdentityHasChanged: jest.fn(() => false) });
+    const session = new LegacyLoadOrchestrationSession(triggerHandler);
+
+    expect(session.fetchingIdentityHasChanged()).toBe(false);
+    expect(triggerHandler.amountHasChanged).not.toHaveBeenCalled();
+  });
+
+  it('Given a handler from an older runtime build, When the repeat guard is read, Then it falls back to the authenticator identity', () => {
+    const triggerHandler = buildTriggerHandler();
+    const session = new LegacyLoadOrchestrationSession(triggerHandler);
+
+    expect(session.fetchingIdentityHasChanged()).toBe(true);
+    expect(triggerHandler.amountHasChanged).toHaveBeenCalled();
+    expect(triggerHandler.emailHasChanged).toHaveBeenCalled();
+  });
+
   it('Given the reset primitive, When called, Then it forwards to the legacy resetFlow', () => {
     const triggerHandler = buildTriggerHandler();
     const session = new LegacyLoadOrchestrationSession(triggerHandler);

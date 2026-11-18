@@ -50,7 +50,10 @@ class SmartPixRefundContextTest extends TestCase
         return [[42, 321, 'BRL', '-25.50', 25.5, true], [0, 321, 'BRL', '-25.50', 25.5, false],
             [42, 999, 'BRL', '-25.50', 25.5, false], [42, 321, 'USD', '-25.50', 25.5, false],
             [42, 321, 'BRL', '-25.501', 25.5, false], [42, 321, 'BRL', '-25.50', 30.0, false],
-            [42, 321, 'BRL', '25.50', 25.5, false], [42, 321, 'BRL', '-0.00', 0.0, false]];
+            [42, 321, 'BRL', '25.50', 25.5, false], [42, 321, 'BRL', '-0.00', 0.0, false],
+            // A sub-cent native refund is sent rounded to cents, like the other payment methods.
+            [42, 321, 'BRL', '-25.495', 25.495, true], [42, 321, 'BRL', '-25.504', 25.504, true],
+            [42, 321, 'BRL', '-0.004', 0.004, false]];
     }
 
     public function testManualBookkeepingAndUncapturedRefundsNeverResolve(): void

@@ -124,6 +124,13 @@ abstract class BlockTestCase extends TestCase
         WP_Mock::onFilterAdded('style_loader_tag')
             ->with([new \WP_Mock\Matcher\AnyInstance(\MercadoPago\Woocommerce\Hooks\Scripts::class), 'addSmartPixStyleCrossOrigin'], 10, 2)
             ->perform(function () {});
+        WP_Mock::onHookAdded('wp_head', 'action')
+            ->with(
+                [new \WP_Mock\Matcher\AnyInstance(\MercadoPago\Woocommerce\Hooks\Scripts::class), 'printSmartPixBootstrapBeforeStyles'],
+                \MercadoPago\Woocommerce\Hooks\Scripts::SMART_PIX_BOOTSTRAP_HEAD_PRIORITY,
+                1
+            )
+            ->perform(function () {});
         WP_Mock::onHookAdded('enqueue_block_assets', 'action')
             ->with(Mockery::type('callable'), 10, 1)->perform(function () {});
         foreach ([

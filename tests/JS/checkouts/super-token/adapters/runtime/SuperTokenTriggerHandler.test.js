@@ -1,5 +1,7 @@
 const { SuperTokenTriggerHandler } = require('@super-token/adapters/runtime/SuperTokenTriggerHandler');
 
+const { SuperTokenAuthenticator } = require('@super-token/adapters/runtime/SuperTokenAuthenticator');
+
 const CURRENT_USER_EMAIL = 'default@store.com';
 
 const buildAuthenticator = (overrides = {}) => ({
@@ -238,6 +240,17 @@ describe('SuperTokenTriggerHandler', () => {
       expect(authenticator.reset).toHaveBeenCalledTimes(1);
       expect(paymentMethods.reset).toHaveBeenCalledTimes(1);
     });
+
+    it('Given a load still pending, When the flow resets, Then it abandons that load so the next one is not discarded as a repeat', () => {
+      const { handler } = build();
+      handler.isFetchingPaymentMethods = true;
+      handler.loadGeneration = 3;
+
+      handler.resetFlow();
+
+      expect(handler.isFetchingPaymentMethods).toBe(false);
+      expect(handler.loadGeneration).toBe(4);
+    });
   });
 
   describe('isSuperTokenPaymentMethodsLoaded', () => {
@@ -334,12 +347,29 @@ describe('SuperTokenTriggerHandler', () => {
     it('Given a fetch already in flight for the same amount and e-mail, When loaded, Then it short-circuits without fetching', async () => {
       const { handler, authenticator, emailListener } = build();
       handler.isFetchingPaymentMethods = true;
+      handler.fetchingAmount = '10.00';
+      handler.fetchingEmail = CURRENT_USER_EMAIL;
 
       await handler.loadSuperToken('10.00');
 
       expect(handler.currentAmount).toBe('10.00');
       expect(authenticator.getAccountPaymentMethods).not.toHaveBeenCalled();
       expect(emailListener.onEmailChange).not.toHaveBeenCalled();
+    });
+
+    it('Given its own load is pending for another amount and Smart Pix rebuilt the authenticator for the new one, When loaded with the new amount, Then it fetches again', async () => {
+      const authenticator = buildAuthenticator({
+        getAmountUsed: jest.fn().mockReturnValue('8.26'),
+        getEmailUsed: jest.fn().mockReturnValue(CURRENT_USER_EMAIL),
+      });
+      const { handler } = build({ authenticator });
+      handler.isFetchingPaymentMethods = true;
+      handler.fetchingAmount = '9.44';
+      handler.fetchingEmail = CURRENT_USER_EMAIL;
+
+      await handler.loadSuperToken('8.26');
+
+      expect(authenticator.getAccountPaymentMethods).toHaveBeenCalledWith('8.26', CURRENT_USER_EMAIL);
     });
 
     it('Given the amount changed, When loaded, Then it resets the flow and reports the amount-change metric', async () => {
@@ -574,6 +604,87 @@ describe('SuperTokenTriggerHandler', () => {
         'restore down',
         'mp_super_token_restore_error',
       );
+    });
+  });
+
+  describe('with the real authenticator', () => {
+    const buildAuthenticatorMetrics = () => ({
+      sendMetric: jest.fn(),
+      errorToBuildAuthenticator: jest.fn(),
+      errorToGetSimplifiedAuth: jest.fn(),
+      errorToGetFastPaymentToken: jest.fn(),
+      registerAuthorizedPseudotoken: jest.fn(),
+      isNotSimplifiedAuth: jest.fn(),
+      canUseSuperToken: jest.fn(),
+      cannotGetFastPaymentToken: jest.fn(),
+      errorToGetAccountPaymentMethods: jest.fn(),
+      errorToAuthorizePayment: jest.fn(),
+    });
+
+    const buildWithSdk = (sdk, accountPaymentMethods = { getAccountPaymentMethods: jest.fn() }) => {
+      const authenticator = new SuperTokenAuthenticator(sdk, accountPaymentMethods, buildAuthenticatorMetrics(), 'BP1', 'MLB');
+      return build({ authenticator });
+    };
+
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    it('Given the SDK never answers and the buyer leaves and comes back to the card, When the 30 s cap expires, Then the next load calls the SDK again', async () => {
+      const sdk = { authenticator: jest.fn(() => new Promise(() => {})) };
+      const { handler } = buildWithSdk(sdk);
+
+      handler.loadSuperToken('9.44');
+      await jest.advanceTimersByTimeAsync(0);
+      handler.cancelLoad();
+      const backToCard = handler.loadSuperToken('9.44');
+      await jest.advanceTimersByTimeAsync(0);
+      expect(sdk.authenticator).toHaveBeenCalledTimes(1);
+
+      await jest.advanceTimersByTimeAsync(30000);
+      await backToCard;
+      expect(handler.isFetchingPaymentMethods).toBe(false);
+
+      handler.loadSuperToken('9.44');
+      await jest.advanceTimersByTimeAsync(0);
+      expect(sdk.authenticator).toHaveBeenCalledTimes(2);
+    });
+
+    it('Given the SDK never answers, When the custom checkout resets, Then the reload calls the SDK right away', async () => {
+      const sdk = { authenticator: jest.fn(() => new Promise(() => {})) };
+      const { handler } = buildWithSdk(sdk);
+
+      handler.loadSuperToken('9.44');
+      await jest.advanceTimersByTimeAsync(0);
+      handler.resetCustomCheckout(true);
+      await jest.advanceTimersByTimeAsync(0);
+
+      expect(sdk.authenticator).toHaveBeenCalledTimes(2);
+      expect(handler.isFetchingPaymentMethods).toBe(true);
+    });
+
+    it('Given a slow SDK and the buyer leaves and comes back to the card, When the SDK answers, Then the cards render without another SDK call', async () => {
+      let answerSdk;
+      const handle = {
+        getSimplifiedAuth: jest.fn().mockResolvedValue(true),
+        getFastPaymentToken: jest.fn().mockResolvedValue('FAST_1'),
+      };
+      const sdk = { authenticator: jest.fn(() => new Promise((resolve) => { answerSdk = resolve; })) };
+      const savedCard = { type: 'credit_card', token: 'PM_1' };
+      const { handler, paymentMethods } = buildWithSdk(sdk, {
+        getAccountPaymentMethods: jest.fn().mockResolvedValue({ data: [savedCard] }),
+      });
+
+      handler.loadSuperToken('9.44');
+      await jest.advanceTimersByTimeAsync(0);
+      handler.cancelLoad();
+      const backToCard = handler.loadSuperToken('9.44');
+      await jest.advanceTimersByTimeAsync(0);
+      answerSdk(handle);
+      await backToCard;
+
+      expect(sdk.authenticator).toHaveBeenCalledTimes(1);
+      expect(paymentMethods.renderAccountPaymentMethods).toHaveBeenCalledWith([savedCard], '9.44');
+      expect(handler.isFetchingPaymentMethods).toBe(false);
     });
   });
 });
