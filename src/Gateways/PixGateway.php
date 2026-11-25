@@ -4,6 +4,8 @@ namespace MercadoPago\Woocommerce\Gateways;
 
 use Exception;
 use MercadoPago\Woocommerce\Exceptions\InvalidCheckoutDataException;
+use MercadoPago\Woocommerce\Exceptions\OrderStatusLockException;
+use MercadoPago\Woocommerce\Exceptions\PixCompletionException;
 use MercadoPago\Woocommerce\Exceptions\ResponseStatusException;
 use MercadoPago\Woocommerce\Exceptions\RejectedPaymentException;
 use MercadoPago\Woocommerce\Helpers\Country;
@@ -1464,20 +1466,17 @@ class PixGateway extends AbstractGateway
      */
     private function handleApprovedPayment(\WC_Order $order, array $paymentData): void
     {
-        $paymentAlreadyProcessed = $this->orderMeta->get($order, 'pix_payment_approved');
-
-        if ($paymentAlreadyProcessed) {
-            wp_send_json_success([
-                'status' => 'approved',
-                'message' => 'Payment has already been processed',
-            ]);
+        try {
+            // Exclusion, fresh read and the completion checkpoint live in OrderStatus::processStatus():
+            // the order loaded before the HTTP call may already be stale here.
+            $applied = $this->mercadopago->orderStatus->processStatus('approved', $paymentData, $order, self::WEBHOOK_API_NAME);
+        } catch (OrderStatusLockException | PixCompletionException $exception) {
+            $this->respondRecoverableFailure($order, (string) ($paymentData['id'] ?? ''));
             return;
         }
 
-        $applied = $this->mercadopago->orderStatus->processStatus('approved', $paymentData, $order, self::WEBHOOK_API_NAME);
-
         // A status that was not applied (e.g. an order owned by another payment contract)
-        // must not be marked as processed nor reported as approved to the polling client.
+        // must not be reported as approved to the polling client.
         if (!$applied) {
             if ($this->mercadopago->orderStatus->isOwnedBySmartPixOrders($order)) {
                 // Keep a trace of the approved conventional Pix payment without changing the order.
@@ -1490,12 +1489,24 @@ class PixGateway extends AbstractGateway
             return;
         }
 
-        $this->orderMeta->update($order, 'pix_payment_approved', true);
-
         wp_send_json_success([
             'status' => 'approved',
             'message' => 'Payment successfully approved',
         ]);
+    }
+
+    /**
+     * The update was not applied (lock busy/unavailable or completion failed). Persist a retry
+     * before answering, and never report success for something that was not processed.
+     */
+    private function respondRecoverableFailure(\WC_Order $order, string $paymentId): void
+    {
+        $this->mercadopago->pixStatusRetry->enqueue((int) $order->get_id(), 'polling', $paymentId);
+
+        wp_send_json_error(
+            ['message' => 'Payment is being processed, try again', 'retry' => true],
+            503
+        );
     }
 
     /**

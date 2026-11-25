@@ -5,6 +5,8 @@ const { loadFile } = require('../../../helpers/load-file');
 // is what lets `jest --findRelatedTests` / diff-coverage attribute coverage here.
 require('assets/js/checkouts/custom/entities/event-handler.js');
 const eventHandlerPath = resolveAlias('assets/js/checkouts/custom/entities/event-handler.js');
+require('assets/js/checkouts/custom/entities/mobile-checkout-classic-observer.js');
+const observerPath = resolveAlias('assets/js/checkouts/custom/entities/mobile-checkout-classic-observer.js');
 
 // No-op stub: MPEventHandler constructor uses MobileCheckoutClassicObserver as a default
 // parameter. Tests instantiate the handler directly without going through bindEvents,
@@ -66,8 +68,262 @@ function checkoutJQuery(selector) {
       ? new URLSearchParams(new window.FormData(elements[0])).toString() : '',
     on: jest.fn(), ready: jest.fn(), submit: jest.fn(), block: jest.fn(), unblock: jest.fn(),
     prepend: (node) => elements[0]?.prepend(node),
+    trigger: (eventName) => {
+      elements.forEach((element) => element.dispatchEvent(new window.Event(eventName, { bubbles: true, cancelable: true })));
+      return elements;
+    },
   });
 }
+
+describe('MPEventHandler - mobile recovery with Fast Payments', () => {
+  let handler;
+  let metrics;
+  let listeners;
+  let triggerHandler;
+  let documentListeners;
+  let addEventListenerSpy;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    mountPaymentForm('super_token');
+    const cvv = document.createElement('iframe');
+    cvv.id = 'saved-card-cvv';
+    document.getElementById('checkout').append(cvv);
+    metrics = jest.fn();
+    listeners = new Map();
+    documentListeners = [];
+    const addEventListener = document.addEventListener.bind(document);
+    addEventListenerSpy = jest.spyOn(document, 'addEventListener').mockImplementation((event, callback, options) => {
+      documentListeners.push([event, callback, options]);
+      addEventListener(event, callback, options);
+    });
+    const jquery = (selector) => {
+      const boundary = checkoutJQuery(selector);
+      boundary.ready = (callback) => callback();
+      boundary.on = (event, callback) => {
+        const target = boundary[0];
+        if (!listeners.has(target)) listeners.set(target, new Map());
+        const events = listeners.get(target);
+        if (!events.has(event)) events.set(event, new Set());
+        events.get(event).add(callback);
+      };
+      boundary.off = (event, callback) => listeners.get(boundary[0])?.get(event)?.delete(callback);
+      return boundary;
+    };
+    const context = {
+      jQuery: jquery, sendMetric: metrics,
+      setTimeout: global.setTimeout, clearTimeout: global.clearTimeout,
+      navigator: { userAgent: 'Chrome Android 14' },
+      wc_mercadopago_custom_event_handler_params: { is_mobile: true },
+    };
+    const Observer = loadFile(observerPath, 'MobileCheckoutClassicObserver', context);
+    const Handler = loadFile(eventHandlerPath, 'MPEventHandler', {
+      ...context, MobileCheckoutClassicObserver: Observer,
+    });
+    const cardForm = {
+      formMounted: false, amount: '10.00',
+      getAmount: () => document.getElementById('mp-amount').value,
+      initCardForm: jest.fn().mockImplementation(() => {
+        cardForm.formMounted = true;
+        return Promise.resolve();
+      }),
+      form: { unmount: jest.fn(() => { cardForm.formMounted = false; }) },
+      createLoadSpinner: jest.fn(), removeLoadSpinner: jest.fn(),
+    };
+    handler = new Handler(cardForm, { set3dsStatusValidationListener: jest.fn() });
+    triggerHandler = { loadSuperToken: jest.fn().mockResolvedValue() };
+    handler.mpSuperTokenTriggerHandler = triggerHandler;
+    handler.mpSuperTokenAuthenticator = {};
+    jest.spyOn(handler, 'createToken');
+    jest.spyOn(handler, 'handleWithSuperTokenSubmit');
+    handler.bindEvents();
+  });
+
+  afterEach(() => {
+    expect(handler.createToken).not.toHaveBeenCalled();
+    expect(handler.handleWithSuperTokenSubmit).not.toHaveBeenCalled();
+    handler._mobileObserver.destroy();
+    documentListeners.forEach(([event, callback, options]) => document.removeEventListener(event, callback, options));
+    addEventListenerSpy.mockRestore();
+    jest.clearAllTimers();
+    jest.useRealTimers();
+    document.body.replaceChildren();
+  });
+
+  it('reports skipped recovery once without changing Fast Payments fields at the deadline', async () => {
+    await jest.advanceTimersByTimeAsync(20000);
+
+    expect(handler.cardForm.initCardForm).not.toHaveBeenCalled();
+    expect(handler.cardForm.form.unmount).not.toHaveBeenCalled();
+    expect(triggerHandler.loadSuperToken).not.toHaveBeenCalled();
+    expect(document.getElementById('mp_checkout_type').value).toBe('super_token');
+    expect(document.getElementById('cardInstallments').value).toBe('1');
+    expect(metrics).toHaveBeenCalledWith(
+      '1', 'no-wc-form/mode:super_token', 'mp_custom_checkout_mobile_recovery_skipped'
+    );
+    expect(metrics.mock.calls.map((call) => call[2])).toEqual([
+      'mp_custom_checkout_mobile_started', 'mp_custom_checkout_mobile_recovery_skipped',
+    ]);
+  });
+
+  it('sends the guard count through the real emitter with store URI and URL', async () => {
+    const beacon = jest.fn().mockReturnValue(true);
+    const sendMetric = loadFile(resolveAlias('assets/js/checkouts/mp-checkout-metrics.js'), 'sendMetric', {
+      navigator: { sendBeacon: beacon },
+      wc_mercadopago_checkout_metrics_params: {
+        plugin_version: '8.10.0', platform_version: '10.0.0',
+        location: '/checkout', theme: 'storefront', site_id: 'MLB', currency: 'BRL', cust_id: 'fixture-customer',
+      },
+      window: {
+        location: { origin: 'https://shop.example.test', pathname: '/checkout-blocks/' },
+        sessionStorage: { getItem: () => null },
+      },
+    });
+    metrics.mockImplementation(sendMetric);
+
+    await jest.advanceTimersByTimeAsync(20000);
+
+    expect(beacon).toHaveBeenCalledTimes(1);
+    const [url, body] = beacon.mock.calls[0];
+    expect(url).toBe('https://api.mercadopago.com/ppcore/prod/monitor/v1/event/datadog/big/mp_custom_checkout_mobile_recovery_skipped');
+    const payload = JSON.parse(body);
+    expect(payload.value).toBe('1');
+    expect(payload.message).toBe('no-wc-form/mode:super_token');
+    expect(payload.platform.uri).toBe('https://shop.example.test/checkout_storefront_MLB_BRL');
+    expect(payload.platform.url).toBe('https://shop.example.test/checkout-blocks/');
+    expect(payload.details.environment).toBe('prod');
+    expect(handler.cardForm.initCardForm).not.toHaveBeenCalled();
+    expect(handler.cardForm.form.unmount).not.toHaveBeenCalled();
+  });
+
+  it('recovers the conventional form when Custom is active at the deadline', async () => {
+    document.getElementById('mp_checkout_type').value = 'custom';
+
+    await jest.advanceTimersByTimeAsync(10000);
+
+    expect(handler.cardForm.initCardForm).toHaveBeenCalledTimes(1);
+    expect(metrics).toHaveBeenCalledWith('android_14', 'no-wc-form/mounted:yes', 'mp_custom_checkout_mobile_recovered');
+  });
+
+  it('does not recover while Fast Payments is preparing its CVV', async () => {
+    document.getElementById('saved-card-cvv').remove();
+
+    await jest.advanceTimersByTimeAsync(10000);
+
+    expect(handler.cardForm.initCardForm).not.toHaveBeenCalled();
+    expect(metrics.mock.calls.map((call) => call[2])).toEqual([
+      'mp_custom_checkout_mobile_started', 'mp_custom_checkout_mobile_recovery_skipped',
+    ]);
+  });
+
+  it.each(['updated_checkout', 'cfw_pre_updated_checkout', 'payment_method_selected'])(
+    'does not report skipped recovery when %s cancels the timer', async (event) => {
+      const target = event === 'updated_checkout' ? document : document.body;
+      listeners.get(target).get(event).forEach((callback) => callback());
+
+      await jest.advanceTimersByTimeAsync(20000);
+
+      expect(metrics.mock.calls.map((call) => call[2])).toEqual(['mp_custom_checkout_mobile_started']);
+      expect(handler.cardForm.initCardForm).not.toHaveBeenCalled();
+      expect(handler.cardForm.form.unmount).not.toHaveBeenCalled();
+    }
+  );
+
+  it('does not report skipped recovery for a mounted form or after destroy', async () => {
+    handler.cardForm.formMounted = true;
+    await jest.advanceTimersByTimeAsync(10000);
+    expect(metrics.mock.calls.map((call) => call[2])).toEqual(['mp_custom_checkout_mobile_started']);
+
+    handler.cardForm.formMounted = false;
+    handler._mobileObserver._scheduleInitFailureDetector();
+    handler._mobileObserver.destroy();
+    await jest.advanceTimersByTimeAsync(10000);
+    expect(metrics.mock.calls.map((call) => call[2])).toEqual(['mp_custom_checkout_mobile_started']);
+  });
+
+  it('refreshes the Fast Payments amount without mounting or unmounting Custom fields', async () => {
+    document.getElementById('mp-amount').value = '20.00';
+
+    listeners.get(document).get('updated_checkout').forEach((callback) => callback());
+    await jest.advanceTimersByTimeAsync(500);
+
+    expect(triggerHandler.loadSuperToken).toHaveBeenCalledWith('20.00');
+    expect(handler.cardForm.initCardForm).not.toHaveBeenCalled();
+    expect(handler.cardForm.form.unmount).not.toHaveBeenCalled();
+    expect(handler.cardForm.removeLoadSpinner).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not unmount or remount conventional fields for Fast Payments even with a stale mounted flag', async () => {
+    handler.cardForm.formMounted = true;
+    document.getElementById('mp-amount').value = '20.00';
+
+    await handler.handleUpdatedCheckout();
+
+    expect(triggerHandler.loadSuperToken).toHaveBeenCalledWith('20.00');
+    expect(handler.cardForm.form.unmount).not.toHaveBeenCalled();
+    expect(handler.cardForm.initCardForm).not.toHaveBeenCalled();
+  });
+
+  it('mounts Custom after returning to a new card and recovers detached fields on later updates', async () => {
+    document.getElementById('mp_checkout_type').value = 'custom';
+    const containers = ['cardNumber', 'expirationDate', 'securityCode'].map((field) => {
+      const element = document.createElement('div');
+      element.id = `form-checkout__${field}-container`;
+      document.getElementById('checkout').append(element);
+      return element;
+    });
+
+    await handler.handleUpdatedCheckout();
+    expect(handler.cardForm.initCardForm).toHaveBeenCalledTimes(1);
+    expect(handler.cardForm.form.unmount).not.toHaveBeenCalled();
+
+    await handler.handleUpdatedCheckout();
+    expect(handler.cardForm.form.unmount).toHaveBeenCalledTimes(1);
+    expect(handler.cardForm.initCardForm).toHaveBeenCalledTimes(2);
+
+    containers.forEach((container) => container.append(document.createElement('iframe')));
+    await handler.handleUpdatedCheckout();
+    expect(handler.cardForm.initCardForm).toHaveBeenCalledTimes(2);
+  });
+
+  it('rechecks the mode when Fast Payments becomes active between the timer and its update callback', async () => {
+    document.getElementById('mp_checkout_type').value = 'custom';
+    jest.advanceTimersByTime(10000);
+    document.getElementById('mp_checkout_type').value = 'super_token';
+
+    await jest.advanceTimersByTimeAsync(500);
+
+    expect(handler.cardForm.initCardForm).not.toHaveBeenCalled();
+    expect(triggerHandler.loadSuperToken).toHaveBeenCalledTimes(1);
+    expect(metrics.mock.calls.map((call) => call[2])).not.toContain('mp_custom_checkout_mobile_recovered');
+  });
+
+  it('rechecks field ownership after starting a Fast Payments refresh', async () => {
+    document.getElementById('mp_checkout_type').value = 'custom';
+    triggerHandler.loadSuperToken.mockImplementation(() => {
+      document.getElementById('mp_checkout_type').value = 'super_token';
+      return Promise.resolve();
+    });
+
+    await handler.handleUpdatedCheckout();
+
+    expect(handler.cardForm.initCardForm).not.toHaveBeenCalled();
+    expect(handler.cardForm.form.unmount).not.toHaveBeenCalled();
+  });
+
+  it('ignores recovery when another gateway is selected and removes listeners on destroy', async () => {
+    document.getElementById('payment_method_woo-mercado-pago-custom').checked = false;
+    await jest.advanceTimersByTimeAsync(10000);
+    expect(handler.cardForm.initCardForm).not.toHaveBeenCalled();
+    expect(triggerHandler.loadSuperToken).not.toHaveBeenCalled();
+
+    expect(metrics.mock.calls.map((call) => call[2])).toEqual(['mp_custom_checkout_mobile_started']);
+
+    handler._mobileObserver.destroy();
+    expect(listeners.get(document).get('updated_checkout').size).toBe(0);
+    expect(listeners.get(document.body).get('cfw_pre_updated_checkout').size).toBe(0);
+  });
+});
 
 describe('MPEventHandler - validateCheckoutThenContinue', () => {
   let handler;
@@ -983,6 +1239,83 @@ describe('MPEventHandler - handleWithSuperTokenSubmit', () => {
         'unexpected_error',
         expect.any(String),
       );
+    });
+  });
+
+  describe('given an authorized Super Token payment on the standard checkout', () => {
+    const { ClassicCheckout } = require('@super-token/adapters/checkout/ClassicCheckout');
+    const { FinalizeSuperTokenPayment } = require('@super-token/useCases/FinalizeSuperTokenPayment');
+    const AUTHORIZED_TOKEN = 'fixture-authorized-proof';
+
+    let form;
+    let submittedForms;
+    let deps;
+
+    const buildSuperTokenDependencies = () => ({
+      triggerHandler: { resetSuperTokenOnError: jest.fn(), setLastException: jest.fn() },
+      authenticator: {
+        // The CDN authenticator's contract: a successful authorization writes the proof into the form.
+        authorizePayment: jest.fn(async (token) => {
+          form.querySelector('[name="mercadopago_custom[authorized_pseudotoken]"]').value = token;
+        }),
+        setSuperTokenValidation: jest.fn(),
+      },
+      paymentMethods: {
+        getActivePaymentMethod: jest.fn(() => ({ token: AUTHORIZED_TOKEN })),
+        isSelectedPaymentMethodValid: jest.fn(() => true),
+        validateInstallmentSelection: jest.fn(() => true),
+        updateSecurityCode: jest.fn().mockResolvedValue(undefined),
+        unmountCardForm: jest.fn(),
+      },
+      metrics: { registerClickOnPlaceOrderButton: jest.fn(), sendMetric: jest.fn() },
+      errorHandler: { handleError: jest.fn() },
+    });
+
+    const finalizationFlows = {
+      legacy: () => {
+        delete window.mpSuperTokenFinalizeClassic;
+      },
+      refactored: () => {
+        window.mpSuperTokenFinalizeClassic = (input) =>
+          new ClassicCheckout({ finalize: new FinalizeSuperTokenPayment(), ...input }).finalize();
+      },
+    };
+
+    beforeEach(() => {
+      form = document.querySelector('form.checkout');
+      submittedForms = [];
+      form.addEventListener('submit', (event) => submittedForms.push(event.target));
+      deps = buildSuperTokenDependencies();
+      handler.setSuperTokenDependencies(deps);
+    });
+
+    afterEach(() => {
+      delete window.mpSuperTokenFinalizeClassic;
+    });
+
+    describe.each(Object.keys(finalizationFlows))('in the %s finalization flow', (flow) => {
+      beforeEach(() => finalizationFlows[flow]());
+
+      it.each([
+        ['missing', undefined],
+        ['without $checkout_form', {}],
+      ])('Given wc_checkout_form is %s, When the authorization succeeds, Then it submits the checkout form captured for the request', async (_description, wcCheckoutForm) => {
+        await handler.handleWithSuperTokenSubmit({ preventDefault: jest.fn() }, wcCheckoutForm);
+
+        expect(submittedForms).toEqual([form]);
+        expect(deps.triggerHandler.resetSuperTokenOnError).not.toHaveBeenCalled();
+        expect(deps.metrics.sendMetric).not.toHaveBeenCalled();
+      });
+
+      it('Given WooCommerce passes wc_checkout_form, When the authorization succeeds, Then it submits through the received $checkout_form', async () => {
+        const checkoutForm = checkoutJQuery(form);
+        const trigger = jest.spyOn(checkoutForm, 'trigger');
+
+        await handler.handleWithSuperTokenSubmit({ preventDefault: jest.fn() }, { $checkout_form: checkoutForm });
+
+        expect(trigger).toHaveBeenCalledWith('submit');
+        expect(submittedForms).toEqual([form]);
+      });
     });
   });
 });

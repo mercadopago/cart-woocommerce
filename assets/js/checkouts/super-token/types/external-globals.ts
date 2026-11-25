@@ -236,6 +236,7 @@ export interface SuperTokenBundleParams {
   plugin_version: string;
   platform_version: string;
   site_id: string;
+  store_locale?: string;
   cust_id: string;
   location: string;
   platform_id: string;

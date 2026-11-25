@@ -17,6 +17,8 @@ import { SuperTokenTriggerHandler } from '@super-token/adapters/runtime/SuperTok
 import { SuperTokenDebounce } from '@super-token/adapters/runtime/SuperTokenDebounce';
 import { CoreMonitorMetricsAdapter, createDomainConfig } from '@super-token/adapters/platform';
 import { resolveMlcCopy } from '@super-token/adapters/platform/resolveMlcCopy';
+import { resolveRegionalCopy, regionalCopySite } from '@super-token/adapters/platform/resolveRegionalCopy';
+import { syncRegionalCopyToLegacy } from '@super-token/adapters/legacy/syncRegionalCopyToLegacy';
 import { resolveSuperTokenBlock } from '@super-token/adapters/platform/resolveSuperTokenBlock';
 import { divergentStoreLanguage } from '@super-token/adapters/platform/storeLanguage';
 import type { SuperTokenDomainParams } from '@super-token/adapters/platform';
@@ -110,7 +112,12 @@ export function composeRuntime(
   reportStoreLanguageDivergence(domainParams.site_id, metrics);
 
   // Plugins that predate `store_language_copy` keep the bundle's Chilean copy (see resolveMlcCopy).
-  const siteLocalizedParams = resolveMlcCopy(domainParams);
+  const regionalSite = regionalCopySite(
+    domainParams, document.documentElement.lang, window.wc_mercadopago_custom_checkout_params?.locale,
+  );
+  const siteLocalizedParams = resolveRegionalCopy(
+    resolveMlcCopy(domainParams), document.documentElement.lang, window.wc_mercadopago_custom_checkout_params?.locale,
+  );
   const localizedParams = {
     ...siteLocalizedParams,
     ...resolveLegacyPresentationCopy(
@@ -127,6 +134,14 @@ export function composeRuntime(
     window.mpSuperTokenPaymentMethods as unknown as LegacyCopyFields | undefined,
     window.wc_mercadopago_custom_checkout_params,
   );
+  if (regionalSite) {
+    syncRegionalCopyToLegacy(
+      domainParams as unknown as LegacyCopyParams,
+      localizedParams as unknown as LegacyCopyParams,
+      window.mpSuperTokenPaymentMethods as unknown as LegacyCopyFields | undefined,
+      regionalSite,
+    );
+  }
   const viewParams = localizedParams as unknown as SuperTokenViewParams;
 
   const compose = (): void => {

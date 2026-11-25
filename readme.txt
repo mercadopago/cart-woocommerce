@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 8.10.3
+Stable tag: 8.10.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,15 +134,28 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.10.3 (18/11/2026) =
+= v8.10.4 (25/11/2026) =
+* Added
+- Add Uruguayan Spanish translations with local wording and "Cuotas" in Fast Payments and the new-card checkout.
+- Add neutral Peruvian Spanish translations with "Cuotas" in Fast Payments, the new-card checkout and the rest of the plugin.
+
 * Changed
-- Load Pix via Open Finance only on the checkout and order payment pages
+- Update Uruguayan Fast Payments text on older plugin versions while preserving merchant customizations, selected payment methods and accessible card names.
+- Update Peruvian Fast Payments and installment copy to "Cuotas" on older plugin versions.
 
 * Fixed
-- Improve how Pix via Open Finance loads on slower checkout pages, and show the conventional Pix right away when it cannot load
-- Prevent the card checkout from loading indefinitely when Fast Payments does not respond
-- Reload Fast Payments correctly when the buyer changes the checkout, such as applying a coupon
-- Improve the creation and refunds of Pix via Open Finance orders in more store configurations
-
+- Prevent concurrent store activation requests from creating duplicate Mercado Pago onboarding registrations.
+- Preserve saved-card CVV when mobile checkout recovery runs while Fast Payments is active.
+- Submit authorized Fast Payments orders when a theme or checkout extension omits WooCommerce checkout form data.
+- Correct incomplete Fast Payments balance labels.
+- Apply Uruguayan translations when the payment SDK uses a historical language fallback, preserving the store language chosen by the merchant.
+- Require an offline payment method outside Brazil and a document in Uruguay.
+- Keep offline payment validation working with customized layouts and repeated checkout updates.
+- Restore document masks after checkout updates without overwriting newer input.
+- Reject payment notifications larger than 16 KiB before processing them.
+- Prevent repeated or concurrent Pix status updates from completing the same order more than once.
+- Prevent repeated payment notifications from counting the same Pix refund more than once.
+- Retry pending Pix status updates after concurrent requests or temporary failures.
+- Keep the Order Pay Ticket form unlocked after an invalid submit, so the buyer can correct the offline payment choice or the document and submit again.
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

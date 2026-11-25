@@ -270,7 +270,9 @@ class WoocommerceMercadoPagoTest extends TestCase
             'Argentina uses the Argentine catalog' => ['es_AR', 'es_AR'],
             'Spain uses the neutral default catalog' => ['es_ES', 'es'],
             'Colombia uses the Colombian catalog' => ['es_CO', 'es_CO'],
-            'Peru uses the neutral default catalog' => ['es_PE', 'es'],
+            'Peru uses the Peruvian catalog'    => ['es_PE', 'es_PE'],
+            'Uruguay uses the Uruguayan catalog' => ['es_UY', 'es_UY'],
+            'Other Spanish regions keep the neutral default catalog' => ['es_EC', 'es'],
         ];
     }
 
@@ -335,6 +337,7 @@ class WoocommerceMercadoPagoTest extends TestCase
 
         $funnel = Mockery::mock(Funnel::class);
         $funnel->shouldReceive('created')->once()->andReturn(true);
+        $funnel->shouldReceive('sellerContactPending')->once()->andReturn(false);
         $funnel->shouldReceive('create')->never();
         $funnel->shouldReceive('updateStepSellerContact')->never();
         $funnel->shouldReceive('updateStepActivate')->once()->andReturnUsing(
@@ -353,5 +356,41 @@ class WoocommerceMercadoPagoTest extends TestCase
         $this->newPluginWiredTo($funnel, $store)->activatePlugin();
 
         $this->assertTrue($flagCleared, 'an already created funnel must still disarm the activation flag');
+    }
+
+    /**
+     * A creation that published its identity but stopped before its callback leaves the
+     * activation armed and the first contact owed: the next activation must send it once.
+     */
+    public function testGivenFunnelCreatedWithPendingContactWhenPluginActivatesThenTheFirstContactRunsAfterTheFlagIsCleared(): void
+    {
+        $calls = [];
+
+        $funnel = Mockery::mock(Funnel::class);
+        $funnel->shouldReceive('created')->once()->andReturn(true);
+        $funnel->shouldReceive('create')->never();
+        $funnel->shouldReceive('updateStepActivate')->once()->andReturnUsing(
+            function (\Closure $after) use (&$calls) {
+                $calls[] = 'activate';
+                $after();
+            }
+        );
+        $funnel->shouldReceive('sellerContactPending')->once()->andReturn(true);
+        $funnel->shouldReceive('updateStepSellerContact')->once()->andReturnUsing(
+            function () use (&$calls) {
+                $calls[] = 'seller-contact';
+            }
+        );
+
+        $store = Mockery::mock(Store::class);
+        $store->shouldReceive('setExecuteActivate')->once()->with(false)->andReturnUsing(
+            function () use (&$calls) {
+                $calls[] = 'activation-flag-off';
+            }
+        );
+
+        $this->newPluginWiredTo($funnel, $store)->activatePlugin();
+
+        $this->assertSame(['activate', 'activation-flag-off', 'seller-contact'], $calls);
     }
 }

@@ -124,6 +124,34 @@ describe('composeRuntime', () => {
     expect(metrics.storeLanguageDivergesFromSite).toHaveBeenCalledWith('es-es', 'MLC');
   });
 
+  it.each(['es-UY', 'es-AR', 'es-MX'])('localizes an old MLU plugin with the generic flag and SDK %s without replacing selected payment state', async (sdkLocale) => {
+    const platform = require('@super-token/adapters/platform');
+    window.mpSdkInstance = {};
+    window.mpSuperTokenTriggerHandler = {};
+    document.documentElement.lang = 'es-UY';
+    window.wc_mercadopago_custom_checkout_params = { locale: sdkLocale };
+    const selected = { id: 'saved-card', installments: 3 };
+    window.mpSuperTokenPaymentMethods = {
+      MP_METHODS_TITLE: 'Además, puedes utilizar',
+      selectedPaymentMethod: selected,
+    };
+    const params = {
+      site_id: 'MLU', store_language_copy: true,
+      mp_methods_title: 'Además, puedes utilizar',
+      input_title: { installments: 'Meses' },
+      placeholders: { installments: 'Selecciona una opción' },
+      input_helper_message: { installments: { required: 'Selecciona una opción.' } },
+    };
+
+    await composeRuntime(params, recompose, metrics);
+
+    expect(platform.createDomainConfig.mock.calls[0][0].mp_methods_title).toBe('Además, podés utilizar');
+    expect(params.input_title.installments).toBe('Cuotas');
+    expect(window.mpSuperTokenPaymentMethods.MP_METHODS_TITLE).toBe('Además, podés utilizar');
+    expect(window.mpSuperTokenPaymentMethods.selectedPaymentMethod).toBe(selected);
+    delete window.mpSuperTokenPaymentMethods;
+  });
+
   it('Given the store language expected for the credential site, When composed, Then no divergence is reported', async () => {
     document.documentElement.lang = 'es-CL';
 

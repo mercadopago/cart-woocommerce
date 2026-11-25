@@ -23,14 +23,13 @@ class Uninstall
 
     public function send(): bool
     {
-        $installationId = $this->store->getInstallationId();
-        $installationKey = $this->store->getInstallationKey();
+        $identity = $this->store->getInstallationCredentials();
 
-        if ($installationId === '' || $installationKey === '') {
+        if ($identity['id'] === '' || $identity['key'] === '') {
             return false;
         }
 
-        $this->client->update(['id' => $installationId, 'is_deleted' => true], $installationKey);
+        $this->client->update(['id' => $identity['id'], 'is_deleted' => true], $identity['key']);
 
         return true;
     }

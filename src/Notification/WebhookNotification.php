@@ -102,6 +102,11 @@ class WebhookNotification extends AbstractNotification
         $this->setResponse(200, 'Webhook Notification Successfully');
     }
 
+    protected function retrySource(): string
+    {
+        return 'webhook';
+    }
+
     /**
      * Process status
      *

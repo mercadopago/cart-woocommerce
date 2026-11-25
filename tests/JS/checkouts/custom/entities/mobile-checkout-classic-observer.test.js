@@ -275,6 +275,68 @@ describe('MobileCheckoutClassicObserver — PSW-4054', () => {
 
   });
 
+  describe('skipped recovery telemetry', () => {
+    it.each([undefined, null, 'other_gateway'])(
+      'does not attribute a skipped mount to Fast Payments for reason %s', (reason) => {
+        isSelected.mockReturnValue(false);
+        const obs = new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate, null, () => reason);
+        sendMetricMock.mockClear();
+
+        jest.advanceTimersByTime(10000);
+
+        expect(sendMetricMock).not.toHaveBeenCalled();
+        expect(onCheckoutUpdate).not.toHaveBeenCalled();
+        obs.destroy();
+      }
+    );
+
+    it('preserves legacy callers that omit a skip reason', () => {
+      isSelected.mockReturnValue(false);
+      const obs = new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate);
+      sendMetricMock.mockClear();
+      jest.advanceTimersByTime(10000);
+      expect(sendMetricMock).not.toHaveBeenCalled();
+      expect(onCheckoutUpdate).not.toHaveBeenCalled();
+      obs.destroy();
+    });
+
+    it('keeps the guard effective when the metric emitter throws', () => {
+      isSelected.mockReturnValue(false);
+      const obs = new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate, null, () => 'super_token');
+      sendMetricMock.mockImplementation(() => { throw new Error('metrics unavailable'); });
+      try {
+        expect(() => jest.advanceTimersByTime(10000)).not.toThrow();
+        expect(onCheckoutUpdate).not.toHaveBeenCalled();
+      } finally {
+        sendMetricMock.mockReset();
+        obs.destroy();
+      }
+    });
+
+    it('keeps the guard effective when the reason provider throws', () => {
+      isSelected.mockReturnValue(false);
+      const obs = new MobileCheckoutClassicObserver(cardForm, isSelected, onCheckoutUpdate, null, () => {
+        throw new Error('context unavailable');
+      });
+      sendMetricMock.mockClear();
+      expect(() => jest.advanceTimersByTime(10000)).not.toThrow();
+      expect(sendMetricMock).not.toHaveBeenCalled();
+      expect(onCheckoutUpdate).not.toHaveBeenCalled();
+      obs.destroy();
+    });
+
+    it('keeps the guard effective without a metric emitter', () => {
+      const Observer = loadFile(observerPath, 'MobileCheckoutClassicObserver', {
+        jQuery: (...args) => jQueryMock(...args),
+        setTimeout: global.setTimeout, clearTimeout: global.clearTimeout,
+      });
+      const obs = new Observer(cardForm, () => false, onCheckoutUpdate, null, () => 'super_token');
+      expect(() => jest.advanceTimersByTime(10000)).not.toThrow();
+      expect(onCheckoutUpdate).not.toHaveBeenCalled();
+      obs.destroy();
+    });
+  });
+
   // -------------------------------------------------------------------------
   // guardedUpdate — deduplication
   // -------------------------------------------------------------------------

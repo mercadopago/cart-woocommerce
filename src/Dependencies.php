@@ -60,6 +60,7 @@ use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\Remote;
 use MercadoPago\Woocommerce\Order\OrderShipping;
 use MercadoPago\Woocommerce\Order\OrderStatus;
+use MercadoPago\Woocommerce\Order\PixStatusRetry;
 use MercadoPago\Woocommerce\Order\PaymentReconciliation;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
@@ -184,6 +185,8 @@ class Dependencies
 
     public OrderStatus $orderStatus;
 
+    public PixStatusRetry $pixStatusRetry;
+
     public PaymentReconciliation $paymentReconciliation;
 
     public \MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderOperations $smartPixOperations;
@@ -253,6 +256,12 @@ class Dependencies
         $this->gatewayHook             = $this->setGateway();
         $this->nonceHelper             = $this->setNonce();
         $this->orderStatus             = $this->setOrderStatus();
+        $this->pixStatusRetry          = new PixStatusRetry(
+            $this->orderStatus,
+            $this->orderMetadata,
+            $this->requesterHelper,
+            $this->logs
+        );
         $this->smartPixNativeEffects   = new \MercadoPago\Woocommerce\SmartPix\Adapters\WooCommerce\SmartPixNativeEffects();
         $this->smartPixOrderSync       = $this->setSmartPixOrderSync();
         $this->smartPixOperations      = $this->setSmartPixOperations();

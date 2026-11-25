@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.10.4] 2026-11-25
+### Added
+- Add Uruguayan Spanish translations with local wording and "Cuotas" in Fast Payments and the new-card checkout.
+- Add neutral Peruvian Spanish translations with "Cuotas" in Fast Payments, the new-card checkout and the rest of the plugin.
+
+### Changed
+- Update Uruguayan Fast Payments text on older plugin versions while preserving merchant customizations, selected payment methods and accessible card names.
+- Update Peruvian Fast Payments and installment copy to "Cuotas" on older plugin versions.
+
+### Fixed
+- Prevent concurrent store activation requests from creating duplicate Mercado Pago onboarding registrations.
+- Preserve saved-card CVV when mobile checkout recovery runs while Fast Payments is active.
+- Submit authorized Fast Payments orders when a theme or checkout extension omits WooCommerce checkout form data.
+- Correct incomplete Fast Payments balance labels.
+- Apply Uruguayan translations when the payment SDK uses a historical language fallback, preserving the store language chosen by the merchant.
+- Require an offline payment method outside Brazil and a document in Uruguay.
+- Keep offline payment validation working with customized layouts and repeated checkout updates.
+- Restore document masks after checkout updates without overwriting newer input.
+- Reject payment notifications larger than 16 KiB before processing them.
+- Prevent repeated or concurrent Pix status updates from completing the same order more than once.
+- Prevent repeated payment notifications from counting the same Pix refund more than once.
+- Retry pending Pix status updates after concurrent requests or temporary failures.
+- Keep the Order Pay Ticket form unlocked after an invalid submit, so the buyer can correct the offline payment choice or the document and submit again.
+
 ## [8.10.3] 2026-11-18
 ### Changed
 - Load Pix via Open Finance only on the checkout and order payment pages

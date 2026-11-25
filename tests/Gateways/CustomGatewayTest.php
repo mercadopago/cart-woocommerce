@@ -1650,6 +1650,7 @@ class CustomGatewayTest extends TestCase
         $this->assertSame('test-image-url', $localizeData['white_card_path']);
         $this->assertArrayNotHasKey('credits_renamed', $localizeData, 'Os novos nomes de Credits nao dependem de sinal do plugin');
         $this->assertTrue($localizeData['store_language_copy'], 'O plugin deve avisar o bundle que os catalogos ja trazem o texto no idioma da loja');
+        $this->assertSame('en-US', $localizeData['store_locale']);
         $this->assertTrue($localizeData['mco_store_language_copy'], 'O plugin deve avisar o bundle que traz o catalogo es_CO, liberando o Super Token em MCO');
         $this->assertSame('Super Token installments', $localizeData['input_title']['installments'], 'O bundle deve receber o texto do contexto do Super Token');
         $this->assertContains('wc_mercadopago_supertoken_refactored', $registeredHandles, 'Self-construct deve enfileirar o entry TS');

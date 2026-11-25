@@ -9,6 +9,29 @@ $scenario = json_decode(stream_get_contents(STDIN), true);
 $state = ['deleted' => [], 'requests' => [], 'logs' => []];
 $options = $scenario['options'];
 
+// The uninstall entrypoint also has WordPress's database object, without the plugin bootstrap.
+$GLOBALS['wpdb'] = new class {
+    public $options = 'wp_options';
+    public $last_error = '';
+
+    public function prepare($query, ...$names)
+    {
+        return $names;
+    }
+
+    public function get_results($names)
+    {
+        global $options;
+        $rows = [];
+        foreach ($names as $name) {
+            if (array_key_exists($name, $options)) {
+                $rows[] = (object) ['option_name' => $name, 'option_value' => $options[$name]];
+            }
+        }
+        return $rows;
+    }
+};
+
 define('ABSPATH', sys_get_temp_dir() . '/mp-uninstall-wordpress/');
 if ($scenario['authorized']) {
     define('WP_UNINSTALL_PLUGIN', 'woocommerce-mercadopago/woocommerce-mercadopago.php');

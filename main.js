@@ -40,7 +40,7 @@ function minifyFiles (extension) {
 }
 
 /** Canonical experience and JS/CSS telemetry stamp; not a runtime selector. */
-const SUPER_TOKEN_LOADER_VERSION = { 'v2.1': '1.2.13' };
+const SUPER_TOKEN_LOADER_VERSION = { 'v2.1': '1.2.14' };
 
 /**
  * Compile one Super Token SCSS entry into a compressed CSS file (both under

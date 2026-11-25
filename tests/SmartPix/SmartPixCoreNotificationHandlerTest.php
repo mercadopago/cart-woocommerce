@@ -107,6 +107,17 @@ class SmartPixCoreNotificationHandlerTest extends TestCase
         WP_Mock::tearDown();
     }
 
+    public function testExplicitOversizedRejectionReturnsFixedResponseAndMetricsWithoutFetchingOrEffects(): void
+    {
+        $this->http->shouldNotReceive('request');
+        $this->forbidLinkageAndEffects();
+
+        $result = $this->handler()->rejectOversized();
+
+        $this->assertFixedResponse(413, SmartPixNotificationReceiver::MESSAGE_TOO_LARGE, $result);
+        $this->assertSame([$this->rejected('body_too_large'), $this->time('failure')], $this->events);
+    }
+
     public function testCoreNotificationWithSmartPixIdFetchesTheNotificationAndAppliesTheOrdersStateOnce(): void
     {
         // The posted body names the notification only; its other fields must be ignored.

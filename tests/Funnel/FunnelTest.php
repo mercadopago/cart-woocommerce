@@ -7,6 +7,7 @@ use MercadoPago\Woocommerce\Api\Core\Models\FunnelRegistration;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
 use MercadoPago\Woocommerce\Funnel\Funnel;
+use MercadoPago\Woocommerce\Funnel\CreationLock;
 use MercadoPago\Woocommerce\Helpers\Country;
 use MercadoPago\Woocommerce\Helpers\Gateways;
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
@@ -24,6 +25,8 @@ class FunnelTest extends TestCase
 
     /** @var MockInterface|Store */
     private $store;
+
+    private bool $contactPending = false;
 
     /** @var MockInterface|Seller */
     private $seller;
@@ -45,6 +48,14 @@ class FunnelTest extends TestCase
         WP_Mock::setUp();
 
         $this->store = Mockery::mock(Store::class);
+        // In-memory pending-contact marker; dedicated tests assert when it is set and cleared.
+        $this->contactPending = false;
+        $this->store->shouldReceive('setSellerContactPending')->andReturnUsing(function (bool $pending) {
+            $this->contactPending = $pending;
+        })->byDefault();
+        $this->store->shouldReceive('getSellerContactPending')->andReturnUsing(function () {
+            return $this->contactPending;
+        })->byDefault();
         $this->seller = Mockery::mock(Seller::class);
         // Real instance, not a mock: Funnel reaches Country statically, both through
         // this property (create()) and on the class itself (updateStepSellerContact()).
@@ -58,7 +69,7 @@ class FunnelTest extends TestCase
         $this->gateways = Mockery::mock(Gateways::class);
 
         $this->client = Mockery::mock(FunnelClient::class);
-        $this->funnel = new Funnel($this->client, $this->store, $this->seller, $this->country, $this->gateways);
+        $this->funnel = new Funnel($this->client, $this->store, $this->seller, $this->country, $this->gateways, new CreationLock(new OptionsDatabase()));
 
         $this->datadog = Mockery::mock(Datadog::class);
         $this->datadog->shouldReceive('sendEvent')->byDefault();
@@ -154,7 +165,7 @@ class FunnelTest extends TestCase
      */
     public function testGivenAnUnsupportedPersistedSiteIdWhenCreateRunsThenTheStoreCountryIsSentInstead(): void
     {
-        $this->store->shouldReceive('getInstallationId')->andReturn('');
+        $this->store->shouldReceive('getInstallationCredentials')->andReturn(['id' => '', 'key' => '']);
         $this->seller->shouldReceive('getCredentialsAccessTokenProd')->andReturn('');
         $this->gateways->shouldReceive('getEnabledPaymentGateways')->andReturn([]);
         $this->seller->shouldReceive('getSiteId')->andReturn('MEC');
@@ -181,7 +192,7 @@ class FunnelTest extends TestCase
 
     public function testGivenProductionCredentialsAlreadyPresentWhenCreateIsCalledThenClientIsNeverRequested(): void
     {
-        $this->store->shouldReceive('getInstallationId')->andReturn('');
+        $this->store->shouldReceive('getInstallationCredentials')->andReturn(['id' => '', 'key' => '']);
         $this->seller->shouldReceive('getCredentialsAccessTokenProd')->andReturn('APP_USR-access-token');
 
         $this->client->shouldReceive('create')->never();
@@ -191,7 +202,7 @@ class FunnelTest extends TestCase
 
     public function testGivenPaymentGatewaysAlreadyEnabledWhenCreateIsCalledThenClientIsNeverRequested(): void
     {
-        $this->store->shouldReceive('getInstallationId')->andReturn('');
+        $this->store->shouldReceive('getInstallationCredentials')->andReturn(['id' => '', 'key' => '']);
         $this->seller->shouldReceive('getCredentialsAccessTokenProd')->andReturn('');
         $this->gateways->shouldReceive('getEnabledPaymentGateways')->andReturn(['woo-mercado-pago-pix']);
 
@@ -328,7 +339,7 @@ class FunnelTest extends TestCase
      */
     private function allowFunnelCreation(): void
     {
-        $this->store->shouldReceive('getInstallationId')->andReturn('');
+        $this->store->shouldReceive('getInstallationCredentials')->andReturn(['id' => '', 'key' => '']);
         $this->seller->shouldReceive('getCredentialsAccessTokenProd')->andReturn('');
         $this->gateways->shouldReceive('getEnabledPaymentGateways')->andReturn([]);
     }
@@ -339,8 +350,7 @@ class FunnelTest extends TestCase
      */
     private function markFunnelAsCreated(): void
     {
-        $this->store->shouldReceive('getInstallationId')->andReturn('installation-id');
-        $this->store->shouldReceive('getInstallationKey')->andReturn('installation-key');
+        $this->store->shouldReceive('getInstallationCredentials')->andReturn(['id' => 'installation-id', 'key' => 'installation-key']);
     }
 
     /**
@@ -378,8 +388,9 @@ class FunnelTest extends TestCase
                 return new FunnelRegistration(['id' => $id], $cppToken);
             }
         );
-        $this->store->shouldReceive('setInstallationId')->once()->with($id);
-        $this->store->shouldReceive('setInstallationKey')->once()->with($cppToken);
+        $this->store->shouldReceive('setInstallationCredentials')->once()->with(Mockery::on(function ($registration) use ($id, $cppToken) {
+            return $registration instanceof FunnelRegistration && $registration->getId() === $id && $registration->getCppToken() === $cppToken;
+        }), Mockery::type('string'));
 
         return $capture;
     }

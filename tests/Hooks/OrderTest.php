@@ -48,6 +48,50 @@ class OrderTest extends TestCase
         $this->order->syncPendingStatusOrders();
     }
 
+    /**
+     * Runs the pending-orders cron over one order whose synchronization throws $failure.
+     */
+    private function runPendingCronWithFailure(\Throwable $failure): void
+    {
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('get_id')->andReturn(55);
+        $this->orderMetadataMock->shouldReceive('getSyncCronErrorCount')->with($order)->andReturn(0);
+        $this->orderMetadataMock->shouldReceive('getPaymentContract')->with($order)->andReturn('orders_smart_pix_v1');
+        $sync = Mockery::mock(\MercadoPago\Woocommerce\SmartPix\UseCases\SmartPixOrderSync::class);
+        $sync->shouldReceive('synchronize')->once()->with($order)->andThrow($failure);
+        $this->setPrivateProperty('smartPixOrderSync', $sync);
+        $metric = Mockery::mock(\MercadoPago\Woocommerce\Libraries\Singleton\Singleton::class);
+        $metric->shouldReceive('sendEvent')->once();
+        $this->setPrivateProperty('datadog', $metric);
+        WP_Mock::userFunction('wc_get_orders', ['times' => 1, 'return' => [$order]]);
+
+        $this->order->syncPendingStatusOrders();
+    }
+
+    public function testCronDoesNotCountBusyLockAsASyncFailure(): void
+    {
+        $this->orderMetadataMock->shouldReceive('incrementSyncCronErrorCount')->never();
+
+        $this->runPendingCronWithFailure(new \MercadoPago\Woocommerce\Exceptions\OrderStatusLockException('busy'));
+        $this->addToAssertionCount(1);
+    }
+
+    public function testCronCountsAPersistentCompletionFailureTowardTheErrorCap(): void
+    {
+        $this->orderMetadataMock->shouldReceive('incrementSyncCronErrorCount')->once();
+
+        $this->runPendingCronWithFailure(new \MercadoPago\Woocommerce\Exceptions\PixCompletionException('failed'));
+        $this->addToAssertionCount(1);
+    }
+
+    public function testCronCountsAnUnavailableOrLostLockTowardTheErrorCap(): void
+    {
+        $this->orderMetadataMock->shouldReceive('incrementSyncCronErrorCount')->once();
+
+        $this->runPendingCronWithFailure(new \MercadoPago\Woocommerce\Exceptions\OrderStatusLockException('unavailable'));
+        $this->addToAssertionCount(1);
+    }
+
     private Order $order;
 
     private OrderStatus $orderStatusMock;
@@ -871,5 +915,69 @@ class OrderTest extends TestCase
         $reflection = new \ReflectionProperty(Order::class, $property);
         $reflection->setAccessible(true);
         $reflection->setValue($this->order, $value);
+    }
+
+    private function syncNotification(): array
+    {
+        $this->orderMetadataMock->shouldReceive('getUsedGatewayData')->andReturn('gateway');
+
+        return [['status' => 'approved', 'id' => 100]];
+    }
+
+    public function testSyncOrderStatusPropagatesPixContentionInsteadOfSwallowingIt(): void
+    {
+        $order = Mockery::mock(WC_Order::class);
+        $this->orderStatusMock->shouldReceive('getLastNotification')->with($order)->andReturn($this->syncNotification());
+        $this->orderStatusMock->shouldReceive('processStatus')->andThrow(new \MercadoPago\Woocommerce\Exceptions\OrderStatusLockException('busy'));
+
+        $this->expectException(\MercadoPago\Woocommerce\Exceptions\OrderStatusLockException::class);
+        $this->order->syncOrderStatus($order);
+    }
+
+    public function testSyncOrderStatusPropagatesPixCompletionFailure(): void
+    {
+        $order = Mockery::mock(WC_Order::class);
+        $this->orderStatusMock->shouldReceive('getLastNotification')->with($order)->andReturn($this->syncNotification());
+        $this->orderStatusMock->shouldReceive('processStatus')->andThrow(new \MercadoPago\Woocommerce\Exceptions\PixCompletionException('failed'));
+
+        $this->expectException(\MercadoPago\Woocommerce\Exceptions\PixCompletionException::class);
+        $this->order->syncOrderStatus($order);
+    }
+
+    public function testPaymentStatusSyncRegistersARetryAndReportsARecoverableError(): void
+    {
+        global $mercadopago;
+        $previous = $mercadopago ?? null;
+        $retry = Mockery::mock(\MercadoPago\Woocommerce\Order\PixStatusRetry::class);
+        $mercadopago = (object) ['pixStatusRetry' => $retry];
+
+        $nonce = Mockery::mock(\MercadoPago\Woocommerce\Helpers\Nonce::class);
+        $nonce->shouldReceive('validateNonce')->once();
+        $currentUser = Mockery::mock(\MercadoPago\Woocommerce\Helpers\CurrentUser::class);
+        $currentUser->shouldReceive('validateUserNeededPermissions')->once();
+        $this->setPrivateProperty('nonce', $nonce);
+        $this->setPrivateProperty('currentUser', $currentUser);
+
+        $this->adminTranslationsMock->statusSync['response_error'] = 'Sync error';
+        $_POST = ['nonce' => 'n', 'order_id' => '84'];
+        \WP_Mock::userFunction('sanitize_post')->andReturnUsing(static fn ($post) => $post);
+        \WP_Mock::userFunction('map_deep')->andReturnUsing(static fn ($data, $callback) => is_array($data) ? array_map($callback, $data) : $callback($data));
+        \WP_Mock::userFunction('sanitize_text_field')->andReturnUsing(static fn ($value) => (string) $value);
+
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('get_id')->andReturn(84);
+        \WP_Mock::userFunction('wc_get_order')->with('84')->andReturn($order);
+        $this->orderStatusMock->shouldReceive('getLastNotification')->andReturn($this->syncNotification());
+        $this->orderStatusMock->shouldReceive('processStatus')->andThrow(new \MercadoPago\Woocommerce\Exceptions\OrderStatusLockException('busy'));
+
+        $retry->shouldReceive('enqueue')->once()->with(84, 'sync', '84')->andReturn(3)->ordered();
+        \WP_Mock::userFunction('wp_send_json_error')->once()->with(Mockery::type('string'), 503)->ordered();
+
+        try {
+            $this->order->paymentStatusSync();
+        } finally {
+            $mercadopago = $previous;
+            $_POST = [];
+        }
     }
 }

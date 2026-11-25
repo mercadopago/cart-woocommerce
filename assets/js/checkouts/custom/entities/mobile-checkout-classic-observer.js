@@ -3,11 +3,12 @@
 class MobileCheckoutClassicObserver {
     INIT_TIMEOUT_DELAY = 10000;
 
-    constructor(cardForm, isChoCustomInitiallySelected, onCheckoutUpdate, onOrderPayInit = null) {
+    constructor(cardForm, shouldMountCardForm, onCheckoutUpdate, onOrderPayInit = null, getRecoverySkipReason = () => null) {
         this._cardForm                    = cardForm;
-        this._isChoCustomInitiallySelected = isChoCustomInitiallySelected;
+        this._shouldMountCardForm         = shouldMountCardForm;
         this._onCheckoutUpdate            = onCheckoutUpdate;
         this._onOrderPayInit              = onOrderPayInit;
+        this._getRecoverySkipReason       = getRecoverySkipReason;
         this._updateInFlight              = false;
         this._updatePending               = false;
         this._destroyed                   = false;
@@ -52,7 +53,7 @@ class MobileCheckoutClassicObserver {
             .finally(() => {
                 this._updateInFlight = false;
                 if (this._destroyed) return;
-                if (wasRecovery && !errored) {
+                if (wasRecovery && !errored && this._shouldMountCardForm?.()) {
                     this._emitRecoveredMetric(!!this._cardForm?.formMounted);
                 }
                 if (this._updatePending) this._guardedUpdate();
@@ -100,21 +101,38 @@ class MobileCheckoutClassicObserver {
         }
     }
 
+    _emitRecoverySkippedMetric() {
+        try {
+            if (this._getRecoverySkipReason() === 'super_token' && typeof sendMetric === 'function') {
+                sendMetric(
+                    '1',
+                    `${this._structure}/mode:super_token`,
+                    'mp_custom_checkout_mobile_recovery_skipped',
+                );
+            }
+        } catch (metricError) {
+            // Telemetry is optional; Fast Payments keeps ownership of the fields.
+        }
+    }
+
     _scheduleInitFailureDetector() {
         this._initTimeout = setTimeout(() => {
-            if (!this._cardForm?.formMounted && this._isChoCustomInitiallySelected?.()) {
-                if (typeof sendMetric === 'function') {
-                    const checkoutUpdateLabel = this._checkoutUpdateReceived ? 'yes' : 'no';
-                    sendMetric(
-                        this._getDeviceLabel(),
-                        `${this._structure}/event_received:${checkoutUpdateLabel}`,
-                        'mp_custom_checkout_mobile_timeout'
-                    );
-                }
-                if (!this._checkoutUpdateReceived) {
-                    this._recoveryInFlight = true;
-                    this._guardedUpdate();
-                }
+            if (this._destroyed || this._cardForm?.formMounted) return;
+            if (!this._shouldMountCardForm?.()) {
+                this._emitRecoverySkippedMetric();
+                return;
+            }
+            if (typeof sendMetric === 'function') {
+                const checkoutUpdateLabel = this._checkoutUpdateReceived ? 'yes' : 'no';
+                sendMetric(
+                    this._getDeviceLabel(),
+                    `${this._structure}/event_received:${checkoutUpdateLabel}`,
+                    'mp_custom_checkout_mobile_timeout'
+                );
+            }
+            if (!this._checkoutUpdateReceived) {
+                this._recoveryInFlight = true;
+                this._guardedUpdate();
             }
         }, this.INIT_TIMEOUT_DELAY);
     }

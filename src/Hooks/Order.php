@@ -4,6 +4,8 @@ namespace MercadoPago\Woocommerce\Hooks;
 
 use Exception;
 use MercadoPago\Woocommerce\Configs\Seller;
+use MercadoPago\Woocommerce\Exceptions\OrderStatusLockException;
+use MercadoPago\Woocommerce\Exceptions\PixCompletionException;
 use MercadoPago\Woocommerce\Gateways\PixGateway;
 use MercadoPago\Woocommerce\Libraries\Singleton\Singleton;
 use MercadoPago\Woocommerce\Order\OrderMetadata;
@@ -147,6 +149,7 @@ class Order
         add_filter('woocommerce_order_get_payment_method_title', [$this, 'paymentMethodTitle'], 10, 2);
         add_filter('woocommerce_gateway_title', [$this, 'adminPaymentMethodTitle'], 20, 2);
         add_action('woocommerce_before_order_object_save', [$this->orderMetadata, 'prepareSmartPixOrderIdCustomField']);
+        add_action('woocommerce_order_status_changed', [$this->orderStatus, 'clearPixMediationMarker'], 10, 4);
     }
 
     /**
@@ -457,11 +460,25 @@ class Order
     }
 
     /**
+     * @param WC_Order|false|null $order
+     */
+    private function queuePixRetry($order, string $source): void
+    {
+        global $mercadopago;
+
+        if ($order instanceof WC_Order && isset($mercadopago->pixStatusRetry)) {
+            $mercadopago->pixStatusRetry->enqueue((int) $order->get_id(), $source, (string) $order->get_id());
+        }
+    }
+
+    /**
      * Updates the order based on current payment status from API
      *
      */
     public function paymentStatusSync(): void
     {
+        $order = null;
+
         try {
             $this->nonce->validateNonce(self::NONCE_ID, Form::sanitizedPostData('nonce'));
             $this->currentUser->validateUserNeededPermissions();
@@ -475,6 +492,16 @@ class Order
 
             wp_send_json_success(
                 $this->adminTranslations->statusSync['response_success']
+            );
+        } catch (OrderStatusLockException | PixCompletionException $e) {
+            // Pix update contended or not confirmed: register the retry and report a recoverable
+            // error. A sync must never be announced as successful when nothing was processed.
+            $this->logs->file->warning("Pix status sync was not applied: {$e->getMessage()}", __CLASS__);
+            $this->queuePixRetry($order, 'sync');
+
+            wp_send_json_error(
+                $this->adminTranslations->statusSync['response_error'] . ' ' . $e->getMessage(),
+                503
             );
         } catch (Exception $e) {
             $this->logs->file->error(
@@ -532,6 +559,9 @@ class Order
             }
 
             $this->processSyncData($order, (array) $lastPaymentInfo);
+        } catch (OrderStatusLockException | PixCompletionException $e) {
+            // Pix orders: let the caller see the contention instead of swallowing it.
+            throw $e;
         } catch (Exception $e) {
             $this->logs->file->error('Mercado Pago: Error in sync order status: ' . $e->getMessage(), __CLASS__);
         }
@@ -715,7 +745,24 @@ class Order
                     }
 
                     $this->syncOrderStatus($order);
+                } catch (OrderStatusLockException $ex) {
+                    if ($ex->getReason() === OrderStatusLockException::REASON_BUSY) {
+                        // Contention is not a sync failure: another worker owns the order, try next run.
+                        $this->logs->file->warning("Pix order {$order->get_id()} busy during sync cron", __CLASS__);
+                        continue;
+                    }
+
+                    // The lock could not be provided or kept (unavailable/lost): that can be persistent, so it
+                    // counts toward the error cap like any other failure of the order.
+                    $this->orderMetadata->incrementSyncCronErrorCount($order);
+                    $this->logs->file->error(
+                        "Unable to update order {$order->get_id()} on action got error: {$ex->getMessage()}",
+                        __CLASS__
+                    );
                 } catch (Exception $ex) {
+                    // Includes PixCompletionException: a completion that keeps failing (payment_complete()
+                    // swallowed, checkpoint not saved) must reach the error cap instead of repeating the full
+                    // approval flow on every run.
                     $this->orderMetadata->incrementSyncCronErrorCount($order);
                     $error_message = "Unable to update order {$order->get_id()} on action got error: {$ex->getMessage()}";
 

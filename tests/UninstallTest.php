@@ -77,6 +77,28 @@ class UninstallTest extends TestCase
         $this->assertSame([], $state['logs']);
     }
 
+    public function testGivenCanonicalIdentityWhenUninstallRunsThenItUsesTheCompletePairAndPreservesIt(): void
+    {
+        $canonical = '{"id":"canonical-installation","key":"canonical-cpp-token"}';
+        $state = $this->runUninstall(['options' => ['_mp_funnel_identity' => $canonical]]);
+
+        $this->assertCount(1, $state['requests']);
+        $request = $state['requests'][0]['args'];
+        $this->assertSame(['id' => 'canonical-installation', 'is_deleted' => true], json_decode($request['body'], true));
+        $this->assertSame('canonical-cpp-token', $request['headers']['x-cpp-token']);
+        $this->assertSame($canonical, $state['options']['_mp_funnel_identity']);
+        $this->assertSame(self::CREDENTIAL_OPTIONS, $state['deleted']);
+    }
+
+    public function testGivenCorruptCanonicalIdentityWhenUninstallRunsThenItDoesNotUseLegacyAndStillCleansCredentials(): void
+    {
+        $state = $this->runUninstall(['options' => ['_mp_funnel_identity' => '{"id":"incomplete"}']]);
+
+        $this->assertSame([], $state['requests']);
+        $this->assertSame(self::CREDENTIAL_OPTIONS, $state['deleted']);
+        $this->assertSame('Unable to report plugin uninstallation to the integration funnel.', $state['logs'][0]['message']);
+    }
+
     public function testGivenDirectAccessWhenUninstallRunsThenItDoesNotLoadClientsOrChangeOptions(): void
     {
         $state = $this->runUninstall(['authorized' => false]);

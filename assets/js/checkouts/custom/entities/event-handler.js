@@ -101,9 +101,10 @@ class MPEventHandler {
             } else {
                 this._mobileObserver = new this._MobileCheckoutClassicObserver(
                     this.cardForm,
-                    this.isCheckoutCustomPaymentMethodSelected.bind(this),
+                    this.shouldMountCustomCardForm.bind(this),
                     this.handleUpdatedCheckout.bind(this),
-                    this.initCardFormWhenReady.bind(this)
+                    this.initCardFormWhenReady.bind(this),
+                    this.getCustomCardFormRecoverySkipReason.bind(this)
                 );
             }
         });
@@ -617,7 +618,7 @@ class MPEventHandler {
             markPaymentReady: () => this.completeSuperTokenRequest(request),
             submitCheckoutForm: () => {
                 if (this.mercado_pago_submit && this.completeSuperTokenRequest(request)) {
-                    wc_checkout_form.$checkout_form.trigger('submit');
+                    this.submitSuperTokenCheckoutForm(wc_checkout_form, request);
                 }
             },
             submitOrderPayForm: () => {
@@ -644,6 +645,17 @@ class MPEventHandler {
             this.removePaymentLoaders();
             this.resetPaymentReadiness();
         });
+    }
+
+    submitSuperTokenCheckoutForm(wc_checkout_form, request) {
+        const checkoutForm = wc_checkout_form?.$checkout_form;
+        if (typeof checkoutForm?.trigger === 'function') {
+            checkoutForm.trigger('submit');
+            return;
+        }
+        // WooCommerce < 7.8.0 and some checkout-replacement plugins fire checkout_place_order without
+        // wc_checkout_form; request.form was already verified as the connected checkout form by completeSuperTokenRequest.
+        jQuery(request.form).trigger('submit');
     }
 
     async legacyHandleWithSuperTokenSubmit(wc_checkout_form, request) {
@@ -674,7 +686,7 @@ class MPEventHandler {
 
             superTokenAuthenticator?.setSuperTokenValidation(true);
             if (!this.isOrderPayPage()) {
-                wc_checkout_form.$checkout_form.trigger('submit');
+                this.submitSuperTokenCheckoutForm(wc_checkout_form, request);
             } else {
                 this.handle3dsPayOrderFormSubmission();
             }
@@ -816,6 +828,18 @@ class MPEventHandler {
         return checkoutCustomPaymentMethodElement && checkoutCustomPaymentMethodElement.checked;
     }
 
+    shouldMountCustomCardForm() {
+        // Fast Payments shares the gateway but intentionally unmounts the Custom fields.
+        return this.isCheckoutCustomPaymentMethodSelected()
+            && document.querySelector('#mp_checkout_type')?.value !== 'super_token';
+    }
+
+    getCustomCardFormRecoverySkipReason() {
+        return this.isCheckoutCustomPaymentMethodSelected()
+            && document.querySelector('#mp_checkout_type')?.value === 'super_token'
+            ? 'super_token' : null;
+    }
+
     handlePaymentMethodSelected() {
       if (!this.isCustomPaymentMethodSelectedInForm(this.getCheckoutForm())) this.invalidatePaymentPreparation();
       if (!this.isCheckoutCustomPaymentMethodSelected()) {
@@ -900,7 +924,7 @@ class MPEventHandler {
                 promises.push(superTokenTriggerHandler.loadSuperToken(newAmount));
             }
 
-            const isCardFormDetached = this.cardForm.formMounted
+            const isCardFormDetached = this.shouldMountCustomCardForm() && this.cardForm.formMounted
                 && ['form-checkout__cardNumber-container', 'form-checkout__expirationDate-container', 'form-checkout__securityCode-container']
                     .every(containerId => {
                         const container = document.getElementById(containerId);
@@ -910,11 +934,13 @@ class MPEventHandler {
             if (isCardFormDetached) {
                 this.cardForm.form.unmount();
                 this.cardForm.formMounted = false;
-            } else if (this.cardForm.formMounted && newAmount !== currentAmount) {
+            } else if (this.shouldMountCustomCardForm() && this.cardForm.formMounted && newAmount !== currentAmount) {
                 this.cardForm.form.unmount();
             }
 
-            if (!this.cardForm.formMounted) promises.push(this.cardForm.initCardForm());
+            if (this.shouldMountCustomCardForm() && !this.cardForm.formMounted) {
+                promises.push(this.cardForm.initCardForm());
+            }
 
             return Promise.all(promises)
                 .finally(() => {
