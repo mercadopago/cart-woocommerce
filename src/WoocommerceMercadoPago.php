@@ -28,6 +28,7 @@ use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Libraries\Metrics\Datadog;
 use MercadoPago\Woocommerce\Order\OrderShipping;
 use MercadoPago\Woocommerce\Order\OrderStatus;
+use MercadoPago\Woocommerce\Order\PixStatusRetry;
 use MercadoPago\Woocommerce\Translations\AdminTranslations;
 use MercadoPago\Woocommerce\Translations\StoreTranslations;
 use MercadoPago\Woocommerce\Helpers\Country;
@@ -44,7 +45,7 @@ if (!defined('ABSPATH')) {
 
 class WoocommerceMercadoPago
 {
-    private const PLUGIN_VERSION = '8.10.3';
+    private const PLUGIN_VERSION = '8.10.4';
 
     private const PLUGIN_MIN_PHP = '7.4';
 
@@ -90,6 +91,8 @@ class WoocommerceMercadoPago
     public OrderShipping $orderShipping;
 
     public OrderStatus $orderStatus;
+
+    public PixStatusRetry $pixStatusRetry;
 
     public AdminTranslations $adminTranslations;
 
@@ -140,7 +143,7 @@ class WoocommerceMercadoPago
 
         $locale = $location_splitted[0];
         $country = $location_splitted[1] ?? '';
-        $locale = in_array($country, ['MX', 'CL', 'AR', 'CO']) ? $locale . '_' . $country : $locale;
+        $locale = in_array($country, ['MX', 'CL', 'AR', 'CO', 'UY', 'PE']) ? $locale . '_' . $country : $locale;
 
         load_textdomain($textDomain, Paths::basePath(Paths::join($this->pluginMetadata('DomainPath'), "woocommerce-mercadopago-$locale.mo")));
     }
@@ -269,6 +272,7 @@ class WoocommerceMercadoPago
         $this->setProperties();
         $this->registerOnboardingNoticeMetrics();
         add_action('mp_reconcile_payment_refund', [$this->orderStatus, 'retryPaymentRefundReconciliation'], 10, 4);
+        $this->pixStatusRetry->register();
         add_action(SmartPixReconciliation::HOOK, static function ($orderId, $attempt): void {
             SmartPixCoreNotificationHandlerFactory::reconciliationFromPlugin()->run((int) $orderId, (int) $attempt);
         }, 10, 2);
@@ -373,7 +377,14 @@ class WoocommerceMercadoPago
         $disableActivate = fn() => $this->storeConfig->setExecuteActivate(false);
 
         if ($this->funnel->created()) {
-            $this->funnel->updateStepActivate($disableActivate);
+            $this->funnel->updateStepActivate(function () use ($disableActivate) {
+                $disableActivate();
+                // A creation that published its identity but stopped before its callback
+                // still owes the first contact; completed installations are not re-sent.
+                if ($this->funnel->sellerContactPending()) {
+                    $this->funnel->updateStepSellerContact();
+                }
+            });
             return;
         }
 
@@ -418,6 +429,7 @@ class WoocommerceMercadoPago
         $this->smartPixOperations = $dependencies->smartPixOperations;
         $this->smartPixNativeEffects = $dependencies->smartPixNativeEffects;
         $this->orderStatus   = $dependencies->orderStatus;
+        $this->pixStatusRetry = $dependencies->pixStatusRetry;
 
         // Helpers
         $this->helpers = $dependencies->helpers;

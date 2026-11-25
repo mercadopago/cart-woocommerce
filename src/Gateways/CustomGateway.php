@@ -1912,6 +1912,8 @@ window.mpSdkInstance = null;",
                 // Tells the CDN bundle that this plugin's catalogs already carry the store-language
                 // copy for every site, so it must not apply its legacy per-site copy override.
                 'store_language_copy' => true,
+                // Explicit store-language source; old SDK locales can be gettext fallbacks.
+                'store_locale' => $this->storeTranslations['locale'],
                 // Tells the CDN bundle that this plugin ships the es_CO catalog, so Colombian stores
                 // can use the Super Token; plugins without it stay on the Custom Checkout.
                 'mco_store_language_copy' => true,

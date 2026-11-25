@@ -4,6 +4,9 @@ namespace MercadoPago\Woocommerce\Order;
 
 use Exception;
 use MercadoPago\Woocommerce\Configs\Seller;
+use MercadoPago\Woocommerce\Exceptions\OrderStatusLockException;
+use MercadoPago\Woocommerce\Exceptions\PixCompletionException;
+use MercadoPago\Woocommerce\Gateways\PixGateway;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Helpers\Numbers;
 use MercadoPago\Woocommerce\Helpers\PaymentMetadata;
@@ -30,6 +33,17 @@ class OrderStatus
 
     private Logs $logs;
 
+    private PixOrderStatusLock $pixLock;
+
+    private FreshOrderReader $freshOrderReader;
+
+    private const PIX_APPROVED_META = 'pix_payment_approved';
+    /** Set when a Pix order entered in_mediation, so a later approval only releases holds that came from it. */
+    public const PIX_MEDIATION_META = '_mp_pix_in_mediation';
+
+    /** Orders being processed by this PHP process (re-entrancy guard, independent of the database lock). */
+    private static array $pixInFlight = [];
+
     private const PAYMENTS_ENDPOINT = '/v1/payments/';
     private const NOTIFICATION_ENDPOINT = '/v1/asgard/notification/';
     private const REFUND_METRIC_ERROR_MP = 'mp_refund_error';
@@ -42,8 +56,12 @@ class OrderStatus
         OrderMetadata $orderMetadata,
         Seller $seller,
         Requester $requester,
-        Logs $logs
+        Logs $logs,
+        ?PixOrderStatusLock $pixLock = null,
+        ?FreshOrderReader $freshOrderReader = null
     ) {
+        $this->pixLock          = $pixLock ?? new PixOrderStatusLock();
+        $this->freshOrderReader = $freshOrderReader ?? new FreshOrderReader();
         $this->translations   = $storeTranslations->orderStatus;
         $this->commonMessages = $storeTranslations->commonMessages;
         $this->orderMetadata  = $orderMetadata;
@@ -115,9 +133,162 @@ class OrderStatus
             return false;
         }
 
+        if (!$this->isPixOrder($order)) {
+            return $this->dispatchStatus($processedStatus, $data, $order, $usedGateway, false);
+        }
+
+        return $this->processPixStatus($processedStatus, $data, $order, $usedGateway);
+    }
+
+    /**
+     * Pix orders can be updated concurrently by the polling AJAX, webhooks, IPN, admin sync and the
+     * pre-cancel reconciliation. Serialize them per order and decide on the persisted state, never on
+     * a copy loaded before the lock (or before the Mercado Pago HTTP call).
+     *
+     * @throws OrderStatusLockException when the lock is busy, unavailable or lost.
+     * @throws PixCompletionException when the completion could not be confirmed as persisted.
+     */
+    private function processPixStatus(string $processedStatus, array $data, WC_Order $order, string $usedGateway): bool
+    {
+        $orderId = (int) $order->get_id();
+        $startedAt = microtime(true);
+
+        // Same process, same order: a hook fired by the flow that owns the order (e.g. a third-party
+        // callback of woocommerce_pre_payment_complete / payment_complete()) called back into processStatus().
+        // The outer call is already handling it; throwing would abort that call from the inside and queue a
+        // retry, and recursing would run the completion again before anything is saved. The in-memory map
+        // does not depend on the database lock, so it also protects the mode where the lock is disabled.
+        if (isset(self::$pixInFlight[$orderId]) || $this->pixLock->isHeld($orderId)) {
+            // Reported as not applied: this call changed nothing.
+            $this->logs->file->warning(
+                'pix_status_reentrant_call_skipped',
+                __CLASS__,
+                ['order_id' => $orderId, 'status' => $processedStatus]
+            );
+
+            return false;
+        }
+
+        self::$pixInFlight[$orderId] = true;
+
+        try {
+            return $this->processPixStatusGuarded($processedStatus, $data, $order, $usedGateway, $orderId, $startedAt);
+        } finally {
+            unset(self::$pixInFlight[$orderId]);
+        }
+    }
+
+    /**
+     * @throws OrderStatusLockException
+     * @throws PixCompletionException
+     */
+    private function processPixStatusGuarded(
+        string $processedStatus,
+        array $data,
+        WC_Order $order,
+        string $usedGateway,
+        int $orderId,
+        float $startedAt
+    ): bool {
+        if (!$this->isPixLockEnabled()) {
+            return $this->processPixStatusWithoutLock($processedStatus, $data, $order, $usedGateway, $startedAt);
+        }
+
+        try {
+            $lock = $this->pixLock->acquire($orderId);
+        } catch (OrderStatusLockException $exception) {
+            // busy is the normal contention signal; unavailable/lost mean the database cannot provide the
+            // lock at all (monitor them: every Pix channel fails closed while that lasts).
+            $level = $exception->getReason() === OrderStatusLockException::REASON_BUSY ? 'warning' : 'error';
+            $this->logs->file->$level(
+                'pix_status_lock_' . $exception->getReason(),
+                __CLASS__,
+                ['order_id' => $orderId, 'status' => $processedStatus]
+            );
+            throw $exception;
+        }
+
+        try {
+            $this->pixLock->assertOwned($lock);
+            $this->freshOrderReader->refresh($order);
+
+            // The re-read runs queries that can make wpdb reconnect, and a reconnection drops the
+            // GET_LOCK of the previous connection: prove ownership again before any effect runs.
+            $this->pixLock->assertOwned($lock);
+
+            $result = $this->dispatchStatus($processedStatus, $data, $order, $usedGateway, true);
+
+            $this->pixLock->assertOwned($lock);
+
+            return $result;
+        } catch (OrderStatusLockException $exception) {
+            $this->logs->file->error(
+                'pix_status_lock_' . $exception->getReason(),
+                __CLASS__,
+                ['order_id' => $orderId, 'status' => $processedStatus]
+            );
+            throw $exception;
+        } finally {
+            if (!$this->pixLock->release($lock)) {
+                $this->logs->file->error('pix_status_lock_release_failed', __CLASS__, ['order_id' => $orderId]);
+            }
+            $this->logs->file->info(
+                'Pix order status processed',
+                __CLASS__,
+                ['order_id' => $orderId, 'duration_ms' => (int) round((microtime(true) - $startedAt) * 1000)]
+            );
+        }
+    }
+
+    /**
+     * Escape hatch for databases where named locks do not work (read-replica drop-ins, engines without
+     * GET_LOCK): `add_filter('woocommerce_mercadopago_pix_status_lock_enabled', '__return_false')`.
+     * The order is still re-read and the persisted checkpoint still decides, but concurrent requests are
+     * no longer serialized, so duplicate completion is possible again under heavy concurrency.
+     */
+    private function isPixLockEnabled(): bool
+    {
+        return (bool) apply_filters('woocommerce_mercadopago_pix_status_lock_enabled', true);
+    }
+
+    private function processPixStatusWithoutLock(
+        string $processedStatus,
+        array $data,
+        WC_Order $order,
+        string $usedGateway,
+        float $startedAt
+    ): bool {
+        $orderId = (int) $order->get_id();
+        $this->logs->file->warning('pix_status_lock_disabled', __CLASS__, ['order_id' => $orderId]);
+
+        try {
+            $this->freshOrderReader->refresh($order);
+
+            return $this->dispatchStatus($processedStatus, $data, $order, $usedGateway, true);
+        } finally {
+            $this->logs->file->info(
+                'Pix order status processed',
+                __CLASS__,
+                ['order_id' => $orderId, 'duration_ms' => (int) round((microtime(true) - $startedAt) * 1000)]
+            );
+        }
+    }
+
+    private function isPixOrder(WC_Order $order): bool
+    {
+        return $order->get_payment_method() === PixGateway::ID;
+    }
+
+    private function dispatchStatus(
+        string $processedStatus,
+        array $data,
+        WC_Order $order,
+        string $usedGateway,
+        bool $isPix
+    ): bool {
         switch ($processedStatus) {
             case 'approved':
-                $this->approvedFlow($data, $order);
+                $this->approvedFlow($data, $order, $isPix);
                 break;
             case 'pending':
                 $this->pendingFlow($data, $order, $usedGateway);
@@ -137,7 +308,7 @@ class OrderStatus
                 $this->cancelledFlow($data, $order);
                 break;
             case 'in_mediation':
-                $this->inMediationFlow($order);
+                $this->inMediationFlow($order, $isPix);
                 break;
             case 'charged_back':
                 $this->chargedBackFlow($order);
@@ -183,9 +354,13 @@ class OrderStatus
     }
 
     /** @param array $data */
-    private function approvedFlow(array $data, WC_Order $order): void
+    private function approvedFlow(array $data, WC_Order $order, bool $isPix = false): void
     {
         if (isset($data['status_detail']) && $data['status_detail'] === 'partially_refunded') {
+            return;
+        }
+
+        if ($isPix && $this->pixCompletionAlreadyApplied($order)) {
             return;
         }
 
@@ -208,6 +383,186 @@ class OrderStatus
                     $order->update_status(self::mapMpStatusToWoocommerceStatus('approved'));
                 }
             }
+
+            if ($isPix) {
+                $this->confirmPixCompletion($order);
+            }
+        }
+    }
+
+    /**
+     * Paid status is proof; a payment date alone is not, because a merchant can mark an order paid and
+     * revert it by hand (pending/failed with a leftover date). Other statuses (on-hold from a mediation,
+     * refunded, cancelled) keep the payment date as the evidence of an earlier completion.
+     */
+    private function isPixOrderPaid(WC_Order $order): bool
+    {
+        $status = $order->get_status();
+
+        if (in_array($status, ['processing', 'completed'], true)) {
+            return true;
+        }
+        if (in_array($status, ['pending', 'failed'], true)) {
+            if ($order->get_date_paid('edit') !== null) {
+                $this->logs->file->warning(
+                    'pix_payment_date_without_paid_status',
+                    __CLASS__,
+                    ['order_id' => $order->get_id(), 'status' => $status]
+                );
+            }
+
+            return false;
+        }
+
+        return $order->get_date_paid('edit') !== null;
+    }
+
+    /**
+     * Hooked to woocommerce_order_status_changed: a Pix order that leaves on-hold, by any path, is no longer
+     * held by a mediation, so the in_mediation marker must not outlive that hold (a later manual hold would
+     * otherwise be released by an approval).
+     *
+     * @param int|string $orderId
+     * @param string $from
+     * @param string $to
+     * @param WC_Order|null $order
+     */
+    public function clearPixMediationMarker($orderId, $from, $to, $order = null): void
+    {
+        if ($from !== 'on-hold' || $to === 'on-hold' || !$order instanceof WC_Order) {
+            return;
+        }
+
+        if ((string) $order->get_meta(self::PIX_MEDIATION_META) !== '1') {
+            return;
+        }
+
+        // WooCommerce emits this hook even when the status write failed (wp_update_post() returning 0), so
+        // confirm what is actually persisted before dropping the marker. The check is "no longer on-hold", not
+        // "equal to $to": another callback may already have moved the order on (processing -> completed) before
+        // this hook finished, and the persisted status then differs from $to although the hold really ended.
+        $persisted = $this->loadPersistedOrder((int) $order->get_id());
+        if ($persisted === null || $persisted->get_status() === 'on-hold') {
+            $this->logs->file->warning('pix_mediation_marker_kept', __CLASS__, ['order_id' => $order->get_id()]);
+            return;
+        }
+
+        $order->delete_meta_data(self::PIX_MEDIATION_META);
+        $order->save_meta_data();
+    }
+
+    /**
+     * A separate copy of the order read from the database, so the caller's object is left untouched.
+     */
+    protected function loadPersistedOrder(int $orderId): ?WC_Order
+    {
+        if ($orderId <= 0) {
+            return null;
+        }
+
+        // wc_get_order() builds a new object each time; refresh() drops the caches and re-reads it.
+        $copy = wc_get_order($orderId);
+        if (!$copy instanceof WC_Order) {
+            return null;
+        }
+
+        $this->freshOrderReader->refresh($copy);
+
+        return $copy;
+    }
+
+    /**
+     * Persisted evidence that the Pix payment was already completed: checkpoint flag,
+     * a paid status or a payment date. Must run under the Pix lock, after a fresh read.
+     * A paid order without the flag only gets the flag repaired, without re-firing hooks.
+     */
+    private function pixCompletionAlreadyApplied(WC_Order $order): bool
+    {
+        $flag = (bool) $order->get_meta(self::PIX_APPROVED_META);
+        $paid = $this->isPixOrderPaid($order);
+
+        if (!$flag && !$paid) {
+            return false;
+        }
+
+        if ($flag && !$paid) {
+            // Orders written by versions that stored the flag even when the completion failed: the flag
+            // alone is not proof of payment. Nothing persisted says the order was paid, so complete it
+            // now (confirmPixCompletion() verifies it and rewrites the flag) instead of answering success.
+            $this->logs->file->warning(
+                'pix_completion_checkpoint_without_payment',
+                __CLASS__,
+                ['order_id' => $order->get_id(), 'status' => $order->get_status()]
+            );
+
+            return false;
+        }
+
+        if (!$flag) {
+            $order->update_meta_data(self::PIX_APPROVED_META, '1');
+            $order->save();
+        }
+
+        // A paid order held by a mediation (in_mediation -> on-hold) keeps its payment date. A later
+        // approval resolves that hold: restore the paid status, but never run payment_complete() again.
+        // Only holds that came from in_mediation (marker set by inMediationFlow) are released: an order
+        // the merchant put on hold by hand also has a payment date and must stay as the merchant left it.
+        if ($order->get_status() === 'on-hold' && $paid && (string) $order->get_meta(self::PIX_MEDIATION_META) === '1') {
+            // The marker is cleared by clearPixMediationMarker() once WooCommerce reports the transition out
+            // of on-hold, i.e. after the new status was persisted: if the write fails the marker survives
+            // and the next approval can retry the release.
+            // Same paid status the approval flow would use, so a store that remaps it with the
+            // woocommerce_payment_complete_order_status filter gets its configured status here too.
+            $releasedStatus = apply_filters(
+                'woocommerce_payment_complete_order_status',
+                $order->needs_processing() ? 'processing' : 'completed',
+                $order->get_id(),
+                $order
+            );
+            $order->update_status(
+                $releasedStatus,
+                'Mercado Pago: ' . $this->translations['payment_approved']
+            );
+
+            $this->freshOrderReader->refresh($order);
+            if ($order->get_status() === 'on-hold') {
+                $this->logs->file->error('pix_mediation_release_failed', __CLASS__, ['order_id' => $order->get_id()]);
+                throw new PixCompletionException('Pix mediation hold release failed');
+            }
+
+            $this->logs->file->info('pix_completion_hold_released', __CLASS__, ['order_id' => $order->get_id()]);
+
+            return true;
+        }
+
+        $this->logs->file->info('pix_completion_already_applied', __CLASS__, ['order_id' => $order->get_id()]);
+
+        return true;
+    }
+
+    /**
+     * payment_complete() returns a bool and may swallow exceptions: only trust the persisted state.
+     *
+     * @throws PixCompletionException when the order is still unpaid after the completion attempt.
+     */
+    private function confirmPixCompletion(WC_Order $order): void
+    {
+        $this->freshOrderReader->refresh($order);
+
+        $paid = $this->isPixOrderPaid($order);
+
+        if (!$paid) {
+            $this->logs->file->error('pix_completion_failed', __CLASS__, ['order_id' => $order->get_id()]);
+            throw new PixCompletionException('Pix payment completion failed');
+        }
+
+        try {
+            $order->update_meta_data(self::PIX_APPROVED_META, '1');
+            $order->save();
+        } catch (\Throwable $exception) {
+            // Paid but checkpoint not stored: a retry sees the paid state and only repairs the flag.
+            $this->logs->file->error('pix_completion_partial_failure', __CLASS__, ['order_id' => $order->get_id()]);
+            throw new PixCompletionException('Pix payment completion checkpoint failed');
         }
     }
 
@@ -443,8 +798,13 @@ class OrderStatus
      *
      * @return void
      */
-    private function inMediationFlow(WC_Order $order): void
+    private function inMediationFlow(WC_Order $order, bool $isPix = false): void
     {
+        if ($isPix) {
+            // update_status() below saves the order together with this marker.
+            $order->update_meta_data(self::PIX_MEDIATION_META, '1');
+        }
+
         $order->update_status(self::mapMpStatusToWoocommerceStatus('inmediation'));
         $order->add_order_note('Mercado Pago: ' . $this->translations['in_mediation']);
     }

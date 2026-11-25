@@ -8,12 +8,12 @@ describe('Pix payment status polling', () => {
   let reload;
   const params = { order_id: 42, order_key: 'synthetic-order-key', nonce: 'synthetic-nonce', ajax_url: '/configured-status' };
 
-  function start(config = params) {
+  function start(config = params, extraGlobals = {}) {
     const lifecycle = createDomReadyHarness();
     loadFile(source, 'undefined', {
       ...timers(), document: lifecycle.document, window: { location: { reload } },
       fetch: fetchStatus, FormData,
-      console: { debug: jest.fn() },
+      console: { debug: jest.fn() }, ...extraGlobals,
       ...(config === undefined ? {} : { wc_mercadopago_pix_pooling_params: config }),
     });
     lifecycle.runReady();
@@ -99,5 +99,116 @@ describe('Pix payment status polling', () => {
     await advance(30000);
     expect(fetchStatus).toHaveBeenCalledTimes(60);
     expect(reload).not.toHaveBeenCalled();
+  });
+
+  describe('single request in flight per page', () => {
+    function deferred() {
+      let resolve;
+      const promise = new Promise(res => { resolve = res; });
+      return { promise, resolve };
+    }
+
+    test('Given a slow request, When more ticks fire, Then no overlapping request is dispatched', async () => {
+      const slow = deferred();
+      fetchStatus.mockReturnValueOnce(slow.promise);
+      start();
+      await advance(20000);
+      expect(fetchStatus).toHaveBeenCalledTimes(1);
+      await advance(15000);
+      expect(fetchStatus).toHaveBeenCalledTimes(1);
+      slow.resolve({ json: async () => ({ success: true, data: { status: 'pending' } }) });
+      await flushPromises();
+      await advance(5000);
+      expect(fetchStatus).toHaveBeenCalledTimes(2);
+    });
+
+    test('Given a request that never answers, When the timeout elapses, Then it is aborted and polling continues', async () => {
+      fetchStatus.mockImplementationOnce((url, request) => new Promise((resolve, reject) => {
+        request.signal.addEventListener('abort', () => reject(new Error('aborted')));
+      }));
+      start(params, { AbortController });
+      await advance(20000);
+      expect(fetchStatus).toHaveBeenCalledTimes(1);
+      await advance(14999);
+      expect(fetchStatus).toHaveBeenCalledTimes(1); // still waiting, ticks are skipped
+      await advance(1);
+      await advance(5000);
+      expect(fetchStatus).toHaveBeenCalledTimes(2); // inFlight was released by the abort
+      expect(reload).not.toHaveBeenCalled();
+    });
+
+    test('Given a backend that never answers, When the total polling window elapses, Then polling stops after 10 minutes', async () => {
+      fetchStatus.mockReturnValue(new Promise(() => {}));
+      start();
+      await advance(20000);
+      expect(fetchStatus).toHaveBeenCalledTimes(1);
+      await advance(5000 * 125); // more ticks than the 120-tick (10 min) window
+      expect(fetchStatus).toHaveBeenCalledTimes(1);
+      expect(jest.getTimerCount()).toBe(0); // the interval was cleared
+      expect(reload).not.toHaveBeenCalled();
+    });
+
+    test('Given AbortController is unavailable, When polling, Then requests are sent without a signal', async () => {
+      start();
+      await advance(20000);
+      expect(fetchStatus.mock.calls[0][1].signal).toBeUndefined();
+    });
+
+    test('Given headers arrived but the JSON body is pending, When ticks fire, Then the next request waits for the body', async () => {
+      const body = deferred();
+      fetchStatus.mockResolvedValueOnce({ json: () => body.promise });
+      start();
+      await advance(20000);
+      await advance(15000);
+      expect(fetchStatus).toHaveBeenCalledTimes(1);
+      body.resolve({ success: true, data: { status: 'pending' } });
+      await flushPromises();
+      await advance(5000);
+      expect(fetchStatus).toHaveBeenCalledTimes(2);
+    });
+
+    test('Given skipped ticks, When the limit is reached, Then only dispatched requests consume attempts', async () => {
+      const slow = deferred();
+      fetchStatus.mockReturnValueOnce(slow.promise);
+      start();
+      await advance(20000);
+      await advance(30000);
+      slow.resolve({ json: async () => ({ success: true, data: { status: 'pending' } }) });
+      await flushPromises();
+      for (let tick = 0; tick < 59; tick++) await advance(5000);
+      expect(fetchStatus).toHaveBeenCalledTimes(60);
+      await advance(30000);
+      expect(fetchStatus).toHaveBeenCalledTimes(60);
+    });
+
+    test('Given a recoverable failure marked retry, When the next tick fires, Then polling continues', async () => {
+      fetchStatus.mockResolvedValueOnce({ json: async () => ({ success: false, data: { retry: true } }) });
+      start();
+      await advance(20000);
+      await advance(5000);
+      expect(fetchStatus).toHaveBeenCalledTimes(2);
+      expect(reload).not.toHaveBeenCalled();
+    });
+
+    test('Given a rejected request, When the next tick fires, Then the in-flight guard was released', async () => {
+      fetchStatus.mockRejectedValueOnce(new Error('network unavailable'));
+      start();
+      await advance(20000);
+      await advance(5000);
+      expect(fetchStatus).toHaveBeenCalledTimes(2);
+    });
+
+    test('Given approval resolves after the polling already finished, When it arrives late, Then it reloads once and starts nothing', async () => {
+      const first = deferred();
+      fetchStatus.mockReturnValueOnce(first.promise);
+      start();
+      await advance(20000);
+      first.resolve({ json: async () => ({ success: true, data: { status: 'approved' } }) });
+      await flushPromises();
+      await advance(30000);
+      expect(reload).toHaveBeenCalledTimes(1);
+      expect(fetchStatus).toHaveBeenCalledTimes(1);
+      expect(jest.getTimerCount()).toBe(0);
+    });
   });
 });

@@ -190,6 +190,7 @@ class OrderStatusTest extends TestCase
     public function testProcessStatusKeepsLegacyFlowForOrdersWithoutTheSmartPixContract($contract): void
     {
         $orderMock = Mockery::mock(WC_Order::class);
+        $orderMock->shouldReceive('get_payment_method')->andReturn('woo-mercado-pago-custom');
         $orderMock->shouldReceive('update_status')->once();
         $orderMock->shouldReceive('add_order_note')->once();
         $this->orderMetadataMock->shouldReceive('getPaymentContract')->once()->andReturn($contract);
@@ -1592,6 +1593,7 @@ class OrderStatusTest extends TestCase
         $usedGateway = 'test_gateway';
 
         $orderMock->shouldReceive('get_status')->andReturn('pending');
+        $orderMock->shouldReceive('get_payment_method')->andReturn('woo-mercado-pago-basic');
         $orderMock->shouldReceive('add_order_note');
         $orderMock->shouldReceive('update_status');
         $orderMock->shouldReceive('get_id')->andReturn(123);

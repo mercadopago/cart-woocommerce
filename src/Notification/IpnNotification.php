@@ -107,6 +107,11 @@ class IpnNotification extends AbstractNotification
         $this->setResponse(200, 'Notification IPN Successfully');
     }
 
+    protected function retrySource(): string
+    {
+        return 'ipn';
+    }
+
     /**
      * Process status
      *

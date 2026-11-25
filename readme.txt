@@ -4,7 +4,7 @@ Tags: ecommerce, mercadopago, woocommerce
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 8.10.3
+Stable tag: 8.10.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,15 +134,23 @@ Set up both the plugin and the checkouts you want to activate on your payment av
 
 Check out our <a href="https://www.mercadopago.com.br/developers/pt/plugins_sdks/plugins/official/woo-commerce/">official documentation</a> for more information on the specific fields to configure.
 
-= v8.10.3 (18/11/2026) =
+= v8.10.4 (25/11/2026) =
+* Added
+- Add Spanish translations for Uruguay and Peru, with "Cuotas" for installments in Fast Payments and in the card checkout
+
 * Changed
-- Load Pix via Open Finance only on the checkout and order payment pages
+- Show the new Uruguay and Peru Fast Payments texts also on stores with older plugin versions, keeping the texts customized by the store
 
 * Fixed
-- Improve how Pix via Open Finance loads on slower checkout pages, and show the conventional Pix right away when it cannot load
-- Prevent the card checkout from loading indefinitely when Fast Payments does not respond
-- Reload Fast Payments correctly when the buyer changes the checkout, such as applying a coupon
-- Improve the creation and refunds of Pix via Open Finance orders in more store configurations
-
+- Prevent duplicate Mercado Pago registrations when the plugin is activated more than once at the same time
+- Keep the saved card security code on mobile when Fast Payments is active
+- Complete Fast Payments orders on stores whose theme or checkout plugin changes the checkout form
+- Show the full balance text in Fast Payments
+- Ask for an offline payment method outside Brazil and for the document in Uruguay before finishing the order, also on customized checkouts
+- Keep the document field format after checkout updates, without erasing what the buyer typed
+- Prevent a Pix order from being completed more than once when its payment status arrives several times
+- Prevent the same Pix refund from being counted more than once
+- Retry the Pix payment status update when it fails temporarily
+- Let the buyer fix the offline payment choice or the document and pay again on the order payment page after an error
 
 [See changelog for all versions](https://github.com/mercadopago/cart-woocommerce/blob/main/CHANGELOG.md).

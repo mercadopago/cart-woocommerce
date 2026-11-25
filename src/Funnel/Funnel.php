@@ -2,7 +2,6 @@
 
 namespace MercadoPago\Woocommerce\Funnel;
 
-use Exception;
 use MercadoPago\Woocommerce\Api\Core\FunnelClient;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
@@ -17,6 +16,8 @@ class Funnel
     // the seller's email) verbatim — see runWithTreatment().
     private const SELLER_CONTACT_ERROR_MESSAGE = 'Error updating seller contact information';
 
+    private const CREATION_ERROR_MESSAGE = 'Error creating onboarding installation';
+
     private FunnelClient $client;
 
     private Store $store;
@@ -29,6 +30,8 @@ class Funnel
 
     private Datadog $datadog;
 
+    private CreationLock $creationLock;
+
     /**
      * Funnel constructor
      *
@@ -38,14 +41,21 @@ class Funnel
      * @param Country $country
      * @param Gateways $gateways
      */
-    public function __construct(FunnelClient $client, Store $store, Seller $seller, Country $country, Gateways $gateways)
-    {
+    public function __construct(
+        FunnelClient $client,
+        Store $store,
+        Seller $seller,
+        Country $country,
+        Gateways $gateways,
+        ?CreationLock $creationLock = null
+    ) {
         $this->client   = $client;
         $this->store    = $store;
         $this->seller   = $seller;
         $this->country  = $country;
         $this->gateways = $gateways;
         $this->datadog  = Datadog::getInstance();
+        $this->creationLock = $creationLock ?? new CreationLock();
     }
 
     /**
@@ -53,11 +63,50 @@ class Funnel
      */
     public function create(?\Closure $after = null): void
     {
-        if (!$this->canCreate()) {
-            return;
-        }
-
         $this->runWithTreatment(function () use ($after) {
+            $step = 'eligibility';
+            try {
+                return $this->createWithLease($after, $step);
+            } catch (\Throwable $error) {
+                // Upstream and SQL messages can carry the CPP token: report only the failed step,
+                // without chaining the original exception. "persist" or later means Core accepted it.
+                throw new \RuntimeException(sprintf('%s (step: %s)', self::CREATION_ERROR_MESSAGE, $step));
+            }
+        });
+    }
+
+    /**
+     * @param string $step Updated with the step in progress, for the sanitized failure report
+     *
+     * @return bool|null false when another request owns or already finished the creation
+     */
+    private function createWithLease(?\Closure $after, string &$step): ?bool
+    {
+        if (!$this->canCreate()) {
+            return false;
+        }
+        $step = 'lease';
+        $owner = $this->creationLock->acquire();
+        if ($owner === null) {
+            return false;
+        }
+        try {
+            $step = 'eligibility';
+            if (!$this->canCreate()) {
+                return false;
+            }
+            $step = 'lease';
+            if (!$this->creationLock->owns($owner)) {
+                throw new \RuntimeException('Onboarding creation lease is no longer owned.');
+            }
+            $step = 'pending';
+            // Recorded before the POST: once Core accepts it, a failure before the callback
+            // must leave the first seller contact owed to the recovery path.
+            $this->store->setSellerContactPending(true);
+            if (!$this->store->getSellerContactPending()) {
+                throw new \RuntimeException('Unable to record the pending seller contact.');
+            }
+            $step = 'core';
             $registration = $this->client->create([
                 'platform_id' => MP_PLATFORM_ID,
                 'shop_url' => site_url(),
@@ -65,19 +114,32 @@ class Funnel
                 'plugin_version' => MP_VERSION,
                 'site_id' => $this->resolveSiteId(),
             ]);
-            $this->store->setInstallationId($registration->getId());
-            $this->store->setInstallationKey($registration->getCppToken());
+            $step = 'persist';
+            $this->store->setInstallationCredentials($registration, $owner);
 
+            $step = 'callback';
             if (isset($after)) {
                 $after();
             }
-        });
+
+            return null;
+        } finally {
+            $failedStep = $step;
+            $step = 'release';
+            $this->creationLock->release($owner);
+            $step = $failedStep;
+        }
     }
 
     public function created(): bool
     {
-        return !empty($this->store->getInstallationId())
-            && !empty($this->store->getInstallationKey());
+        try {
+            $identity = $this->store->getInstallationCredentials();
+            return $identity['id'] !== '' && $identity['key'] !== '';
+        } catch (\Throwable $error) {
+            // create()/update() report the failure inside the best-effort boundary.
+            return false;
+        }
     }
 
     /**
@@ -91,7 +153,21 @@ class Funnel
         $this->update([
             'email'   => $this->getStoreEmail(),
             'country' => Country::getWoocommerceDefaultCountry(),
-        ], $after, self::SELLER_CONTACT_ERROR_MESSAGE);
+        ], function () use ($after) {
+            $this->store->setSellerContactPending(false);
+            if (isset($after)) {
+                $after();
+            }
+        }, self::SELLER_CONTACT_ERROR_MESSAGE);
+    }
+
+    /**
+     * True when this store's registration was created but its first seller contact was never
+     * confirmed. Normal reactivations of older or completed installations return false.
+     */
+    public function sellerContactPending(): bool
+    {
+        return $this->store->getSellerContactPending();
     }
 
     public function updateStepCredentials(?\Closure $after = null): void
@@ -136,7 +212,8 @@ class Funnel
 
     public function updateStepActivate(?\Closure $after = null): void
     {
-        $this->update(['is_disabled' => false], $after);
+        // Repair interrupted compatibility mirrors before completing reactivation.
+        $this->update(['is_disabled' => false], $after, 'Error activating onboarding installation', true);
     }
 
     public function updateStepPluginVersion(?\Closure $after = null): void
@@ -153,16 +230,22 @@ class Funnel
      *                               required for steps that carry PII (see
      *                               runWithTreatment())
      */
-    private function update(array $attrs, ?\Closure $after = null, ?string $sanitizedError = null): void
-    {
-        if (!$this->created()) {
-            return;
-        }
-
-        $attrs['id'] = $this->store->getInstallationId();
-
-        $this->runWithTreatment(function () use ($attrs, $after) {
-            $this->client->update($attrs, $this->store->getInstallationKey());
+    private function update(
+        array $attrs,
+        ?\Closure $after = null,
+        ?string $sanitizedError = null,
+        bool $synchronizeLegacy = false
+    ): void {
+        $this->runWithTreatment(function () use ($attrs, $after, $synchronizeLegacy) {
+            $identity = $this->store->getInstallationCredentials();
+            if ($identity['id'] === '' || $identity['key'] === '') {
+                return false;
+            }
+            if ($synchronizeLegacy) {
+                $this->store->synchronizeInstallationCredentials($identity);
+            }
+            $attrs['id'] = $identity['id'];
+            $this->client->update($attrs, $identity['key']);
 
             if (isset($after)) {
                 $after();
@@ -204,9 +287,12 @@ class Funnel
         return $siteId !== '' ? $siteId : null;
     }
 
+    /** @phpstan-impure Reads shared state that another PHP worker can change. */
     private function canCreate(): bool
     {
-        return !$this->created()
+        $identity = $this->store->getInstallationCredentials();
+
+        return ($identity['id'] === '' || $identity['key'] === '')
             && empty($this->seller->getCredentialsAccessTokenProd())
             && empty($this->gateways->getEnabledPaymentGateways());
     }
@@ -231,15 +317,23 @@ class Funnel
     private function runWithTreatment(\Closure $callback, ?string $sanitizedError = null): void
     {
         try {
-            $callback();
-
-            $this->sendSuccessEvent();
-        } catch (Exception $ex) {
+            if ($callback() !== false) {
+                $this->sendSuccessEvent();
+            }
+        } catch (\Throwable $ex) {
             $logDetail = $sanitizedError ?? (string) $ex;
             $eventMessage = $sanitizedError ?? $ex->getMessage();
 
-            $GLOBALS['mercadopago']->logs->file->error(sprintf("Error on %s\n%s", __METHOD__, $logDetail), __CLASS__);
-            $this->sendErrorEvent($eventMessage);
+            try {
+                $GLOBALS['mercadopago']->logs->file->error(sprintf("Error on %s\n%s", __METHOD__, $logDetail), __CLASS__);
+            } catch (\Throwable $loggingError) {
+                // Diagnostics must not turn a funnel failure into a failed page load.
+            }
+            try {
+                $this->sendErrorEvent($eventMessage);
+            } catch (\Throwable $metricsError) {
+                // The installation remains usable if telemetry is unavailable.
+            }
         }
     }
 

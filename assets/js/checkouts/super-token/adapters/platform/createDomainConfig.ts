@@ -14,6 +14,7 @@ import type { SuperTokenDomainConfig } from '@super-token/core/config';
  */
 export interface SuperTokenDomainParams {
   site_id: string;
+  store_locale?: string;
   intl: string;
   currency: string;
   payment_methods_order?: string;

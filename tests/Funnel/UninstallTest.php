@@ -85,9 +85,10 @@ class UninstallTest extends TestCase
         string $id = 'synthetic-installation',
         string $token = 'synthetic-cpp-token'
     ): Uninstall {
-        WP_Mock::userFunction('get_option')->once()->with('_mp_installation_id', '')->andReturn($id);
-        WP_Mock::userFunction('get_option')->once()->with('_mp_installation_key', '')->andReturn($token);
+        $database = new OptionsDatabase();
+        $database->put('_mp_installation_id', $id);
+        $database->put('_mp_installation_key', $token);
 
-        return new Uninstall(new Store(new Options()), new FunnelClient(new CoreApiClient($http)));
+        return new Uninstall(new Store(new Options(), new \MercadoPago\Woocommerce\Funnel\InstallationStore($database)), new FunnelClient(new CoreApiClient($http)));
     }
 }

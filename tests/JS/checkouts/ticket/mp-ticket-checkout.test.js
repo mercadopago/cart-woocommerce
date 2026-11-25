@@ -1,6 +1,7 @@
 const { resolveAlias } = require('../../helpers/path-resolver');
 const { loadFile } = require('../../helpers/load-file');
 const { createElement, createJQueryHarness, createDomReadyHarness, timers } = require('../fixtures/payment-method-harness');
+const { createAdminRuntime } = require('../../admin/helpers/admin-runtime');
 const source = resolveAlias('assets/js/checkouts/ticket/mp-ticket-checkout.js');
 const event = 'checkout_place_order_woo-mercado-pago-ticket';
 
@@ -76,23 +77,30 @@ describe('Ticket checkout controller', () => {
   let Controller;
   let events;
   let lifecycle;
+  let observers;
   function load(site = 'MLB', construct = true) {
     events = createJQueryHarness();
     lifecycle = createDomReadyHarness();
     const elements = loadFile(resolveAlias('assets/js/checkouts/ticket/mp-ticket-elements.js'), 'CheckoutTicketElements');
     const page = loadFile(resolveAlias('assets/js/checkouts/ticket/mp-ticket-page.js'), 'CheckoutTicketPage', { CheckoutTicketElements: elements });
     Controller = loadFile(source, 'CheckoutTicketPageController', {
-      ...timers(), document: lifecycle.document, jQuery: events.jQuery,
+      ...timers(), document: new Proxy(lifecycle.document, {
+        get(target, key) { return key === 'readyState' ? 'loading' : Reflect.get(target, key); },
+      }), jQuery: events.jQuery,
       CheckoutTicketElements: elements, CheckoutTicketPage: page,
       wc_mercadopago_ticket_checkout_params: { site_id: site, error_messages: messages },
+      MutationObserver: class extends window.MutationObserver {
+        constructor(callback) { super(callback); observers.push(this); }
+      },
     });
     if (construct) controller = new Controller({ site_id: site, error_messages: messages });
   }
   const field = name => document.getElementById(`form-checkout__address_${name}`);
-  const submit = () => events.emit('form.checkout', event)[0];
+  const submit = () => events.emit(document.querySelector('form.checkout'), event)[0];
   const input = name => field(name).dispatchEvent(new Event('input', { bubbles: true }));
-  beforeEach(() => { jest.useFakeTimers(); renderTicket(); load(); });
+  beforeEach(() => { jest.useFakeTimers(); observers = []; renderTicket(); load(); });
   afterEach(() => {
+    observers.forEach(observer => observer.disconnect());
     jest.clearAllTimers(); jest.useRealTimers(); jest.restoreAllMocks();
     delete window.addressFieldsFromTicketRowAreValid;
     document.body.replaceChildren();
@@ -100,17 +108,29 @@ describe('Ticket checkout controller', () => {
 
   test('Given valid MLB fields, When the registered gate succeeds then checkout_error fires, Then the normalized document is restored for display', () => {
     const documentInput = document.querySelector('.mp-document');
-    expect(events.callbacks('form.checkout', event)).toHaveLength(1);
+    expect(events.callbacks(document.querySelector('form.checkout'), event)).toHaveLength(1);
     expect(submit()).toBe(true);
     expect(documentInput.value).toBe('12ABC3450001XY');
     events.emit(document.body, 'checkout_error');
     expect(documentInput.value).toBe('12.abc.345/0001-xy');
   });
-  test('Given Order Pay and invalid MLB address, When the registered submit gate executes, Then it returns false and removes the overlay', () => {
+  test('Given a display value that normalizes to empty, When checkout fails, Then the empty input is preserved', () => {
+    const documentInput = document.querySelector('.mp-document');
+    documentInput.value = '---';
+    controller.normalizeDocumentNumber();
+    expect(documentInput.value).toBe('');
+    events.emit(document.body, 'checkout_error');
+    expect(documentInput.value).toBe('');
+  });
+  test('Given Order Pay and invalid MLB address, When the registered submit gate executes, Then it returns false, stops later submit handlers and removes the overlay', () => {
+    renderTicket();
     document.body.append(createElement('form', { id: 'order_review' }), createElement('div', { class: 'blockOverlay' }));
+    load();
     field('zip_code').value = '';
-    expect(events.callbacks('form#order_review', 'submit')).toHaveLength(1);
-    expect(events.emit('form#order_review', 'submit')[0]).toBe(false);
+    const submitEvent = { stopImmediatePropagation: jest.fn() };
+    expect(events.callbacks(document.querySelector('form#order_review'), 'submit')).toHaveLength(1);
+    expect(events.emit(document.querySelector('form#order_review'), 'submit', submitEvent)[0]).toBe(false);
+    expect(submitEvent.stopImmediatePropagation).toHaveBeenCalledTimes(1);
     expect(document.querySelector('.blockOverlay').style.display).toBe('none');
     expect(document.querySelector('.mp-document').value).toBe('12.abc.345/0001-xy');
   });
@@ -250,17 +270,326 @@ describe('Ticket checkout controller', () => {
     'payment_method_woo-mercado-pago-ticket',
     'radio-control-wc-payment-method-options-woo-mercado-pago-ticket',
     'theme-ticket-radio',
-  ])('Given MLB payment radio %s, When the first bootstrap interval fires, Then the real address contract is published', radioId => {
+  ])('Given MLB payment radio %s, When DOM ready fires, Then the real address contract is published', radioId => {
     renderTicket();
     document.getElementById('payment_method_woo-mercado-pago-ticket').id = radioId;
     load('MLB', false);
-    lifecycle.runReady();
     expect(window.addressFieldsFromTicketRowAreValid).toBeUndefined();
-    jest.advanceTimersByTime(1000);
+    lifecycle.runReady();
     expect(typeof window.addressFieldsFromTicketRowAreValid).toBe('function');
     expect(window.addressFieldsFromTicketRowAreValid()).toBe(true);
     field('city').value = '';
     expect(window.addressFieldsFromTicketRowAreValid()).toBe(false);
-    expect(events.callbacks('form.checkout', event)).toHaveLength(1);
+    expect(events.callbacks(document.querySelector('form.checkout'), event)).toHaveLength(1);
+  });
+});
+
+describe('Ticket checkout lifecycle', () => {
+  let jQuery;
+  let ready;
+  let observers;
+  let runtime;
+
+  function bootstrap(site = 'MLB', readyState = 'loading') {
+    ready = createDomReadyHarness();
+    const pageDocument = new Proxy(ready.document, {
+      get(target, key) { return key === 'readyState' ? readyState : Reflect.get(target, key); },
+    });
+    const elements = loadFile(resolveAlias('assets/js/checkouts/ticket/mp-ticket-elements.js'), 'CheckoutTicketElements');
+    const page = loadFile(resolveAlias('assets/js/checkouts/ticket/mp-ticket-page.js'), 'CheckoutTicketPage', { CheckoutTicketElements: elements });
+    const Controller = loadFile(source, 'CheckoutTicketPageController', {
+      ...timers(), document: pageDocument, jQuery,
+      CheckoutTicketElements: elements, CheckoutTicketPage: page,
+      wc_mercadopago_ticket_checkout_params: { site_id: site, error_messages: messages },
+      MutationObserver: class extends window.MutationObserver {
+        constructor(callback) { super(callback); observers.push(this); }
+      },
+    });
+    if (readyState === 'loading') ready.runReady();
+    return Controller;
+  }
+
+  const form = () => document.querySelector('form.checkout');
+  const count = (element, name) => jQuery._data(element, 'events')?.[name]?.length || 0;
+  const submit = () => jQuery(form()).triggerHandler(event);
+  const helper = () => document.querySelector('[input-id=mp-payment-method-helper] div');
+  const flushMutations = async () => { await Promise.resolve(); await Promise.resolve(); };
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    observers = [];
+    renderTicket();
+    runtime = createAdminRuntime(document.querySelector('form.checkout'));
+    jQuery = runtime.$;
+  });
+  afterEach(() => {
+    observers.forEach(observer => observer.disconnect());
+    delete window.addressFieldsFromTicketRowAreValid;
+    runtime.cleanup();
+  });
+
+  test.each(['MLA', 'MLU', 'MLM', 'MCO', 'MPE', 'MLC'])('Given %s without the Brazil address, When Ticket bootstraps, Then it blocks missing choice and accepts a selection', site => {
+    document.querySelectorAll('[id^="form-checkout__address_"]').forEach(element => {
+      (element.closest('input-helper') ?? element).remove();
+    });
+    if (site !== 'MLU') document.querySelector('input-document').remove();
+    document.querySelector('.mp-input-radio-radio').checked = false;
+    bootstrap(site);
+    expect(count(form(), event)).toBe(1);
+    const attempt = jQuery.Event(event);
+    jQuery(form()).trigger(attempt);
+    expect(attempt.isDefaultPrevented()).toBe(true);
+    expect(helper().style.display).toBe('flex');
+    document.querySelector('.mp-input-radio-radio').click();
+    expect(helper().style.display).toBe('none');
+    expect(submit()).toBe(true);
+  });
+
+  test('Given repeated checkout updates, When the buyer edits and submits, Then each own handler executes once and other handlers remain', () => {
+    const otherHandler = jest.fn();
+    jQuery(form()).on(event, otherHandler);
+    const Controller = bootstrap();
+    const zip = document.getElementById('form-checkout__address_zip_code');
+    const mask = jest.spyOn(Controller.prototype, 'validateZipCodeMask');
+    for (let cycle = 0; cycle < 5; cycle += 1) jQuery(document.body).trigger('updated_checkout');
+    jest.advanceTimersByTime(6000);
+    expect(count(form(), event)).toBe(2);
+    expect(count(document.body, 'checkout_error')).toBe(1);
+    zip.value = '12345678';
+    zip.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(zip.value).toBe('12345-678');
+    expect(mask).toHaveBeenCalledTimes(1);
+    const inputBindings = jest.spyOn(zip, 'addEventListener');
+    jQuery(document.body).trigger('updated_checkout');
+    expect(inputBindings).not.toHaveBeenCalled();
+    submit();
+    expect(otherHandler).toHaveBeenCalledTimes(1);
+  });
+
+  test('Given Ticket is mounted after DOM ready, When its nodes appear, Then the real gate is registered without a timer', async () => {
+    document.body.replaceChildren();
+    bootstrap('MLA');
+    renderTicket();
+    document.getElementById('form-checkout__address_checkbox').remove();
+    await flushMutations();
+    expect(count(form(), event)).toBe(1);
+    document.querySelector('.mp-input-radio-radio').checked = false;
+    expect(submit()).toBe(false);
+  });
+
+  test('Given a Classic form that stays mounted, When only the Ticket payment box is replaced, Then new controls validate once and recover after selection', async () => {
+    bootstrap('MLA');
+    const originalForm = form();
+    const oldContainer = document.querySelector('.mp-checkout-ticket-container');
+    const replacement = oldContainer.cloneNode(true);
+    replacement.querySelector('.mp-input-radio-radio').checked = false;
+    oldContainer.replaceWith(replacement);
+    jQuery(document.body).trigger('updated_checkout');
+    await flushMutations();
+    expect(form()).toBe(originalForm);
+    expect(count(form(), event)).toBe(1);
+    const attempt = jQuery.Event(event);
+    jQuery(form()).trigger(attempt);
+    expect(attempt.isDefaultPrevented()).toBe(true);
+    expect(helper().style.display).toBe('flex');
+    replacement.querySelector('.mp-input-radio-radio').click();
+    expect(helper().style.display).toBe('none');
+    expect(submit()).toBe(true);
+    expect(count(form(), event)).toBe(1);
+  });
+
+  test('Given a failed empty selection, When an offline label is appended later, Then clicking it clears the error and permits submission', async () => {
+    bootstrap('MLA');
+    document.querySelector('.mp-input-radio-radio').checked = false;
+    expect(submit()).toBe(false);
+    const option = createElement('input', { class: 'mp-input-radio-radio', type: 'radio', value: 'rapipago' });
+    const label = createElement('label', { class: 'mp-input-table-label' }, option);
+    document.querySelector('[data-cy=input-table-list]').append(label);
+    await flushMutations();
+    option.click();
+    expect(helper().style.display).toBe('none');
+    expect(submit()).toBe(true);
+    expect(count(form(), event)).toBe(1);
+  });
+
+  test('Given the script loads after DOM ready, When evaluated, Then the initial form is validated immediately', () => {
+    bootstrap('MLA', 'complete');
+    expect(count(form(), event)).toBe(1);
+    document.querySelector('.mp-input-radio-radio').checked = false;
+    expect(submit()).toBe(false);
+  });
+
+  test('Given a normalized old document, When the form is replaced, Then new fields are bound once and the old mask is not restored into them', async () => {
+    bootstrap();
+    expect(submit()).toBe(true);
+    renderTicket();
+    const newDocument = document.querySelector('.mp-document');
+    newDocument.value = 'fresh-document';
+    await flushMutations();
+    jQuery(document.body).trigger('checkout_error');
+    expect(newDocument.value).toBe('fresh-document');
+    expect(count(form(), event)).toBe(1);
+    document.getElementById('form-checkout__address_city').value = '';
+    expect(window.addressFieldsFromTicketRowAreValid()).toBe(false);
+    expect(submit()).toBe(false);
+    expect(count(document.body, 'checkout_error')).toBe(1);
+  });
+
+  test('Given Order Pay with no overlay, When address is invalid, Then submit is blocked without a secondary exception', () => {
+    const orderForm = createElement('form', { id: 'order_review' });
+    document.body.append(orderForm);
+    bootstrap();
+    document.getElementById('form-checkout__address_city').value = '';
+    expect(jQuery(orderForm).triggerHandler('submit')).toBe(false);
+  });
+
+  test('Given Order Pay with a valid Ticket, When the buyer submits, Then WooCommerce keeps its submit handler', () => {
+    const orderForm = createElement('form', { id: 'order_review' });
+    document.body.append(orderForm);
+    bootstrap();
+    const wooSubmit = jest.fn();
+    jQuery(orderForm).on('submit', wooSubmit);
+    expect(jQuery(orderForm).triggerHandler('submit')).toBe(true);
+    expect(wooSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  test('Given Order Pay with an invalid Ticket, When the buyer submits, Then WooCommerce does not block the form', () => {
+    const orderForm = createElement('form', { id: 'order_review' });
+    document.body.append(orderForm);
+    bootstrap();
+    // WooCommerce binds after the Ticket gate: its handler blocks the form, and the block adds the overlay.
+    const wooSubmit = jest.fn(() => document.body.append(createElement('div', { class: 'blockOverlay' })));
+    jQuery(orderForm).on('submit', wooSubmit);
+    document.getElementById('form-checkout__address_city').value = '';
+    expect(jQuery(orderForm).triggerHandler('submit')).toBe(false);
+    expect(wooSubmit).not.toHaveBeenCalled();
+    expect(document.querySelector('.blockOverlay')).toBeNull();
+  });
+
+  test('Given MLU with an empty document, When an option is selected, Then the gate still blocks the missing document', () => {
+    document.getElementById('form-checkout__address_checkbox').remove();
+    document.querySelector('.mp-document').value = '';
+    bootstrap('MLU');
+    expect(submit()).toBe(false);
+    expect(document.querySelector('input-document .mp-helper').style.display).toBe('flex');
+  });
+
+  test.each([
+    'payment_method_woo-mercado-pago-ticket',
+    'radio-control-wc-payment-method-options-woo-mercado-pago-ticket',
+    'theme-ticket-radio',
+  ])('Given Ticket radio %s, When the buyer submits without an offline choice, Then the real gateway event is prevented', radioId => {
+    document.getElementById('payment_method_woo-mercado-pago-ticket').id = radioId;
+    document.querySelector('.mp-input-radio-radio').checked = false;
+    bootstrap('MLA');
+    const attempt = jQuery.Event(event);
+    jQuery(form()).trigger(attempt);
+    expect(attempt.isDefaultPrevented()).toBe(true);
+    expect(submit()).toBe(false);
+    expect(helper().style.display).toBe('flex');
+    document.querySelector('.mp-input-radio-radio').click();
+    expect(submit()).toBe(true);
+    expect(helper().style.display).toBe('none');
+  });
+
+  test('Given an unchecked standard radio and a checked theme radio, When Ticket submits, Then the selected gateway still validates the offline choice', () => {
+    document.getElementById('payment_method_woo-mercado-pago-ticket').checked = false;
+    form().append(createElement('input', {
+      id: 'theme-ticket-radio', type: 'radio', value: 'woo-mercado-pago-ticket', checked: '',
+    }));
+    document.querySelector('.mp-input-radio-radio').checked = false;
+    bootstrap('MLA');
+    expect(submit()).toBe(false);
+    expect(helper().style.display).toBe('flex');
+  });
+
+  test.each(['MLB', 'MLU'])('Given %s without the required document input, When Ticket submits, Then it blocks without throwing and shows the available helper', site => {
+    document.querySelector('.mp-document').remove();
+    bootstrap(site);
+    expect(submit()).toBe(false);
+    expect(document.querySelector('input-document .mp-helper').style.display).toBe('flex');
+  });
+
+  test.each(['MLB', 'MLU'])('Given %s without the document component, When Ticket submits, Then it blocks incomplete data without throwing', site => {
+    document.querySelector('input-document').remove();
+    bootstrap(site);
+    expect(submit()).toBe(false);
+  });
+
+  test('Given the same normalized document in a replacement input, When updated_checkout precedes checkout_error, Then its mask is restored', async () => {
+    bootstrap();
+    const oldInput = document.querySelector('.mp-document');
+    const maskedValue = oldInput.value;
+    expect(submit()).toBe(true);
+    const newInput = oldInput.cloneNode(true);
+    newInput.value = oldInput.value;
+    oldInput.replaceWith(newInput);
+    jQuery(document.body).trigger('updated_checkout');
+    await flushMutations();
+    jQuery(document.body).trigger('checkout_error');
+    expect(newInput.value).toBe(maskedValue);
+    expect(count(form(), event)).toBe(1);
+  });
+
+  test.each(['different-synthetic-value', ''])('Given a replacement document with value %j, When checkout fails after a refresh, Then the old document is not copied into it', async value => {
+    bootstrap();
+    expect(submit()).toBe(true);
+    const oldInput = document.querySelector('.mp-document');
+    const newInput = oldInput.cloneNode(true);
+    newInput.value = value;
+    oldInput.replaceWith(newInput);
+    jQuery(document.body).trigger('updated_checkout');
+    await flushMutations();
+    jQuery(document.body).trigger('checkout_error');
+    expect(newInput.value).toBe(value);
+  });
+
+  test.each(['different-synthetic-value', ''])('Given the buyer changes the submitted document to %j, When checkout fails, Then the newer value is preserved', value => {
+    bootstrap();
+    expect(submit()).toBe(true);
+    const input = document.querySelector('.mp-document');
+    input.value = value;
+    jQuery(document.body).trigger('checkout_error');
+    expect(input.value).toBe(value);
+  });
+
+  test('Given two submissions of the same normalized document, When checkout fails, Then the original mask is retained', () => {
+    bootstrap();
+    const input = document.querySelector('.mp-document');
+    const maskedValue = input.value;
+    expect(submit()).toBe(true);
+    expect(submit()).toBe(true);
+    jQuery(document.body).trigger('checkout_error');
+    expect(input.value).toBe(maskedValue);
+  });
+
+  test('Given one thousand unrelated inserted elements, When mutations are delivered, Then Ticket is not refreshed', async () => {
+    const Controller = bootstrap('MLA');
+    const refresh = jest.spyOn(Controller.prototype, 'refresh');
+    const unrelated = document.createDocumentFragment();
+    for (let index = 0; index < 1000; index += 1) {
+      unrelated.append(document.createElement('span'));
+    }
+    document.body.append(unrelated);
+    await flushMutations();
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  test('Given Ticket markup disappears, When Ticket is selected, Then incomplete data is not accepted or thrown', () => {
+    bootstrap('MLA');
+    document.querySelector('.mp-checkout-ticket-container').remove();
+    expect(submit()).toBe(false);
+    document.getElementById('payment_method_woo-mercado-pago-ticket').checked = false;
+    expect(submit()).toBe(true);
+  });
+
+  test('Given a single hidden payment method, When it is empty or filled, Then only the filled method is accepted', () => {
+    document.querySelector('[data-cy=input-table-list]').remove();
+    const method = createElement('input', { type: 'hidden', name: 'mercadopago_ticket[payment_method_id]', value: '' });
+    document.querySelector('.mp-checkout-ticket-container').append(method);
+    bootstrap('MLA');
+    expect(submit()).toBe(false);
+    method.value = 'pagofacil';
+    expect(submit()).toBe(true);
   });
 });

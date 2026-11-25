@@ -3,7 +3,12 @@
 namespace MercadoPago\Woocommerce\Tests\Notification;
 
 use Exception;
+use MercadoPago\Woocommerce\Exceptions\OrderStatusLockException;
+use MercadoPago\Woocommerce\Exceptions\PixCompletionException;
 use MercadoPago\Woocommerce\Interfaces\MercadoPagoGatewayInterface;
+use MercadoPago\Woocommerce\Notification\CoreNotification;
+use MercadoPago\Woocommerce\Notification\WebhookNotification;
+use MercadoPago\Woocommerce\Order\PixStatusRetry;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Libraries\Logs\Transports\File;
 use MercadoPago\Woocommerce\Notification\AbstractNotification;
@@ -163,5 +168,89 @@ class AbstractNotificationTest extends TestCase
         $this->assertSame(422, $response['status']);
         $this->assertArrayHasKey('message', $response);
         $this->assertIsString($response['message']);
+    }
+
+    /**
+     * @return array<string, array{0: \Throwable}>
+     */
+    public function pixContentionProvider(): array
+    {
+        return [
+            'lock busy'          => [new OrderStatusLockException('busy')],
+            'lock unavailable'   => [new OrderStatusLockException('unavailable')],
+            'completion failed'  => [new PixCompletionException('Pix payment completion failed')],
+        ];
+    }
+
+    /**
+     * @dataProvider pixContentionProvider
+     */
+    public function testPixContentionPersistsARetryAndAnswersARecoverable503(\Throwable $contention): void
+    {
+        global $mercadopago;
+        $previous = $mercadopago ?? null;
+        $retry = Mockery::mock(PixStatusRetry::class);
+        $mercadopago = (object) ['pixStatusRetry' => $retry];
+
+        $data = ['external_reference' => 'WC-84', 'id' => 'M-1'];
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('get_id')->andReturn(84);
+        \WP_Mock::userFunction('get_option')->with('_mp_store_identificator', 'WC-')->andReturn('WC-');
+        \WP_Mock::userFunction('wc_get_order')->with(84)->andReturn($order);
+
+        $this->notification->orderStatus = Mockery::mock(OrderStatus::class);
+        $this->notification->orderStatus->shouldReceive('isOwnedBySmartPixOrders')->with($order)->andReturn(false);
+        $this->file->shouldReceive('info')->twice()->withAnyArgs();
+        $this->file->shouldReceive('warning')->once()->withAnyArgs();
+        $this->notification->shouldReceive('handleSuccessfulRequestInternal')->once()->andThrow($contention);
+
+        // The retry is persisted before the 503 is sent.
+        $retry->shouldReceive('enqueue')->once()->with(84, 'ipn', 'M-1')->andReturn(7)->ordered();
+        $this->notification->shouldReceive('setResponse')->once()->with(503, Mockery::type('string'))->ordered();
+
+        try {
+            $this->notification->handleSuccessfulRequest($data);
+        } finally {
+            $mercadopago = $previous;
+        }
+    }
+
+    public function testPixContentionWithoutAnAvailableRetryServiceStillAnswers503(): void
+    {
+        global $mercadopago;
+        $previous = $mercadopago ?? null;
+        $mercadopago = (object) [];
+
+        $data = ['external_reference' => 'WC-84'];
+        $order = Mockery::mock(WC_Order::class);
+        $order->shouldReceive('get_id')->andReturn(84);
+        \WP_Mock::userFunction('get_option')->andReturn('WC-');
+        \WP_Mock::userFunction('wc_get_order')->with(84)->andReturn($order);
+        $this->notification->orderStatus = Mockery::mock(OrderStatus::class);
+        $this->notification->orderStatus->shouldReceive('isOwnedBySmartPixOrders')->with($order)->andReturn(false);
+        $this->file->shouldReceive('info')->twice()->withAnyArgs();
+        $this->file->shouldReceive('warning')->once()->withAnyArgs();
+        $this->notification->shouldReceive('handleSuccessfulRequestInternal')->andThrow(new OrderStatusLockException('busy'));
+        $this->notification->shouldReceive('setResponse')->once()->with(503, Mockery::type('string'));
+
+        try {
+            $this->notification->handleSuccessfulRequest($data);
+        } finally {
+            $mercadopago = $previous;
+        }
+    }
+
+    public function testRetrySourceIsTheChannelName(): void
+    {
+        $sourceOf = static function ($notification): string {
+            $method = new \ReflectionMethod($notification, 'retrySource');
+            $method->setAccessible(true);
+
+            return $method->invoke($notification);
+        };
+
+        $this->assertSame('ipn', $sourceOf($this->notification));
+        $this->assertSame('webhook', $sourceOf(Mockery::mock(WebhookNotification::class)->makePartial()));
+        $this->assertSame('core', $sourceOf(Mockery::mock(CoreNotification::class)->makePartial()));
     }
 }

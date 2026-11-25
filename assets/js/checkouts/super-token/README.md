@@ -58,7 +58,7 @@ plugin release. Plugins still using local scripts cannot be migrated through CDN
 The transitional CSS retains v2 selectors for independently cached old JS; it does not
 restore a v2 implementation. Browser cache combinations still require visual homologation.
 
-Runtime JS and CSS stamp: `1.2.13`; this is separate from the plugin/package release version.
+Runtime JS and CSS stamp: `1.2.14`; this is separate from the plugin/package release version.
 The new runtime sends Datadog `ab_variant: "not_available"`; `js_version` identifies its
 code. External Melidata collection and old loader events can still reflect old cookies
 or lack a version. Do not reinterpret them as proof of which UI rendered.
@@ -87,7 +87,7 @@ NGINX route. Future A/B winners are promoted to `v1/`; only challengers get new 
 
 The runtime safeguards CDN CSS with `ensureSuperTokenCss`: five seconds for the original
 link, one versioned corrective link in the same folder and five seconds for its result.
-The build emits the stamp as a CSS string (`--mp-super-token-loader-version:"1.2.13"`),
+The build emits the stamp as a CSS string (`--mp-super-token-loader-version:"1.2.14"`),
 so WebKit does not serialize a multi-dot numeric token sequence with `/**/` separators.
 The reader removes paired string quotes or those empty separators in legacy unquoted
 values, then compares the complete version. Comments inside a string stay literal.

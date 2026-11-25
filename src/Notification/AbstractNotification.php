@@ -5,6 +5,8 @@ namespace MercadoPago\Woocommerce\Notification;
 use Exception;
 use MercadoPago\Woocommerce\Configs\Seller;
 use MercadoPago\Woocommerce\Configs\Store;
+use MercadoPago\Woocommerce\Exceptions\OrderStatusLockException;
+use MercadoPago\Woocommerce\Exceptions\PixCompletionException;
 use MercadoPago\Woocommerce\Interfaces\NotificationInterface;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use MercadoPago\Woocommerce\Order\OrderStatus;
@@ -106,10 +108,40 @@ abstract class AbstractNotification implements NotificationInterface
             $this->logs->file->info('Updating metadata and status with data', __CLASS__, $data);
 
             $this->handleSuccessfulRequestInternal($data, $order);
+        } catch (OrderStatusLockException | PixCompletionException $e) {
+            // Pix update not applied: persist a retry first, then answer with a recoverable error
+            // so the sender redelivers. Never report success for something that was not processed.
+            $this->logs->file->warning($e->getMessage(), static::class);
+            $this->queuePixRetry($order ?? null, $data);
+            $this->setResponse(503, 'Order is being processed, try again');
         } catch (Exception $e) {
             $this->setResponse(422, $e->getMessage());
             $this->logs->file->error($e->getMessage(), static::class, $data);
         }
+    }
+
+    /**
+     * @param WC_Order|false|null $order
+     * @param mixed $data
+     */
+    private function queuePixRetry($order, $data): void
+    {
+        global $mercadopago;
+
+        if (!$order instanceof WC_Order || !isset($mercadopago->pixStatusRetry)) {
+            return;
+        }
+
+        $reference = is_array($data) ? (string) ($data['id'] ?? '') : '';
+        $mercadopago->pixStatusRetry->enqueue((int) $order->get_id(), $this->retrySource(), $reference);
+    }
+
+    /**
+     * Channel name stored with the retry: core | webhook | ipn.
+     */
+    protected function retrySource(): string
+    {
+        return 'core';
     }
 
     /**

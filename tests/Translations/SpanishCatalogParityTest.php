@@ -23,12 +23,44 @@ class SpanishCatalogParityTest extends TestCase
         'Buy in up to 12 installments without credit cards' => 'Compra ahora y paga después en hasta 12 cuotas',
     ];
 
-    private const LOCALES = ['es', 'es_AR', 'es_CL', 'es_CO', 'es_MX', 'pt'];
+    private const LOCALES = ['es', 'es_AR', 'es_CL', 'es_CO', 'es_MX', 'es_UY', 'es_PE', 'pt'];
+
+    private const REGIONAL_SHARED_CARD_IDS = [
+        'Pay in one tap<br>with your saved cards',
+        'Use Mercado Pago\'s payment methods without real charges. ',
+        'See the rules for the test mode.',
+        'Fill out this field.',
+        'There was an error. Please try again in a few minutes.',
+        'Fill it out as it appears on the card.',
+        'Type in the complete ID number.',
+        'Type in a valid ID.',
+        'Select an option',
+        'Type in the entire number.',
+        'Type in a valid number.',
+        'Enter only letters and numbers.',
+        'Type in the complete date.',
+        'Type in a valid date.',
+        'Type in the complete code.',
+        'Select an option.',
+        'It’s a 3 digit number. You can find it on the back of your card or on the app of your bank or digital wallet.',
+        'It’s a 4 digit number. You can find it on the front of your card or on the app of your bank or digital wallet.',
+        'Invalid card number. Please check the information provided.',
+        'You can pay with card',
+        'Enter the {digits} numbers on your card.',
+        'Enter two digits for the month and two digits for the year.',
+        'Enter your {digits} digit code.',
+        'Enter between {min} and {max} digits for your ID number.',
+        'Enter the {digits} digits of your ID number.',
+        'We need to confirm that you are the cardholder.',
+        'Complete the bank validation so your payment can be approved',
+        'Please keep this page open. If you close it, you will not be able to resume the validation.',
+        '<b>For safety reasons, your payment was declined</b><br>We recommend paying with your usual payment method and device for online purchases.',
+    ];
 
     // Rioplatense voseo forms found in the catalogs. es_CO is a country catalog and must not carry them.
     private const VOSEO = '/(?<!\\p{L})(?:podés|tenés|querés|sabés|solés|necesitás|hablá|pagá|ingresá|probá|verificá|intentá|'
         . 'contactá|contactate|solicitá|elegí|revisá|usá|volvé|asegurate|seleccioná|completá|confirmá|esperá|accedé|'
-        . 'activá|agregá|comprá|hacé|conocé|escribí|tocá|guardá|cambiá)(?!\\p{L})/iu';
+        . 'activá|agregá|comprá|hacé|conocé|escribí|tocá|guardá|cambiá|revisalo|devolvelo)(?!\\p{L})/iu';
 
     public function testGivenGenericSpanishCatalogWhenComparedThenCardCheckoutCopyComesFromMexicanCatalog(): void
     {
@@ -53,6 +85,152 @@ class SpanishCatalogParityTest extends TestCase
             $this->otherEntries($generic),
             'Run `npm run i18n:generic-es`: outside card checkout and the two Credits exceptions, es must match es_AR.'
         );
+    }
+
+    /** @dataProvider regionalLocaleProvider */
+    public function testRegionalFastPaymentsBannerFollowsTheCatalogLanguage(string $locale, array $expected): void
+    {
+        $catalog = $this->readMo($locale);
+
+        $this->assertSame($expected['banner'], $catalog['Pay in one tap<br>with your saved cards']);
+    }
+
+    public function testUruguayanCatalogUsesApprovedInstallmentsCopyInBothCardFlows(): void
+    {
+        $catalog = $this->readMo('es_UY');
+
+        $this->assertSame('Cuotas', $catalog['super token' . self::CONTEXT_SEPARATOR . 'Installments']);
+        $this->assertSame('Cuotas', $catalog['card checkout' . self::CONTEXT_SEPARATOR . 'Installments']);
+    }
+
+    /** @dataProvider regionalLocaleProvider */
+    public function testRegionalFastPaymentsCopyMatchesTheHandoff(string $locale, array $expected): void
+    {
+        $catalog = $this->readMo($locale);
+        $superToken = 'super token' . self::CONTEXT_SEPARATOR;
+
+        $this->assertSame($expected['installments'], $catalog[$superToken . 'Installments']);
+        $this->assertSame($expected['installments'], $catalog['card checkout' . self::CONTEXT_SEPARATOR . 'Installments']);
+        $this->assertSame($expected['additional_methods'], $catalog[$superToken . 'You can also use']);
+        foreach (['', $superToken] as $context) {
+            $this->assertSame($expected['selection'], $catalog[$context . 'Select an option']);
+            $this->assertSame($expected['selection'] . '.', $catalog[$context . 'Select an option.']);
+        }
+        $this->assertSame('Dinero disponible en Mercado&nbsp;Pago', $catalog['Account Money']);
+        $this->assertSame('Tarjeta Prepaga Mercado Pago', $catalog['Mercado Pago Prepaid Card']);
+        $this->assertSame('Suficiente para pagar esta compra.', $catalog[$superToken . 'Enough to pay for this purchase.']);
+        $this->assertSame($expected['interest_free'], $catalog[$superToken . 'interest-free installments']);
+        $this->assertSame('Si hay intereses, los aplicará y cobrará tu banco.', $catalog[$superToken . 'If there is any interest, it will be applied and charged by your bank.']);
+
+        foreach (['super token', 'card checkout'] as $context) {
+            $suffix = $context === 'super token' ? ' rel="noopener noreferrer"' : '';
+            $key = $context . self::CONTEXT_SEPARATOR . 'Learn more about&nbsp;<a href="{link}" target="_blank"' . $suffix . '>how we protect your privacy</a>.';
+            $this->assertSame($expected['privacy'] . '&nbsp;<a href="{link}" target="_blank"' . $suffix . '>cómo cuidamos tu privacidad</a>.', $catalog[$key]);
+            $optionKey = $context . ' installment option' . self::CONTEXT_SEPARATOR . 'interest-free installments';
+            $this->assertSame($expected['interest_free_option'], $catalog[$optionKey]);
+        }
+
+        foreach ($catalog as $key => $value) {
+            if ($this->usesNeutralSpanish($key) && stripos($key, 'installments') !== false) {
+                $unexpected = in_array($locale, ['es_UY', 'es_PE'], true) ? 'meses|mensualidad|mensualidades' : 'cuotas';
+                $this->assertSame(0, preg_match('/(?<!\\p{L})(?:' . $unexpected . ')(?!\\p{L})/iu', $value), "$locale has inconsistent installment wording: $key");
+            }
+        }
+    }
+
+    /** @dataProvider regionalCatalogProvider */
+    public function testRegionalCatalogsPreserveGenericCopyOutsideTheApprovedCardWording(string $locale): void
+    {
+        $generic = $this->readPo('es');
+        $regional = $this->readPo($locale);
+        $chilean = $this->readPo('es_CL');
+        $this->assertSame(array_keys($generic), array_keys($regional));
+
+        foreach ($generic as $key => $value) {
+            $isRegionalCardCopy = $locale === 'es_UY'
+                && ($this->usesNeutralSpanish($key) || in_array($key, self::REGIONAL_SHARED_CARD_IDS, true));
+            $isPeruvianBanner = $locale === 'es_PE' && $key === 'Pay in one tap<br>with your saved cards';
+            $isPeruvianInstallmentTerm = $locale === 'es_PE' && stripos($key, 'installments') !== false;
+            if ($isRegionalCardCopy || $isPeruvianBanner || $isPeruvianInstallmentTerm) {
+                continue;
+            }
+            if ($locale === 'es_PE' && preg_match(self::VOSEO, $value) === 1) {
+                $this->assertSame($chilean[$key], $regional[$key], "es_PE must use the neutral es_CL text where es inherits voseo: $key");
+                continue;
+            }
+            $this->assertSame($value, $regional[$key], "$locale changed copy outside the regional card wording: $key");
+        }
+    }
+
+    public function regionalLocaleProvider(): array
+    {
+        return [
+            'Uruguay' => ['es_UY', [
+                'additional_methods' => 'Además, podés utilizar',
+                'privacy' => 'Conocé',
+                'installments' => 'Cuotas',
+                'selection' => 'Seleccioná una opción',
+                'interest_free' => 'cuotas sin interés',
+                'interest_free_option' => 'sin interés',
+                'banner' => 'Pagá en un toque<br>con tus tarjetas guardadas',
+            ]],
+            'Peru' => ['es_PE', [
+                'additional_methods' => 'Además, puedes utilizar',
+                'privacy' => 'Conoce',
+                'installments' => 'Cuotas',
+                'selection' => 'Selecciona una opción',
+                'interest_free' => 'cuotas sin intereses',
+                'interest_free_option' => 'sin intereses',
+                'banner' => 'Paga en un toque<br>con tus tarjetas guardadas',
+            ]],
+        ];
+    }
+
+    public function regionalCatalogProvider(): array
+    {
+        return ['Uruguay' => ['es_UY'], 'Peru' => ['es_PE']];
+    }
+
+    public function testUruguayanCardInstructionsAndErrorsUseVoseo(): void
+    {
+        $catalog = $this->readMo('es_UY');
+        $this->assertSame('Ingresá la fecha completa.', $catalog['Type in the complete date.']);
+        $this->assertSame('Completalo como aparece en la tarjeta.', $catalog['Fill it out as it appears on the card.']);
+        $this->assertSame('Podés pagar con tarjeta', $catalog['You can pay with card']);
+        $this->assertSame(
+            'No se pudo hacer el pago. Intentá de nuevo o pagá con otro medio.',
+            $catalog['super token' . self::CONTEXT_SEPARATOR . 'The payment could not be completed. Please try again or pay with another method.']
+        );
+        $this->assertSame(
+            '<strong>Uno o más de los datos del comprador fueron ingresados incorrectamente</strong><br>Verificá el número de identificación e intentalo nuevamente.',
+            $catalog['card checkout' . self::CONTEXT_SEPARATOR . '<strong>One or more of the buyer details were entered incorrectly</strong><br>Please check the identification number and try again.']
+        );
+
+        $tuteo = '/(?<!\\p{L})(?:puedes|tienes|necesitas|sueles|encuentras|eres|mantén|cierras|'
+            . 'ingresa|selecciona|intenta|inténtalo|paga|elige|revisa|revísalos|verifica|vuelve|usa|'
+            . 'asegúrate|comunícate|contáctate|contacta|conoce|llama|utiliza|consulte|complétalo)(?!\\p{L})/iu';
+        foreach ($catalog as $key => $value) {
+            if ($this->usesNeutralSpanish($key) || in_array($key, self::REGIONAL_SHARED_CARD_IDS, true)) {
+                $this->assertSame(0, preg_match($tuteo, $value), "es_UY must use voseo in card checkout: $key");
+            }
+        }
+    }
+
+    public function testGivenPeruvianCatalogWhenCompiledThenItHasNoVoseo(): void
+    {
+        $catalog = $this->readMo('es_PE');
+        $this->assertSame(
+            '<strong>Elige la cantidad de cuotas para finalizar el pago</strong>',
+            $catalog['card checkout' . self::CONTEXT_SEPARATOR . '<strong>Choose the number of installments to complete the payment</strong>']
+        );
+        $this->assertSame('Ingresa los datos de la nueva tarjeta para continuar.', $catalog['Please enter the new card data to continue.']);
+        $this->assertSame(
+            'No pudimos agregar la nueva tarjeta. Prueba con otra tarjeta.',
+            $catalog['We could not add the new card. Please try a different card.']
+        );
+        foreach ($catalog as $key => $value) {
+            $this->assertSame(0, preg_match(self::VOSEO, $value), "es_PE must use neutral Spanish, as es_CL does: $key");
+        }
     }
 
     public function testGivenColombianCatalogWhenCompiledThenItHasNoVoseo(): void

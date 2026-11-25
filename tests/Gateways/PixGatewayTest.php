@@ -3234,6 +3234,84 @@ class PixGatewayTest extends TestCase
         $this->gateway->checkPixPaymentStatus();
     }
 
+    private function arrangeApprovedStatusPoll(): \Mockery\MockInterface
+    {
+        $order = Mockery::mock('WC_Order');
+
+        $this->mockFormWithCustomSetup(function ($mock) {
+            $mock->shouldReceive('sanitizedPostData')->with('nonce')->andReturn('valid-nonce');
+            $mock->shouldReceive('sanitizedPostData')->with('order_id')->andReturn(123);
+            $mock->shouldReceive('sanitizedPostData')->with('order_key')->andReturn('wc_order_correct');
+        });
+        \WP_Mock::userFunction('wp_verify_nonce')->with('valid-nonce', PixGateway::PIX_STATUS_NONCE)->andReturn(true);
+        \WP_Mock::userFunction('wc_get_order')->with(123)->andReturn($order);
+        $order->shouldReceive('get_order_key')->andReturn('wc_order_correct');
+        $order->shouldReceive('get_id')->andReturn(123);
+
+        $this->gateway->mercadopago->orderMetadata->shouldReceive('getPaymentsIdMeta')->with($order)->andReturn('pay-123');
+
+        $response = Mockery::mock(\MercadoPago\Woocommerce\Api\Http\HttpResponse::class);
+        $response->shouldReceive('getStatus')->andReturn(200);
+        $response->shouldReceive('getData')->andReturn(['id' => 'pay-123', 'status' => 'approved']);
+        $this->gateway->mercadopago->helpers->requester
+            ->shouldReceive('get')->with('/v1/payments/pay-123', Mockery::type('array'))->andReturn($response);
+
+        $this->gateway->mercadopago->orderStatus = Mockery::mock(\MercadoPago\Woocommerce\Order\OrderStatus::class);
+
+        return $order;
+    }
+
+    /**
+     * Approval is applied through the single protected entrypoint; the gateway no longer
+     * trusts a flag read before the HTTP call nor writes it after leaving the protection.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testCheckPixPaymentStatusApprovedDelegatesToProtectedEntrypoint(): void
+    {
+        $order = $this->arrangeApprovedStatusPoll();
+        $this->gateway->mercadopago->orderStatus
+            ->shouldReceive('processStatus')
+            ->once()
+            ->with('approved', ['id' => 'pay-123', 'status' => 'approved'], $order, PixGateway::WEBHOOK_API_NAME)
+            ->andReturn(true);
+
+        \WP_Mock::userFunction('wp_send_json_success')
+            ->once()
+            ->with(['status' => 'approved', 'message' => 'Payment successfully approved']);
+
+        $this->gateway->checkPixPaymentStatus();
+    }
+
+    /**
+     * A busy lock must never be reported as success: a retry is persisted first and the response
+     * is a recoverable 503 flagged for the browser.
+     *
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function testCheckPixPaymentStatusBusyLockPersistsRetryAndReturns503(): void
+    {
+        $order = $this->arrangeApprovedStatusPoll();
+        $this->gateway->mercadopago->orderStatus
+            ->shouldReceive('processStatus')
+            ->once()
+            ->andThrow(new \MercadoPago\Woocommerce\Exceptions\OrderStatusLockException('busy'));
+
+        $retry = Mockery::mock(\MercadoPago\Woocommerce\Order\PixStatusRetry::class);
+        $retry->shouldReceive('enqueue')->once()->with(123, 'polling', 'pay-123')->andReturn(5)->ordered();
+        $this->gateway->mercadopago->pixStatusRetry = $retry;
+
+        \WP_Mock::userFunction('wp_send_json_success')->never();
+        \WP_Mock::userFunction('wp_send_json_error')
+            ->once()
+            ->with(['message' => 'Payment is being processed, try again', 'retry' => true], 503)
+            ->ordered();
+
+        $this->gateway->checkPixPaymentStatus();
+    }
+
     /**
      * @runInSeparateProcess
      * @preserveGlobalState disabled

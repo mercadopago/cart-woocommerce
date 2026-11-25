@@ -2,6 +2,8 @@
 
 namespace MercadoPago\Woocommerce\Order;
 
+use MercadoPago\Woocommerce\Exceptions\OrderStatusLockException;
+use MercadoPago\Woocommerce\Exceptions\PixCompletionException;
 use MercadoPago\Woocommerce\Helpers\Requester;
 use MercadoPago\Woocommerce\Libraries\Logs\Logs;
 use Throwable;
@@ -160,7 +162,21 @@ class PaymentReconciliation
                 __CLASS__
             );
 
+            if ($exception instanceof OrderStatusLockException || $exception instanceof PixCompletionException) {
+                // Pix update contended: keep the order (fail-closed, `false`) and persist the resumption.
+                $this->queuePixRetry($order);
+            }
+
             return false;
+        }
+    }
+
+    private function queuePixRetry(WC_Order $order): void
+    {
+        global $mercadopago;
+
+        if (isset($mercadopago->pixStatusRetry)) {
+            $mercadopago->pixStatusRetry->enqueue((int) $order->get_id(), 'reconciliation', (string) $order->get_id());
         }
     }
 

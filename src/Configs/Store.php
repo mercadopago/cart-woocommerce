@@ -4,6 +4,8 @@ namespace MercadoPago\Woocommerce\Configs;
 
 use MercadoPago\Woocommerce\Gateways\AbstractGateway;
 use MercadoPago\Woocommerce\Hooks\Options;
+use MercadoPago\Woocommerce\Api\Core\Models\FunnelRegistration;
+use MercadoPago\Woocommerce\Funnel\InstallationStore;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -18,8 +20,6 @@ class Store
     private const STORE_CATEGORY = '_mp_category_id';
 
     private const CHECKOUT_COUNTRY = 'checkout_country';
-
-    private const WOOCOMMERCE_COUNTRY = 'woocommerce_default_country';
 
     private const INTEGRATOR_ID = '_mp_integrator_id';
 
@@ -43,13 +43,11 @@ class Store
 
     private const GATEWAY_TITLE = 'title';
 
-    private const INSTALLATION_ID = '_mp_installation_id';
-
-    private const INSTALLATION_KEY = '_mp_installation_key';
-
     private const EXECUTE_ACTIVATED_PLUGIN = '_mp_execute_activate';
 
     private const EXECUTE_AFTER_UPDATE = '_mp_execute_after_update';
+
+    private const SELLER_CONTACT_PENDING = '_mp_funnel_contact_pending';
 
     private const CODE_VERIFIER = "_mp_integration_code_verifier";
 
@@ -61,14 +59,17 @@ class Store
 
     private Options $options;
 
+    private InstallationStore $installation;
+
     /**
      * Store constructor
      *
      * @param Options $options
      */
-    public function __construct(Options $options)
+    public function __construct(Options $options, ?InstallationStore $installation = null)
     {
         $this->options = $options;
+        $this->installation = $installation ?? new InstallationStore();
     }
 
     /**
@@ -298,7 +299,7 @@ class Store
      */
     public function getInstallationKey(): string
     {
-        return $this->options->get(self::INSTALLATION_KEY, '');
+        return $this->getInstallationCredentials()['key'];
     }
 
     /**
@@ -306,7 +307,24 @@ class Store
      */
     public function getInstallationId(): string
     {
-        return $this->options->get(self::INSTALLATION_ID, '');
+        return $this->getInstallationCredentials()['id'];
+    }
+
+    /** @return array{id: string, key: string} */
+    public function getInstallationCredentials(): array
+    {
+        return $this->installation->read();
+    }
+
+    public function setInstallationCredentials(FunnelRegistration $registration, string $owner): void
+    {
+        $this->installation->save($registration, $owner);
+    }
+
+    /** @param array{id: string, key: string} $identity */
+    public function synchronizeInstallationCredentials(array $identity): void
+    {
+        $this->installation->synchronizeLegacy($identity);
     }
 
     /**
@@ -318,11 +336,25 @@ class Store
     }
 
     /**
-     * @param string $execute
+     * @param bool $execute
      */
     public function setExecuteActivate(bool $execute): void
     {
         $this->options->set(self::EXECUTE_ACTIVATED_PLUGIN, (int) $execute);
+    }
+
+    /**
+     * Set before the creation POST and cleared only by a successful seller contact step, so a
+     * creation interrupted after publishing its identity can still send the first contact.
+     */
+    public function getSellerContactPending(): bool
+    {
+        return (bool) $this->options->get(self::SELLER_CONTACT_PENDING);
+    }
+
+    public function setSellerContactPending(bool $pending): void
+    {
+        $this->options->set(self::SELLER_CONTACT_PENDING, (int) $pending);
     }
 
     public function getExecuteAfterPluginUpdate(): bool
@@ -333,22 +365,6 @@ class Store
     public function setExecuteAfterPluginUpdate(bool $execute): void
     {
         $this->options->set(self::EXECUTE_AFTER_UPDATE, (int) $execute);
-    }
-
-    /**
-     * @param string $installationId
-     */
-    public function setInstallationId(string $installationId): void
-    {
-        $this->options->set(self::INSTALLATION_ID, $installationId);
-    }
-
-    /**
-     * @param string $installationKey
-     */
-    public function setInstallationKey(string $installationKey): void
-    {
-        $this->options->set(self::INSTALLATION_KEY, $installationKey);
     }
 
     /**

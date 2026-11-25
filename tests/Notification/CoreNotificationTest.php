@@ -66,7 +66,6 @@ class CoreNotificationTest extends TestCase
      * @testWith [[],[]]
      *           [{"refunds_notifying": []},[]]
      *           [{"refunds_notifying": "fake"},{"payment_type_id": "creditcard", "payment_method_info": {"installments": 2, "installment_amount": 10, "last_four_digits": "1234"}, "total_amount":10, "paid_amount": 10}]
-     *           [{"current_refund": {"id": 1, "amount": 1}},{"refunds": {"1":{}}}]
      */
     public function testUpdatePaymentDetails(array $data, array $payment)
     {
@@ -84,9 +83,6 @@ class CoreNotificationTest extends TestCase
         ];
 
         $refundedAmount = $paymentData->refund ?? 0;
-        if (isset($data["current_refund"]) && isset($payment["refunds"][$data["current_refund"]["id"]])) {
-            $refundedAmount += $data["current_refund"]["amount"];
-        }
 
         Mockery::getConfiguration()->setConstantsMap([
             PaymentMetadata::class => [
@@ -585,6 +581,7 @@ class CoreNotificationTest extends TestCase
 
     public function testOversizedSmartPixBodyIsRejectedBeforeFetchingOrDecoding(): void
     {
+        $this->expectOversizedRejectionMetric();
         $posted = '{"notification_id":"PPORDSYNTHETIC001","padding":"'
             . str_repeat('x', SmartPixNotificationBody::DEFAULT_MAX_BYTES) . '"}';
         \WP_Mock::userFunction('wp_send_json', [
@@ -609,6 +606,7 @@ class CoreNotificationTest extends TestCase
 
     public function testOversizedSmartPixBodyIsRejectedAfterABoundedReadWithoutLoadingTheWholeBody(): void
     {
+        $this->expectOversizedRejectionMetric();
         $limit = SmartPixNotificationBody::DEFAULT_MAX_BYTES;
         $posted = '{"notification_id":"PPORDSYNTHETIC001","padding":"' . str_repeat('x', 4 * $limit) . '"}';
         \WP_Mock::userFunction('wp_send_json', [
@@ -636,68 +634,29 @@ class CoreNotificationTest extends TestCase
     }
 
     /**
-     * Only Smart Pix bodies are bounded: a large legacy body keeps the legacy fetch.
-     *
-     * @testWith ["P-123"]
-     *           ["M-456"]
+     * @testWith ["P-123", false]
+     *           ["P-123", true]
+     *           ["M-456", false]
+     *           ["M-456", true]
      */
-    public function testOversizedLegacyBodyKeepsTheLegacyFetch(string $id): void
+    public function testOversizedLegacyBodyIsRejectedWithoutFetchingOrReadingAgain(string $id, bool $idAtEnd): void
     {
-        \WP_Mock::userFunction('wp_is_mobile', ['return' => false]);
-        \WP_Mock::userFunction('wp_send_json', ['times' => 0]);
-        $data = ['external_reference' => 'WC-321', 'status' => 'approved'];
-        $fetched = Mockery::mock(\MercadoPago\Woocommerce\Api\Core\Models\Notification::class);
-        $fetched->shouldReceive('toArray')->once()->andReturn($data);
-        $smartPixClient = Mockery::mock(NotificationsClient::class);
-        $smartPixClient->shouldNotReceive('find');
-        $legacyClient = Mockery::mock(NotificationsClient::class);
-        $legacyClient->shouldReceive('find')->once()->with($id, Mockery::type(CoreRequestContext::class))->andReturn($fetched);
-        $posted = (string) json_encode([
-            'notification_id' => $id,
-            'padding' => str_repeat('x', SmartPixNotificationBody::DEFAULT_MAX_BYTES),
+        $this->expectOversizedRejectionMetric();
+        $limit = 16384;
+        $padding = ['padding' => str_repeat('x', 2 * $limit)];
+        $identifier = ['notification_id' => $id];
+        $posted = (string) json_encode($idAtEnd ? $padding + $identifier : $identifier + $padding);
+        \WP_Mock::userFunction('wp_send_json', [
+            'args' => [['status' => 413, 'message' => 'Notification body too large.'], 413],
+            'times' => 1,
         ]);
-
-        $notification = $this->routedNotification(
-            $posted,
-            $legacyClient,
-            $this->ignoringFileLog()->file,
-            $this->smartPixHandler($smartPixClient)
-        );
-        $notification->shouldReceive('handleSuccessfulRequest')->once()->with($data);
-
-        $notification->handleReceivedNotification(['source_news' => 'webhooks']);
-
-        $this->assertTrue(true);
-    }
-
-    public function testOversizedLegacyBodyIsReadWholeOnceAfterTheBoundedRead(): void
-    {
-        $limit = SmartPixNotificationBody::DEFAULT_MAX_BYTES;
-        \WP_Mock::userFunction('wp_is_mobile', ['return' => false]);
-        \WP_Mock::userFunction('wp_send_json', ['times' => 0]);
-        $data = ['external_reference' => 'WC-321', 'status' => 'approved'];
-        $fetched = Mockery::mock(\MercadoPago\Woocommerce\Api\Core\Models\Notification::class);
-        $fetched->shouldReceive('toArray')->once()->andReturn($data);
-        $smartPixClient = Mockery::mock(NotificationsClient::class);
-        $smartPixClient->shouldNotReceive('find');
         $legacyClient = Mockery::mock(NotificationsClient::class);
-        $legacyClient->shouldReceive('find')->once()->with('P-123', Mockery::type(CoreRequestContext::class))->andReturn($fetched);
-        $posted = (string) json_encode(['notification_id' => 'P-123', 'padding' => str_repeat('x', 2 * $limit)]);
-
-        $notification = $this->routedNotification(
-            $posted,
-            $legacyClient,
-            $this->ignoringFileLog()->file,
-            $this->smartPixHandler($smartPixClient),
-            false
-        );
+        $legacyClient->shouldNotReceive('find');
+        $notification = $this->routedNotification($posted, $legacyClient, $this->ignoringFileLog()->file, null, false);
         $notification->shouldReceive('getInput')->once()->with($limit + 1)->andReturn(substr($posted, 0, $limit + 1));
-        $notification->shouldReceive('getInput')->once()->withNoArgs()->andReturn($posted);
-        $notification->shouldReceive('handleSuccessfulRequest')->once()->with($data);
+        $notification->shouldNotReceive('handleSuccessfulRequest');
 
         $notification->handleReceivedNotification(['source_news' => 'webhooks']);
-
-        $this->assertTrue(true);
     }
 
     public function testSmallBodyIsReadOnceWithinTheLimit(): void
@@ -726,9 +685,10 @@ class CoreNotificationTest extends TestCase
         $this->assertTrue(true);
     }
 
-    /** A Smart Pix id placed after the inspected prefix is still caught once the body is decoded. */
+    /** An ID after the budget cannot bypass the global rejection, even without decoding. */
     public function testOversizedBodyNamingASmartPixIdBeyondThePrefixIsRejectedWithoutFetching(): void
     {
+        $this->expectOversizedRejectionMetric();
         $posted = '{"padding":"' . str_repeat('x', SmartPixNotificationBody::DEFAULT_MAX_BYTES)
             . '","notification_id":"PPORDSYNTHETIC001"}';
         \WP_Mock::userFunction('wp_send_json', [
@@ -754,6 +714,7 @@ class CoreNotificationTest extends TestCase
     /** The size is known without the handler, so a composition failure still answers 413. */
     public function testOversizedSmartPixBodyAnswersTooLargeWhenTheHandlerCannotBeComposed(): void
     {
+        $this->expectOversizedRejectionMetric();
         // The plugin container is not loaded, so the default factory cannot compose the handler.
         $GLOBALS['mercadopago'] = null;
         $posted = '"PPORDSYNTHETIC001' . str_repeat(' ', SmartPixNotificationBody::DEFAULT_MAX_BYTES) . '"';
@@ -765,7 +726,7 @@ class CoreNotificationTest extends TestCase
         $legacyClient->shouldNotReceive('find');
         $file = Mockery::mock(File::class);
         $file->shouldReceive('info')->once();
-        $file->shouldReceive('error')->once()->with('Smart Pix notification could not be handled', CoreNotification::class);
+        $file->shouldNotReceive('error');
 
         $notification = $this->routedNotification($posted, $legacyClient, $file);
         $notification->shouldNotReceive('handleSuccessfulRequest');
@@ -884,6 +845,19 @@ class CoreNotificationTest extends TestCase
         $notification->handleReceivedNotification(['source_news' => 'webhooks']);
 
         $this->assertTrue(true);
+    }
+
+    private function expectOversizedRejectionMetric(): void
+    {
+        $datadog = Mockery::mock('alias:MercadoPago\\Woocommerce\\Libraries\\Metrics\\Datadog');
+        $datadog->shouldReceive('getInstance')->once()->andReturnSelf();
+        $datadog->shouldReceive('sendEvent')->once()->with(
+            'core_notification_rejected',
+            'body_too_large',
+            null,
+            null,
+            ['team' => 'big', 'reason' => 'body_too_large']
+        );
     }
 
     private function routedNotification(

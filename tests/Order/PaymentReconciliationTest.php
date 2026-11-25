@@ -868,4 +868,53 @@ class PaymentReconciliationTest extends TestCase
             'transaction_amount_refunded' => 0,
         ]);
     }
+
+    public function testPixContentionKeepsTheOrderAndPersistsARetry(): void
+    {
+        global $mercadopago;
+        $previous = $mercadopago ?? null;
+        $retry = Mockery::mock(\MercadoPago\Woocommerce\Order\PixStatusRetry::class);
+        $mercadopago = (object) ['pixStatusRetry' => $retry];
+
+        $payment = $this->approvedPayment('100', 'WC-75');
+        $this->expectIdentifiers(['100'], []);
+        $this->expectAccessToken();
+        $this->requester->shouldReceive('get')->with('/v1/payments/100', $this->headers())->andReturn($this->response(200, $payment));
+        $this->orderMetadata->shouldReceive('updateOrderCustomFieldsAfterReconciliation')->andReturn(true);
+        $this->orderStatus->shouldReceive('processStatus')
+            ->andThrow(new \MercadoPago\Woocommerce\Exceptions\OrderStatusLockException('busy'));
+        $this->order->shouldReceive('get_id')->andReturn(75);
+        $retry->shouldReceive('enqueue')->once()->with(75, 'reconciliation', '75')->andReturn(9);
+
+        try {
+            $this->assertFalse(
+                $this->reconciliation->canCancelOrder($this->order, 'WC-75', 'woo-mercado-pago-pix')
+            );
+        } finally {
+            $mercadopago = $previous;
+        }
+    }
+
+    public function testPixContentionWithoutRetryServiceStillPreservesTheOrder(): void
+    {
+        global $mercadopago;
+        $previous = $mercadopago ?? null;
+        $mercadopago = (object) [];
+
+        $payment = $this->approvedPayment('100', 'WC-75');
+        $this->expectIdentifiers(['100'], []);
+        $this->expectAccessToken();
+        $this->requester->shouldReceive('get')->andReturn($this->response(200, $payment));
+        $this->orderMetadata->shouldReceive('updateOrderCustomFieldsAfterReconciliation')->andReturn(true);
+        $this->orderStatus->shouldReceive('processStatus')
+            ->andThrow(new \MercadoPago\Woocommerce\Exceptions\PixCompletionException('failed'));
+
+        try {
+            $this->assertFalse(
+                $this->reconciliation->canCancelOrder($this->order, 'WC-75', 'woo-mercado-pago-pix')
+            );
+        } finally {
+            $mercadopago = $previous;
+        }
+    }
 }
